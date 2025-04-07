@@ -4,6 +4,7 @@ Erfassung von geleisteten Bahnen bei einem 24 Stunden schwimmen
 # Szenario
 Bei einem 24 Stundenschwimmen sollen digital die geleisteten Bahnen verschiedener Schiwmmer innerhalb dieser 24 Stundne auf digitalen Endgeräten erfasst und auf einem zentralen Rechner gesammelt werden.
 Dabei soll die Bedienung möglichst intuitiv sein und die Datensicherheit besonders hoch, so dass selbst bei einem Ausfall des Servers oder eines Endgerätes die Informationen auf mehreren Stellen verteilt gespeichert sind.
+Die Erfassung soll auf möglichst vielen verschiedenen Endgeräten möglich sein (verschiedene Bildschirmgrößen, responsive Design)
 
 # grobe Planung
 Ein Mini-Python-Webserver liefert eine HTML-Seite mit Javascript pro Bahn aus und registriert per send requests Bahnen die auf einem Endgerät registriert werden. Ebenso ist er in der Lage per GET-Request Daten zu liefern.
@@ -20,7 +21,7 @@ Die Gestaltung der Ansicht auf dem Endgerät ist in etwa wie folgt:
     *  ...                  *
     *************************
 
-Dabei wird im oberen Bereich die Bahnnummer für die das Gerät genutzt wird eingetragen. Der (+)-Button rechts ermöglicht es einen Schwimmer (der über seine Startnummer erfasst wird) hinzuzufügen.
+Dabei wird im oberen Bereich die Bahnnummer für die das Gerät genutzt wird angezeigt. Der (+)-Button rechts ermöglicht es einen Schwimmer (der über seine Startnummer erfasst wird) hinzuzufügen.
 In einzelnen Zeilen werden die aktiv auf der Bahn schwimmenden Schwimmer grün hinterlegt und am Beginn der Liste geführt. Dies in der Reihenfolge, dass derjenige für den als letztes eine Bahn registriert wurde am Ende
 dieses Bereiches geführt wird. So dass die vermutlich als nächstes eintreffenden aktiven Schwimmer ganz oben in der Liste geführt werden. 
 Unter diesen aktiven Schwimmern werden weitere aktuell inaktive Schwimmer (weil sie vielleicht gerade Pause machen) geführt - nicht grün hinterlegt aber nach Nummer sortiert.
