@@ -8,13 +8,19 @@ body {
 /* Header */
 header {
     background-color: #2962ff; /* Primärblau */
-    color: #fff; /* Weißer Text im Header */
-    padding: 1rem 0; /* Innenabstand */
-    text-align: center; /* Zentriert den Text */
+    color: #ffffff;
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    margin: 0;
+    font-size: 28px;
+    letter-spacing: 2px;
 }
 
 header h1 {
     margin: 0; /* Entfernt Standard-Margin */
+    font-size: 28px;
+    letter-spacing: 2px;
 }
 
 /* Navigation */
@@ -41,6 +47,19 @@ nav a {
     font-weight: bold;
 }
 
+table {
+    border-collapse: collapse;
+    width: 20%;
+    margin: auto;
+}
+th, td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: #f2f2f2;
+}
 
 /* Hauptinhalt */
 main {
