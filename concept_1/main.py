@@ -532,7 +532,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             contextMenu.style.display = "none";
         });
         
-        setInterval(send, 300000);
+        setInterval(send, 50000);
         send()
     </script>
 </body>
