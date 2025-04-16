@@ -38,16 +38,6 @@ def addVersion(new, dateipfad="verlauf.json"):
     with open(dateipfad, "w", encoding="utf-8") as f:
         json.dump(daten, f, ensure_ascii=False, indent=4)
 
-
-def load_html_file(filename):
-    if not os.path.exists(filename):
-        return "HTTP/1.1 404 Not Found\n\n<h1>404 - Datei nicht gefunden</h1>"
-
-    with open(filename, 'r', encoding='utf-8') as file:
-        html = file.read()
-    
-    return f"HTTP/1.1 200 OK\nContent-Type: text/html\n\n{html}"
-
 def build_response(status, body, content_type="text/html"):
     return f"HTTP/1.1 {status}\nContent-Type: {content_type}\n\n{body}"
 
@@ -239,8 +229,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     </header>
     <table id="schwimmer">
         <tr>
-            <th>Schwimmer*innen Startnummer</th>
-            <th>Geschwommene Bahnen</th>
+            <th data-key="Nummer">Schwimmer*innen Startnummer</th>
+            <th data-key="Bahnen">Geschwommene Bahnen</th>
         </tr>
     </table> 
 
@@ -312,17 +302,24 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             const table = document.getElementById(tableId);
             const rows = table.querySelectorAll("tr");
 
-            const headers = Array.from(rows[0].querySelectorAll("th")).map(th => th.textContent.trim());
+            const headers = Array.from(rows[0].querySelectorAll("th")).map(th =>
+                th.getAttribute("data-key")
+            );
+
             const jsonData = [];
 
             for (let i = 1; i < rows.length; i++) {
-                const cells = rows[i].querySelectorAll("td");
+                const row = rows[i];
+                const cells = row.querySelectorAll("td");
                 const rowData = {};
 
                 cells.forEach((cell, index) => {
-                    const header = headers[index];
-                    rowData[header] = cell.textContent.trim();
+                    const key = headers[index];
+                    rowData[key] = cell.textContent.trim();
                 });
+
+                // HIER die Abwesenheit ergänzen
+                rowData["Abwesend"] = row.classList.contains("abwesend");
 
                 if (Object.keys(rowData).length > 0) {
                     jsonData.push(rowData);
@@ -331,7 +328,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
             return jsonData;
         }
-
 
         function downloadJSON() {
             // Tabelle in JSON umwandeln
@@ -420,11 +416,19 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     // Alte Zeilen löschen (außer Header)
                     const rows = table.querySelectorAll("tr:not(:first-child)");
                     rows.forEach(row => row.remove());
-
+                    
+                    daten.sort((a, b) => {
+                        return (a.Abwesend === b.Abwesend) ? 0 : a.Abwesend ? 1 : -1;
+                    });
+                    
                     // Neue Zeilen einfügen
                     daten.forEach(schwimmer => {
                         const tr = document.createElement("tr");
-
+                        
+                        if (schwimmer.Abwesend) {
+                            tr.classList.add("abwesend");
+                            table.appendChild(tr);
+                        }
                         const tdNummer = document.createElement("td");
                         tdNummer.className = "nummer";
                         tdNummer.textContent = schwimmer.Nummer;
@@ -559,16 +563,22 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 for neuer in neue_daten:
                     nummer = neuer["Nummer"]
                     bahnen = int(neuer["Bahnen"])
+                    abwesend = neuer.get("Abwesend", False)  # fallback auf False, falls nicht vorhanden
 
                     gefunden = False
                     for bestehender in bestehende_daten:
                         if bestehender["Nummer"] == nummer:
                             bestehender["Bahnen"] = bahnen
+                            bestehender["Abwesend"] = abwesend
                             gefunden = True
                             break
 
                     if not gefunden:
-                        bestehende_daten.append(neuer)
+                        bestehende_daten.append({
+                            "Nummer": nummer,
+                            "Bahnen": bahnen,
+                            "Abwesend": abwesend
+                        })
 
                 # daten speichern
                 with open("data.json", "w", encoding="utf-8") as f:
