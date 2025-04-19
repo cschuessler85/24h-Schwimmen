@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 
+#Flask ist ein Development-System kann aber auf gunicorn umgestellt werden
+
 app = Flask(__name__)
 data_store = {}  # Speichert die Anzahl pro Name
 
