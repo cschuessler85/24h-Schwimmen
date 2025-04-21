@@ -31,3 +31,74 @@ Mit Hilfe des (-) Buttons kann eine ggf. fälschlicherweise registrierte Bahn wi
 
 Durch einen rechtsklick oder langen klick auf den Schwimmer öffnet sich ein Kontextmenü in dem der Schwimmer z.B. geändert werden kann, bzw. von aktiv zu inaktiv gewechselt werden kann oder ähnliches.
 
+# Datenmodell
+### Benutzer
+
+    name: String
+    benutzername: String
+    passwort: String (verschlüsselt)
+    admin: Boolean
+
+### Client
+
+    id: Integer (beginnt bei 1)
+    ip: String
+    benutzer: Verweis auf Benutzer
+    letzteÜbermittelteAction: Verweis auf Action
+
+### Schwimmer
+
+    nummer: Integer
+    erstelltVonClientId: Verweis auf Client (0 ist admin/Server)
+    name: String
+    bahnen: Integer (Anzahl)
+    strecke: Integer (Meter)
+    aufBahn: Integer (letzte Aktive Bahn - sonst 0)
+    aktiv: Boolean
+
+### Action (alle Befehle/Transaktionen werden protokolliert)
+
+    id: Integer (Nr muss nur lokal eindeutig sein - auf Client oder Server)
+    benutzer: Verweis auf auslösenden Benutzer
+    client: Verweis auf auslösenden Client
+    zeitstempel: ISO-Zeitstempel
+    kommando: String (BAHN, ...)
+    parameterliste: Array
+
+# Projektverzeichnisstruktur
+
+Hier ist eine Übersicht über die Verzeichnisstruktur des Projektes:
+
+```
+24H-Schwimmen/ 
+├── static/             Dateien, die statisch ausgeliefert werden sollen
+│ └── index.html 
+│ └── style.css 
+├── data/               Verzeichnis für daten-Dateien
+├── server.py           Die Hauptdatei mit der Serverfunktionalität 
+├── README.md 
+└── requirements.txt
+```
+
+# Git-Workflow
+
+Neue Features / Änderungen werden in einem sinnvoll benannten Branch entwickelt. 
+Dabei jeweils kleinschrittig committed und schließlich per Pull Request in den Branch main gemerged.
+
+## Git-Befehle (Beispiel)
+
+```
+## Neuen Branch erstellen und wechseln
+git checkout -b feature/kurze-beschreibung
+
+## Änderungen hinzufügen und committen (mehrfach und kleinschrittig)
+git add .
+git commit -m "Kurz und präzise beschreiben, was geändert wurde"
+
+## Branch auf Remote pushen
+git push -u origin feature/kurze-beschreibung
+```
+## Pull Request
+
+Nach dem Push kann auf GitHub ein Pull Request zum Merge in main erstellt werden. 
+Dazu im Repository auf **"Pull requests" → "New pull request"** klicken, den eigenen Branch als *compare* und "main" als *base* auswählen, Titel & Beschreibung angeben und mit **"Create pull request"** bestätigen.
