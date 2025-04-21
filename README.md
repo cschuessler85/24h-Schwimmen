@@ -32,6 +32,8 @@ Mit Hilfe des (-) Buttons kann eine ggf. fälschlicherweise registrierte Bahn wi
 Durch einen rechtsklick oder langen klick auf den Schwimmer öffnet sich ein Kontextmenü in dem der Schwimmer z.B. geändert werden kann, bzw. von aktiv zu inaktiv gewechselt werden kann oder ähnliches.
 
 # Datenmodell
+Die Daten werden auf dem Server in einer SQLite Datenbank gehalten (Absturzsicher, leicht zugreifbar) und auf den Clients jeweils regelmäßig als JSON-Datei gespeichert.
+
 ### Benutzer
 
     name: String
@@ -74,8 +76,10 @@ Hier ist eine Übersicht über die Verzeichnisstruktur des Projektes:
 ├── static/             Dateien, die statisch ausgeliefert werden sollen
 │ └── index.html 
 │ └── style.css 
-├── data/               Verzeichnis für daten-Dateien
-├── server.py           Die Hauptdatei mit der Serverfunktionalität 
+├── data/               Verzeichnis für JSON-Daten-Dateien
+├── db.py               Alles was mit Datenbankzugriffen zu tun hat
+├── server.py           Die Hauptdatei mit der Serverfunktionalität
+├── data.sqlite         Datenbank des Servers
 ├── README.md 
 └── requirements.txt
 ```

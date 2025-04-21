@@ -1,5 +1,15 @@
 import sqlite3
 import atexit
+import random
+from datetime import datetime
+import logging
+from logging_config import configure_logging
+
+# Konfiguration des Loggings
+configure_logging()
+
+# Logger verwenden
+logger = logging.getLogger()
 
 DB_NAME = "data.sqlite"
 
@@ -22,9 +32,9 @@ class Database:
             self.conn = sqlite3.connect(self.db_name)
             self.conn.row_factory = sqlite3.Row  # Für dict-ähnliche Zeilen
             self.cursor = self.conn.cursor()
-            print("Datenbankverbindung hergestellt.")
+            logging.info("Database.connect - Datenbankverbindung hergestellt.")
         except sqlite3.DatabaseError as e:
-            print(f"Fehler beim Verbinden zur Datenbank: {e}")
+            logging.error(f"Database.connect - Fehler beim Verbinden zur Datenbank: {e}")
             self.conn = None
             self.cursor = None
 
@@ -33,11 +43,12 @@ class Database:
         Führt eine SQL-Abfrage aus und behandelt Verbindungsfehler.
         """
         if self.conn is None:
-            print("Keine Datenbankverbindung. Versuche Wiederverbindung.")
+            logging.error("Database execute: Keine Datenbankverbindung. Versuche Wiederverbindung.")
+            logging.debug(f"Query: {query}, params:{params}")
             self.connect()  # Versuche erneut, die Verbindung herzustellen
             
             if self.conn is None:
-                print("Datenbankverbindung konnte nicht wiederhergestellt werden.")
+                logging.error("Datenbankverbindung konnte nicht wiederhergestellt werden.")
                 return
         
         try:
@@ -45,8 +56,15 @@ class Database:
                 params = []
             self.cursor.execute(query, params)
             self.conn.commit()
+        except sqlite3.OperationalError as e:
+            logging.error(f"OperationalError: {e}")
+            logging.debug(f"execute - query: {query}, params: {params}")
+        except sqlite3.IntegrityError as e:
+            logging.error(f"Integritätsfehler: {e}")    
+            logging.debug(f"execute - query: {query}, params: {params}")
         except sqlite3.DatabaseError as e:
-            print(f"Fehler bei der SQL-Abfrage: {e}")
+            logging.error(f"Fehler bei der SQL-Abfrage: {e}")
+            logging.debug(f"execute - query: {query}, params: {params}")
             self.conn = None
             self.cursor = None  # Setze den Cursor auf None, damit bei der nächsten Abfrage ein Fehler festgestellt wird
 
@@ -55,11 +73,12 @@ class Database:
         Holt alle Ergebnisse einer SELECT-Abfrage und behandelt Verbindungsfehler.
         """
         if self.conn is None:
-            print("Keine Datenbankverbindung. Versuche Wiederverbindung.")
+            logging.error("Keine Datenbankverbindung. Versuche Wiederverbindung.")
+            logging.debug(f"fetchall - query: {query}, params: {params}")
             self.connect()  # Versuche erneut, die Verbindung herzustellen
             
             if self.conn is None:
-                print("Datenbankverbindung konnte nicht wiederhergestellt werden.")
+                logging.error("Datenbankverbindung konnte nicht wiederhergestellt werden.")
                 return []
         
         try:
@@ -68,7 +87,8 @@ class Database:
             self.cursor.execute(query, params)
             return self.cursor.fetchall()
         except sqlite3.DatabaseError as e:
-            print(f"Fehler bei der SQL-Abfrage: {e}")
+            logging.error(f"Fehler bei der SQL-Abfrage: {e}")
+            logging.debug(f"fetchall - query: {query}, params: {params}")
             self.conn = None
             self.cursor = None
             return []
@@ -78,11 +98,12 @@ class Database:
         Holt ein einzelnes Ergebnis einer SELECT-Abfrage und behandelt Verbindungsfehler.
         """
         if self.conn is None:
-            print("Keine Datenbankverbindung. Versuche Wiederverbindung.")
+            logging.error("Keine Datenbankverbindung. Versuche Wiederverbindung.")
+            logging.debug(f"fetchone - query: {query}, params: {params}")
             self.connect()  # Versuche erneut, die Verbindung herzustellen
             
             if self.conn is None:
-                print("Datenbankverbindung konnte nicht wiederhergestellt werden.")
+                logging.error("Datenbankverbindung konnte nicht wiederhergestellt werden.")
                 return None
         
         try:
@@ -91,7 +112,7 @@ class Database:
             self.cursor.execute(query, params)
             return self.cursor.fetchone()
         except sqlite3.DatabaseError as e:
-            print(f"Fehler bei der SQL-Abfrage: {e}")
+            logging.error(f"Fehler bei der SQL-Abfrage: {e}")
             self.conn = None
             self.cursor = None
             return None
@@ -102,7 +123,7 @@ class Database:
         """
         if self.conn:
             self.conn.close()
-            print("Datenbankverbindung geschlossen.")
+            logging.info("Datenbankverbindung geschlossen.")
 
 # Globale Instanz der Database-Klasse
 db = Database()
@@ -110,72 +131,113 @@ db = Database()
 # Automatisch beim Programmende die Verbindung schließen
 atexit.register(db.close)
 
-# =======================================
-# DATENBANK-INITIALISIERUNG
-# =======================================
+# ===================================================
+# DATENBANK-INITIALISIERUNG UND ALLGEMEINE METHODEN
+# ===================================================
 """
 Initialisiert die SQLite-Datenbank mit den Tabellen:
 - Benutzer
 - Clients
 - Actions
 - Schwimmer
+
+liste_tabelle
+dict_from_row-Methode
 """
 
 def init_db():
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
+    """
+    Initialisiert die Datenbank und erstellt alle notwendigen Tabellen, falls sie noch nicht existieren.
+    """
+    # Tabellen erstellen
+    query_benutzer = '''
+        CREATE TABLE IF NOT EXISTS benutzer (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            benutzername TEXT UNIQUE NOT NULL,
+            passwort TEXT NOT NULL,
+            admin BOOLEAN NOT NULL DEFAULT 0
+        )
+    '''
+    db.execute(query_benutzer)
 
-        # Tabelle: Benutzer
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS benutzer (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                benutzername TEXT UNIQUE NOT NULL,
-                passwort TEXT NOT NULL,
-                admin BOOLEAN NOT NULL DEFAULT 0
-            )
-        ''')
+    query_clients = '''
+        CREATE TABLE IF NOT EXISTS clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT NOT NULL,
+            benutzer_id INTEGER,
+            zeitpunkt_letzte_aktion TEXT,
+            FOREIGN KEY (benutzer_id) REFERENCES benutzer(id)
+        )
+    '''
+    db.execute(query_clients)
 
-        # Tabelle: Clients
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS clients (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ip TEXT NOT NULL,
-                benutzer_id INTEGER,
-                zeitpunkt_letzte_aktion TEXT,
-                FOREIGN KEY (benutzer_id) REFERENCES benutzer(id)
-            )
-        ''')
+    query_schwimmer = '''
+        CREATE TABLE IF NOT EXISTS schwimmer (
+            nummer INTEGER NOT NULL,
+            erstellt_von_client_id INTEGER,
+            name TEXT,
+            bahnanzahl INTEGER,
+            strecke INTEGER,
+            auf_bahn INTEGER,
+            aktiv BOOLEAN,
+            FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id),
+            CONSTRAINT unique_schwimmer UNIQUE (nummer, erstellt_von_client_id)
+        )
+    '''
+    db.execute(query_schwimmer)
 
-        # Tabelle: Schwimmer
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS schwimmer (
-                nummer INTEGER PRIMARY KEY,
-                erstellt_von_client_id INTEGER,
-                name TEXT,
-                bahnanzahl INTEGER,
-                strecke INTEGER,
-                auf_bahn INTEGER,
-                aktiv BOOLEAN,
-                FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id)
-            )
-        ''')
+    query_actions = '''
+        CREATE TABLE IF NOT EXISTS actions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            benutzer_id INTEGER,
+            client_id INTEGER,
+            zeitstempel TEXT,
+            kommando TEXT,
+            parameter TEXT,
+            FOREIGN KEY (benutzer_id) REFERENCES benutzer(id),
+            FOREIGN KEY (client_id) REFERENCES clients(id)
+        )
+    '''
+    db.execute(query_actions)
 
-        # Tabelle: Actions
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS actions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                benutzer_id INTEGER,
-                client_id INTEGER,
-                zeitstempel TEXT,
-                kommando TEXT,
-                parameter TEXT,
-                FOREIGN KEY (benutzer_id) REFERENCES benutzer(id),
-                FOREIGN KEY (client_id) REFERENCES clients(id)
-            )
-        ''')
+def dict_from_row(row, table_name):
+    """
+    Wandelt eine Datenbankzeile (Tupel) in ein Dictionary um.
+    """
+    if table_name == 'benutzer':
+        columns = ['id', 'name', 'benutzername', 'passwort', 'admin']
+    elif table_name == 'clients':
+        columns = ['id', 'ip', 'benutzer_id', 'zeitpunkt_letzte_aktion']
+    elif table_name == 'schwimmer':
+        columns = ['nummer', 'erstellt_von_client_id', 'name', 'bahnanzahl', 'strecke', 'auf_bahn', 'aktiv']
+    elif table_name == 'actions':
+        columns = ['id', 'benutzer_id', 'client_id', 'zeitstempel', 'kommando', 'parameter']
+    else:
+        return None
+    return dict(zip(columns, row))
 
-        conn.commit()
+def liste_tabelle(table_name):
+    """
+    Gibt eine Liste aller Einträge aus der angegebenen Tabelle zurück.
+    Wenn der Tabellenname ungültig ist, wird eine leere Liste zurückgegeben.
+    """
+    # Gültige Tabellen
+    valid_tables = ['benutzer', 'clients', 'schwimmer', 'actions']
+    
+    # Überprüfen, ob der angegebene Tabellenname gültig ist
+    if table_name not in valid_tables:
+        return []
+
+    # Dynamische SQL-Abfrage erstellen, um alle Einträge aus der angegebenen Tabelle zu holen
+    query = f'SELECT * FROM {table_name}'
+    
+    # Datenbankabfrage ausführen
+    rows = db.fetchall(query)
+    
+    # Die Zeilen in Dictionaries umwandeln und zurückgeben
+    return [dict_from_row(r, table_name) for r in rows]
+
 
 
 # =======================================
@@ -190,42 +252,57 @@ Funktionen zur Verwaltung von Schwimmern:
 
 # Sucht einen Schwimmer anhand seines Namens
 def finde_schwimmer(name):
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute("SELECT * FROM schwimmer WHERE name = ?", (name,))
-        return c.fetchone()
+    """
+    Sucht einen Schwimmer anhand seines Namens.
+    """
+    query = "SELECT * FROM schwimmer WHERE name = ?"
+    params = (name,)
+    return db.fetch_one(query, params)
+
 
 # Liest einen Schwimmer anhand seiner ID aus der Datenbank
 def lies_schwimmer(schwimmer_id):
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute("SELECT * FROM schwimmer WHERE id = ?", (schwimmer_id,))
-        return c.fetchone()
+    """
+    Liest einen Schwimmer anhand seiner ID aus der Datenbank.
+    """
+    query = "SELECT * FROM schwimmer WHERE id = ?"
+    params = (schwimmer_id,)
+    return db.fetch_one(query, params)
+
 
 # Aktualisiert Felder eines Schwimmers anhand der ID
 # Die zu aktualisierenden Felder werden dynamisch übergeben, z. B.:
 # update_schwimmer(1, bahnanzahl=5, aktiv=0)
 # Das funktioniert durch **kwargs, womit beliebige Schlüssel-Wert-Paare übergeben werden können.
 def update_schwimmer(schwimmer_id, **kwargs):
+    """
+    Aktualisiert Felder eines Schwimmers anhand der ID.
+    Die zu aktualisierenden Felder werden dynamisch übergeben, z. B.:
+    update_schwimmer(1, bahnanzahl=5, aktiv=0)
+    Das funktioniert durch **kwargs, womit beliebige Schlüssel-Wert-Paare übergeben werden können.
+    """
     # Baut dynamisch das SET-Statement für SQL, z. B. "bahnanzahl=?, aktiv=?"
     keys = ', '.join([f"{k}=?" for k in kwargs])
     values = list(kwargs.values()) + [schwimmer_id]
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute(f"UPDATE schwimmer SET {keys} WHERE id = ?", values)
-        conn.commit()
+    query = f"UPDATE schwimmer SET {keys} WHERE id = ?"
+    db.execute_query(query, values)
 
 # Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück
-def erstelle_schwimmer(name, erstellt_von_client_id, bahnanzahl, strecke, auf_bahn, aktiv):
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO schwimmer (name, erstellt_von_client_id, bahnanzahl, strecke, auf_bahn, aktiv)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (name, erstellt_von_client_id, bahnanzahl, strecke, auf_bahn, aktiv))
-        conn.commit()
-        return c.lastrowid
-    
+def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv):
+    """
+    Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück.
+    """
+    query = """
+        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """
+    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
+    return db.execute(query, params)
+
+
+
+
+
 #========================
 #    Abschnitt: Clients
 #======================== 
@@ -238,48 +315,30 @@ def erstelle_client(ip, benutzer_id=None):
     - ip (str): IP-Adresse des Clients
     - benutzer_id (int, optional): ID des zugeordneten Benutzers, kann None sein
     """
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''
+    query = '''
         INSERT INTO clients (ip, benutzer_id, zeitpunkt_letzte_aktion)
         VALUES (?, ?, ?)
-    ''', (ip, benutzer_id, datetime.now().isoformat()))
-    conn.commit()
-    conn.close()
+    '''
+    params = (ip, benutzer_id, datetime.now().isoformat())
+    db.execute(query, params)
 
 def finde_client(ip):
     """
     Sucht einen Client anhand seiner IP-Adresse.
-
-    Parameter:
-    - ip (str): IP-Adresse des gesuchten Clients
-
-    Rückgabe:
-    - Tupel mit den Client-Daten oder None, falls nicht gefunden
     """
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('SELECT * FROM clients WHERE ip = ?', (ip,))
-    client = c.fetchone()
-    conn.close()
+    query = 'SELECT * FROM clients WHERE ip = ?'
+    params = (ip,)
+    client = dict(db.fetchone(query, params))
     return client
+
 
 def update_client_aktion(client_id):
     """
     Aktualisiert den Zeitstempel der letzten Aktion eines Clients.
-
-    Parameter:
-    - client_id (int): ID des Clients
     """
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''
-        UPDATE clients
-        SET zeitpunkt_letzte_aktion = ?
-        WHERE id = ?
-    ''', (datetime.now().isoformat(), client_id))
-    conn.commit()
-    conn.close()
+    query = 'UPDATE clients SET zeitpunkt_letzte_aktion = ? WHERE id = ?'
+    params = (datetime.now().isoformat(), client_id)
+    db.execute_query(query, params)
 
 #========================
 #    Abschnitt: Benutzer
@@ -290,35 +349,63 @@ def erstelle_benutzer(name, benutzername, passwort, admin=False):
     Fügt einen neuen Benutzer zur Datenbank hinzu.
     Gibt die ID des neuen Benutzers zurück.
     """
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''
+    query = '''
         INSERT INTO benutzer (name, benutzername, passwort, admin)
         VALUES (?, ?, ?, ?)
-    ''', (name, benutzername, passwort, int(admin)))
-    conn.commit()
-    benutzer_id = c.lastrowid
-    conn.close()
-    return benutzer_id
+    '''
+    params = (name, benutzername, passwort, int(admin))
+    return db.execute(query, params)
+
 
 def finde_benutzer_by_username(benutzername):
     """
     Gibt einen Benutzer als Dictionary zurück, der dem Benutzernamen entspricht.
     """
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('SELECT * FROM benutzer WHERE benutzername = ?', (benutzername,))
-    row = c.fetchone()
-    conn.close()
-    return dict_from_row(row) if row else None
+    query = 'SELECT * FROM benutzer WHERE benutzername = ?'
+    params = (benutzername,)
+    row = db.fetch_one(query, params)
+    return dict_from_row(row,'benutzer') if row else None
 
-def liste_benutzer():
-    """
-    Gibt eine Liste aller Benutzer zurück.
-    """
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('SELECT * FROM benutzer')
-    rows = c.fetchall()
-    conn.close()
-    return [dict_from_row(r) for r in rows]
+
+
+#========================
+#    Testabschnitt
+#======================== 
+
+
+if __name__ == "__main__":
+    # Setze den DB-Namen auf eine Testdatenbank
+    DB_NAME = "testdata.sqlite"
+
+    # Erstelle ein neues Database-Objekt mit der Test-Datenbank
+    db = Database(DB_NAME)
+
+    # Teste die Methoden
+    print("Test der Methoden in der Testdatenbank:")
+    
+    # Initialisiere die Datenbank (wird Tabellen erstellen)
+    init_db()
+
+    # Beispiel: Benutzer hinzufügen und abfragen
+    print("\nHinzufügen eines neuen Benutzers...")
+    erstelle_benutzer("Test User", f"testuser{random.randint(10,99)}", "password123", admin=False)
+    benutzer = liste_tabelle('benutzer')
+    print(f"Benutzer in der Datenbank: {benutzer}")
+
+    # Beispiel: Client hinzufügen und abfragen
+    print("\nHinzufügen eines neuen Clients...")
+    erstelle_client("192.168.1.1", 1)
+    clients = finde_client("192.168.1.1")
+    print(f"Clients in der Datenbank: {clients}")
+
+    # Beispiel: Schwimmer hinzufügen und abfragen
+    print("\nHinzufügen eines neuen Schwimmers...")
+    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max Mustermann", 3, 400, 1, True)
+    schwimmer = liste_tabelle('schwimmer')
+    print(f"Schwimmer in der Datenbank: {schwimmer}")
+
+    # Beispiel: Action hinzufügen und abfragen
+    #print("\nHinzufügen einer neuen Aktion...")
+    #add_action(1, 1, "2025-01-01 12:00", "Befehl1", "Parameter1")
+    #actions = liste_tabelle('actions')
+    #print(f"Aktionen in der Datenbank: {actions}")
