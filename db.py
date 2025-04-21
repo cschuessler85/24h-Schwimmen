@@ -366,6 +366,57 @@ def finde_benutzer_by_username(benutzername):
     row = db.fetch_one(query, params)
     return dict_from_row(row,'benutzer') if row else None
 
+#========================
+#    Abschnitt: Actions
+#======================== 
+
+def erstelle_action(benutzer_id, client_id, zeitstempel, kommando, parameter):
+    """
+    Fügt eine neue Action zur Datenbank hinzu.
+    Gibt die ID der neuen Action zurück.
+    """
+    query = '''
+        INSERT INTO actions (benutzer_id, client_id, zeitstempel, kommando, parameter)
+        VALUES (?, ?, ?, ?, ?)
+    '''
+    params = (benutzer_id, client_id, zeitstempel, kommando, parameter)
+    return db.execute(query, params)
+
+def finde_actions_by_benutzer_id(benutzer_id):
+    """
+    Gibt eine Liste aller Actions zurück, die dem Benutzer mit der gegebenen ID entsprechen.
+    """
+    query = 'SELECT * FROM actions WHERE benutzer_id = ?'
+    params = (benutzer_id,)
+    rows = db.fetchall(query, params)
+    return [dict_from_row(row, 'actions') for row in rows]
+
+def finde_actions_by_client_id(client_id):
+    """
+    Gibt eine Liste aller Actions zurück, die dem Client mit der gegebenen ID entsprechen.
+    """
+    query = 'SELECT * FROM actions WHERE client_id = ?'
+    params = (client_id,)
+    rows = db.fetchall(query, params)
+    return [dict_from_row(row, 'actions') for row in rows]
+
+def finde_action_by_id(action_id):
+    """
+    Gibt die Action mit der gegebenen ID zurück.
+    """
+    query = 'SELECT * FROM actions WHERE id = ?'
+    params = (action_id,)
+    row = db.fetchone(query, params)
+    return dict_from_row(row, 'actions') if row else None
+
+def finde_actions_after_timestamp(timestamp):
+    """
+    Gibt alle Actions zurück, die nach dem angegebenen Zeitstempel stattgefunden haben.
+    """
+    query = 'SELECT * FROM actions WHERE zeitstempel > ?'
+    params = (timestamp,)
+    rows = db.fetchall(query, params)
+    return [dict_from_row(row, 'actions') for row in rows]
 
 
 #========================
@@ -404,8 +455,14 @@ if __name__ == "__main__":
     schwimmer = liste_tabelle('schwimmer')
     print(f"Schwimmer in der Datenbank: {schwimmer}")
 
-    # Beispiel: Action hinzufügen und abfragen
-    #print("\nHinzufügen einer neuen Aktion...")
-    #add_action(1, 1, "2025-01-01 12:00", "Befehl1", "Parameter1")
-    #actions = liste_tabelle('actions')
-    #print(f"Aktionen in der Datenbank: {actions}")
+    # Beispiel: Action hinzufügen und abfragen (falls du eine action-tabelle hast)
+    print("\nHinzufügen einer neuen Action...")
+    erstelle_action(1, 1,datetime.now().strftime('%Y-%m-%d %H:%M:%S'),  'login', 'param1')
+    actions = liste_tabelle('actions')
+    print(f"Actions in der Datenbank: {actions}")
+
+    # Beispiel: Abfragen von Actions nach einem bestimmten Zeitstempel
+    timestamp = '2025-04-21 00:00:00'
+    print(f"\nAbfragen von Actions nach dem Zeitstempel {timestamp}...")
+    actions_after_timestamp = finde_actions_after_timestamp(timestamp)
+    print(f"Actions nach {timestamp}: {actions_after_timestamp}")
