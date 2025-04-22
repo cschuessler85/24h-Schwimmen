@@ -79,7 +79,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         with conn:
             request = conn.recv(1024).decode()
             print("Anfrage erhalten:")
-            print(request)
+            print(f"request: {request}\naddr: {addr}")
             
             if not request:
                 continue
@@ -111,7 +111,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                 if os.path.exists(file_path):
                     try:
-                        with open(file_path, "rb") as f:
+                        with open(file_path, "r", encoding="utf-8") as f:
                             body = f.read()
                         content_type = content_type = get_content_type(path)
                         response = build_response("200 OK", body, content_type)
