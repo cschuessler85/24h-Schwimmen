@@ -156,7 +156,7 @@ function send() {
         method: "POST",
         body: msg,
         headers: {
-            "Content-Type": "text/plain"
+            "Content-Type": "application/json"
         }
     })
     .then(response => response.text())
