@@ -64,6 +64,21 @@ th {
   background-color: #f2f2f2;
 }
 
+/* Für Zellen, die langen Text enthalten */
+td.truncated {
+  max-width: 200px;  /* Maximalbreite der Zelle */
+  overflow: hidden;
+  text-overflow: ellipsis;  /* "..." anzeigen, wenn der Text zu lang ist */
+  white-space: nowrap;  /* Verhindert Umbrüche */
+}
+
+td.truncated:hover {
+  overflow: visible;  /* Beim Hover den Text sichtbar machen */
+  white-space: normal;  /* Erlaubt den Umbruch */
+  background-color: #f8f8f8;  /* Optional: Hervorheben beim Hover */
+  z-index: 1000;  /* Sicherstellen, dass der Text über anderen Inhalten liegt */
+}
+
 /* Hauptinhalt */
 main {
   padding: 2rem;

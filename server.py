@@ -1,4 +1,5 @@
 import os, sys
+import re #Regular Expressions
 import json
 import db
 from datetime import datetime
@@ -36,6 +37,8 @@ if not app.secret_key:
     print("Fehler: 'flask_secret_key' fehlt in der config.json.")
     logger.error("Fehler: 'flask secret_key' fehlt in der config.json.")
     sys.exit(1)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['DEBUG'] = True
 
 # Benutzer admin prüfen
 if not db.finde_benutzer_by_username("admin"):
@@ -87,6 +90,9 @@ def login():
         if benutzer and check_password_hash(benutzer['passwort'], passwort):  # Passwort prüfen (angenommen, es ist gehasht)
             # Erfolgreich eingeloggt, Benutzer zur Hauptseite weiterleiten
             session['user'] = benutzername  # Benutzername in der Session speichern
+            if benutzer['admin']:
+                logging.info(f"Admin-Benutzer {benutzername} angemeldet")
+                session['user_role']='admin'
             return redirect(url_for('index'))
         else:
             return render_template('login.html', error=True)  # Login-Seite anzeigen
@@ -98,6 +104,54 @@ def login():
 def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
+
+#****************************
+#  Admin-Angelegenheiten
+#****************************
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if session.get('user_role') != 'admin':
+        return "Zugriff verweigert", 403
+
+    if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form
+        action = data.get('action')
+
+        if action == 'create_user':
+            # Benutzer erstellen
+            print(data)
+            realname = data.get('realname', '').strip()
+            username = data.get('username', '').strip()
+            password = data.get('password', '')
+
+            if not re.fullmatch(r"[A-Za-zÄÖÜäöüß\s]+", realname):
+                logging.error(f"Versuch Benutzer mit ungültigem Real-Namen anzulegen {realname}")
+                return "Ungültiger Name", 400
+            if not re.fullmatch(r"[A-Za-z0-9]+", username):
+                return "Ungültiger Benutzername", 400
+            if len(password) < 3:
+                return "Passwort zu kurz", 400
+
+            db.erstelle_benutzer(realname, username, password, admin=data.get('admin',False))
+            return "Benutzer erstellt"
+
+        elif action == 'delete_user':
+            # Benutzer löschen
+            pass
+            return "Benutzer gelöscht"
+        elif action == 'get_table_benutzer':
+            return jsonify(db.liste_tabelle('benutzer'))
+        elif action == 'get_table_clients':
+            logging.info("Tabelle clients wird abgerufen")
+            print(db.liste_tabelle('clients'))
+            return jsonify(db.liste_tabelle('clients'))
+        # usw.
+
+    return render_template('admin.html')
+
 
 @app.route("/")
 def index():
@@ -147,5 +201,5 @@ def action():
     return "OK", 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=False, threaded=False)
+    app.run(host="0.0.0.0", port=8080, threaded=False)
     #app.run(ssl_context=('cert.pem', 'key.pem'), debug=True)
