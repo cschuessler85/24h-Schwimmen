@@ -1,11 +1,13 @@
-import socket
-import os
+import os, sys
 import json
 import db
 from datetime import datetime
 import logging
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, redirect, url_for, session, render_template_string, render_template
 from logging_config import configure_logging
+from utils import generiere_passwort
+from werkzeug.security import check_password_hash
+
 
 # Konfiguration des Loggings
 configure_logging()
@@ -13,7 +15,38 @@ configure_logging()
 # Logger verwenden
 logger = logging.getLogger()
 
-app = Flask(__name__, static_folder="static")
+# Konfiguration laden
+try:
+    with open("config.json", encoding="utf-8") as f:
+        config =json.load(f)
+        logger.info("Konfiguration geladen")
+except json.JSONDecodeError as e:
+    print(f"Fehler beim Einlesen von '{CONFIG_PATH}': {e}")
+    logger.error(f"Fehler beim Einlesen von '{CONFIG_PATH}': {e}")
+    sys.exit(0)
+except Exception as e:
+    print("Fehler beim lesen der Konfiguration")
+    logger.error("allgemeiner Fehler beim lesen der Konfiguration")
+    sys.exit(0)
+
+
+app = Flask(__name__, static_folder="static", template_folder="flask_templates")
+app.secret_key = config["flask_secret_key"]  # nötig für Sessions
+if not app.secret_key:
+    print("Fehler: 'flask_secret_key' fehlt in der config.json.")
+    logger.error("Fehler: 'flask secret_key' fehlt in der config.json.")
+    sys.exit(1)
+
+# Benutzer admin prüfen
+if not db.finde_benutzer_by_username("admin"):
+    passwort = config["default_admin_pass"]
+    if not passwort:
+        passwort = generiere_passwort();
+
+    print(f"Benutzer 'admin' wird angelegt mit passwort: {passwort}")
+    db.erstelle_benutzer("Administrator", "admin", passwort, admin=True)
+
+
 
 # Dateien sicherstellen
 os.makedirs("data", exist_ok=True)
@@ -32,6 +65,39 @@ def addVersion(new, dateipfad="data/verlauf.json"):
     daten.append({"Zeit": datetime.now().strftime("%H:%M:%S"), "Data": new})
     with open(dateipfad, "w", encoding="utf-8") as f:
         json.dump(daten, f, ensure_ascii=False, indent=4)
+
+# Immer prüfen, ob der Benutzer angemeldet ist
+# bzw. zur Login-Seite durchlassen
+@app.before_request
+def before_request():
+    # Überprüfen, ob der Benutzer authentifiziert ist
+    if 'user' not in session and request.endpoint != 'login':
+        return redirect(url_for('login'))  # Wenn der Benutzer nicht eingeloggt ist, zur Login-Seite weiterleiten
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        benutzername = request.form['benutzername']
+        passwort = request.form['passwort']
+
+        # Benutzerdaten aus der Datenbank holen
+        benutzer = db.finde_benutzer_by_username(benutzername)
+        print(benutzer)
+        
+        if benutzer and check_password_hash(benutzer['passwort'], passwort):  # Passwort prüfen (angenommen, es ist gehasht)
+            # Erfolgreich eingeloggt, Benutzer zur Hauptseite weiterleiten
+            session['user'] = benutzername  # Benutzername in der Session speichern
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error=True)  # Login-Seite anzeigen
+            #return 'Falscher Benutzername oder Passwort', 401  # Fehler bei der Anmeldung
+
+    return render_template('login.html')  # Login-Seite anzeigen
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect(url_for("login"))
 
 @app.route("/")
 def index():
@@ -81,4 +147,5 @@ def action():
     return "OK", 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080, debug=False, threaded=False)
+    #app.run(ssl_context=('cert.pem', 'key.pem'), debug=True)
