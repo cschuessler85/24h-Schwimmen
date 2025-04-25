@@ -21,13 +21,30 @@
     </style>
   </head>
   <body>
-    <header>
-      <button id="adminAktionen" style="position: fixed; top: 20px; left: 20px; font-size: 30px; cursor: pointer; color: white">+</button>
-      <button id="downloadBackupBtn" style="position: fixed; top: 20px; right: 20px; font-size: 30px; cursor: pointer; color: white">
-        <i class="fa-solid fa-download"></i>
-      </button>
-      <h1>Admin-Bereich</h1>
+    <header style="margin-top: 30px;" >
+      <!-- Linke Schaltfläche (z.B. für Schwimmer hinzufügen) -->
+      <button id="adminAktionen" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">&#9776;</button>
+
+      <!-- Zentrierter Titel -->
+      <div style="position: absolute; left: 50%; transform: translateX(-50%); font-size: 24px; color: white">
+        <h1>Admin-Bereich</h1>
+      </div>
+
+      <!-- Rechte Schaltflächen (z.B. für Datei-Download und Info) -->
+      <div>
+        <button id="downloadBackupBtn" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">
+          <i class="fa-solid fa-download"></i>
+        </button>
+      </div>
     </header>
+    <div id="infoBar" style="display: flex">
+      <span>
+        <span id="serverStatus" style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px"></span>
+        Verbunden
+      </span>
+      <span>Angemeldet als: <strong>{{userrealname}} ({{username}})</strong></span>
+      <span>Client-ID: <strong>{{clientID}}</strong></span>
+    </div>
 
     <nav style="text-align: center; margin-bottom: 20px">
       <button onclick="showUserTable()">Benutzer</button>

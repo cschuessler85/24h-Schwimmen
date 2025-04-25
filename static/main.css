@@ -7,6 +7,10 @@ body {
 
 /* Header */
 header {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  position: relative;
   background-color: #2962ff; /* Primärblau */
   color: #ffffff;
   padding: 20px 0;
@@ -21,6 +25,21 @@ header h1 {
   margin: 0; /* Entfernt Standard-Margin */
   font-size: 28px;
   letter-spacing: 2px;
+}
+
+#infoBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #2b4a7d;
+  padding: 5px 10px;
+  font-size: 14px;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 /* Navigation */

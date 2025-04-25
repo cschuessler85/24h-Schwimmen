@@ -82,6 +82,25 @@ function tableToJSON(tableId) {
     return jsonData;
 }
 
+function toggleInfoBar() {
+    // Das Info-Bar-Element auswählen
+    const infoBar = document.getElementById("infoBar");
+    // Das Header-Element manipulieren
+    const header = document.querySelector("header");
+
+    // Überprüfen, ob die Info-Leiste gerade sichtbar ist
+    if (infoBar.style.display === "none" || infoBar.style.display === "") {
+        // Info-Leiste einblenden
+        infoBar.style.display = "flex";
+        header.style.marginTop = "25px";
+    } else {
+        // Info-Leiste ausblenden
+        infoBar.style.display = "none";
+        header.style.removeProperty('margin-top');
+    }
+}
+
+
 function downloadJSON() {
     // Tabelle in JSON umwandeln
     const data = tableToJSON("schwimmer");

@@ -89,6 +89,7 @@ def login():
         if benutzer and check_password_hash(benutzer['passwort'], passwort):  # Passwort prüfen (angenommen, es ist gehasht)
             # Erfolgreich eingeloggt, Benutzer zur Hauptseite weiterleiten
             session['user'] = benutzername  # Benutzername in der Session speichern
+            session['realname'] = benutzer['name']
             session['clientID'] = db.erstelle_client(request.remote_addr,benutzer['id']) #Speichere die ClientID in der Session
             if benutzer['admin']:
                 logging.info(f"Admin-Benutzer {benutzername} angemeldet")
@@ -151,13 +152,25 @@ def admin():
             return jsonify(db.liste_tabelle('clients'))
         # usw.
 
-    return render_template('admin.html')
+    params = {
+        'user_role': session.get('user_role',""),
+        'userrealname': session.get('realname',"Unbekannt"),
+        'username': session.get('user',"unknown"),
+        'clientID': session.get('clientID',"--")
+    }
+    return render_template('admin.html',**params)
 
 
 @app.route("/")
 def index():
     #return send_from_directory("static", "index.html")
-    return render_template("index.html", user_role=session.get("user_role"))
+    params = {
+        'user_role': session.get('user_role',""),
+        'userrealname': session.get('realname',"Unbekannt"),
+        'username': session.get('user',"unknown"),
+        'clientID': session.get('clientID',"--")
+    }
+    return render_template("index.html", **params)
 
 @app.route("/<path:filename>")
 def static_files(filename):
