@@ -8,6 +8,12 @@ Bei einem 24 Stundenschwimmen sollen digital die geleisteten Bahnen verschiedene
 Dabei soll die Bedienung möglichst intuitiv sein und die Datensicherheit besonders hoch, so dass selbst bei einem Ausfall des Servers oder eines Endgerätes die Informationen auf mehreren Stellen verteilt gespeichert sind.
 Die Erfassung soll auf möglichst vielen verschiedenen Endgeräten möglich sein (verschiedene Bildschirmgrößen, responsive Design)
 
+## Quick-Start
+
+Repository clonen 
+mit ``pip install -r requirements.txt`` die benötigten Pakete installieren und die Datei ``server.py`` ausführen.
+Dies startet einen Server auf dem Port 8080, der in der Regel unter ``http://localhost:8080`` zu erreichen ist. Eine Basisdatenbank mit dem Benutzer ``admin`` und dem Passwort ``swim24`` wird automatisch angelegt.
+
 ## grobe Planung
 
 Ein Mini-Python-Webserver liefert eine HTML-Seite mit Javascript pro Bahn aus und registriert per send requests Bahnen die auf einem Endgerät registriert werden. Ebenso ist er in der Lage per GET-Request Daten zu liefern.

@@ -872,5 +872,35 @@
                 "Abwesend": true
             }
         ]
+    },
+    {
+        "Zeit": "20:07:57",
+        "Data": [
+            {
+                "Nummer": "283",
+                "Bahnen": 10,
+                "Abwesend": false
+            },
+            {
+                "Nummer": "870",
+                "Bahnen": 5,
+                "Abwesend": true
+            }
+        ]
+    },
+    {
+        "Zeit": "21:08:02",
+        "Data": [
+            {
+                "Nummer": "283",
+                "Bahnen": 10,
+                "Abwesend": false
+            },
+            {
+                "Nummer": "870",
+                "Bahnen": 5,
+                "Abwesend": true
+            }
+        ]
     }
 ]
