@@ -1,30 +1,31 @@
-import logging
+
 
 # Globales Logging konfigurieren
 import logging
 
 # Globales Logging konfigurieren
 def configure_logging():
-    # Erstellen des Loggers
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)  # Alle Meldungen ab DEBUG-Level
-    
-    # Format für die Log-Meldungen
-    log_format = '%(asctime)s - %(levelname)s - %(message)s'
+    if not logging.getLogger().hasHandlers():
+        # Erstellen des Loggers
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)  # Alle Meldungen ab DEBUG-Level
+        
+        # Format für die Log-Meldungen
+        log_format = '%(asctime)s - %(levelname)s - %(message)s'
 
-    # Handler für das Loggen in eine Datei
-    file_handler = logging.FileHandler('data/serverlog.log', mode='a')  # Log-Datei
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(logging.Formatter(log_format))
+        # Handler für das Loggen in eine Datei
+        file_handler = logging.FileHandler('data/serverlog.log', mode='a')  # Log-Datei
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(logging.Formatter(log_format))
 
-    # Handler für das Loggen auf der Konsole (Bildschirm)
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(logging.Formatter(log_format))
+        # Handler für das Loggen auf der Konsole (Bildschirm)
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(logging.Formatter(log_format))
 
-    # Hinzufügen der Handler zum Logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+        # Hinzufügen der Handler zum Logger
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
 
 def configure_logging_old():
     logging.basicConfig(

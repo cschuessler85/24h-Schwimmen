@@ -4,6 +4,8 @@ import random
 from datetime import datetime
 import logging
 from logging_config import configure_logging
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 # Konfiguration des Loggings
 configure_logging()
@@ -29,7 +31,8 @@ class Database:
         Stellt die Verbindung zur SQLite-Datenbank her.
         """
         try:
-            self.conn = sqlite3.connect(self.db_name)
+            #TODO: Darüber nachdenken, wie man same thread-Problematik dauerhaft löst
+            self.conn = sqlite3.connect(self.db_name, check_same_thread=False)
             self.conn.row_factory = sqlite3.Row  # Für dict-ähnliche Zeilen
             self.cursor = self.conn.cursor()
             logging.info("Database.connect - Datenbankverbindung hergestellt.")
@@ -201,6 +204,8 @@ def init_db():
     '''
     db.execute(query_actions)
 
+init_db()
+
 def dict_from_row(row, table_name):
     """
     Wandelt eine Datenbankzeile (Tupel) in ein Dictionary um.
@@ -315,12 +320,15 @@ def erstelle_client(ip, benutzer_id=None):
     - ip (str): IP-Adresse des Clients
     - benutzer_id (int, optional): ID des zugeordneten Benutzers, kann None sein
     """
+    logger.debug(f"Client mit IP {ip} und benutzer_id {benutzer_id} wird erstellt")
     query = '''
         INSERT INTO clients (ip, benutzer_id, zeitpunkt_letzte_aktion)
         VALUES (?, ?, ?)
     '''
     params = (ip, benutzer_id, datetime.now().isoformat())
     db.execute(query, params)
+    #print("LASTID:",db.cursor.lastrowid)
+    return db.cursor.lastrowid
 
 def finde_client(ip):
     """
@@ -353,7 +361,7 @@ def erstelle_benutzer(name, benutzername, passwort, admin=False):
         INSERT INTO benutzer (name, benutzername, passwort, admin)
         VALUES (?, ?, ?, ?)
     '''
-    params = (name, benutzername, passwort, int(admin))
+    params = (name, benutzername, generate_password_hash(passwort), int(admin))
     return db.execute(query, params)
 
 
@@ -363,7 +371,7 @@ def finde_benutzer_by_username(benutzername):
     """
     query = 'SELECT * FROM benutzer WHERE benutzername = ?'
     params = (benutzername,)
-    row = db.fetch_one(query, params)
+    row = db.fetchone(query, params)
     return dict_from_row(row,'benutzer') if row else None
 
 #========================

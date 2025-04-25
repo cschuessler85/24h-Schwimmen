@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Admin-Bereich</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+      #adminMenu ul li {
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      #adminMenu ul li:hover {
+        background-color: #007acc; /* oder eine andere Farbe passend zum Design */
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div id="infoBar">
+        <span style="display: inline-block; text-align: left">
+          <span id="serverStatus" style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px"></span>
+          Verbunden
+        </span>
+        <span style="display: inline-block; text-align: center"> Angemeldet als: <strong>{{userrealname}} ({{username}})</strong></span>
+        <span style="display: inline-block; text-align: right"> Client-ID: <strong>{{clientID}}</strong></span>
+      </div>
+
+      <!-- Header-Inhalt -->
+      <div id="header">
+        <!-- Linke Schaltfläche -->
+        <button id="adminAktionen" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">&#9776;</button>
+
+        <!-- Zentrierter Titel -->
+        <div style="display: flex; flex-direction: column; position: absolute; left: 50%; transform: translateX(-50%); font-size: 24px; color: white; text-align: center">
+          <h1>Admin-Bereich</h1>
+        </div>
+
+        <!-- Rechte Schaltflächen (z.B. für Datei-Download und Info) -->
+        <div>
+          <button id="downloadBackupBtn" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">
+            <i class="fa-solid fa-download"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <nav style="text-align: center; margin-bottom: 20px">
+      <button onclick="showUserTable()">Benutzer</button>
+      <button onclick="showClientTable()">Clients</button>
+      <button onclick="showSection('swimmer')">Schwimmer</button>
+      <button onclick="showSection('logs')">Aktionen</button>
+    </nav>
+
+    <section id="user" class="admin-section">
+      <h2>Benutzertabelle</h2>
+      <table id="userTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+    </section>
+
+    <section id="client" class="admin-section">
+      <h2>Clients</h2>
+      <table id="clientTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+    </section>
+
+    <section id="adduser" class="admin-section">
+      <h2>Benutzer anlegen</h2>
+      <form onsubmit="createUser(event)">
+        <div class="form-group">
+          <label for="realname">Name:</label>
+          <input type="text" id="realname" required />
+        </div>
+        <div class="form-group">
+          <label for="username">Benutzername:</label>
+          <input type="text" id="username" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Passwort:</label>
+          <input type="password" id="password" required />
+        </div>
+        <div class="form-group">
+          <input type="checkbox" id="admin" />
+          <label for="admin"> Administrator </label>
+        </div>
+
+        <button type="submit">Erstellen</button>
+      </form>
+    </section>
+
+    <section id="swimmer" class="admin-section" style="display: none">
+      <h2>Schwimmerbereich (Platzhalter)</h2>
+    </section>
+
+    <section id="logs" class="admin-section" style="display: none">
+      <h2>Aktionen ansehen (Platzhalter)</h2>
+    </section>
+    <!-- Kontextmenü für Admin-Aktionen -->
+    <div id="adminMenu" style="display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 100">
+      <ul style="list-style: none; padding: 10px; margin: 0">
+        <li onclick="showSection('adduser')">Benutzer anlegen</li>
+        <li onclick="showSection('swimmer')">Schwimmer verwalten</li>
+        <li onclick="showSection('logs')">Aktionen ansehen</li>
+      </ul>
+    </div>
+
+    <footer style="display: flex; justify-content: space-between; align-items: center; padding: 10px">
+      <!-- Admin/Nutzer-Wechsel -->
+      <form action="/" method="get">
+        <button type="submit" title="Nutzerbereich" style="font-size: 30px; color: inherit; background: none; border: none; cursor: pointer">⬅️</button>
+      </form>
+      <div style="position: absolute; left: 50%; transform: translateX(-50%)">&copy; 2025 Schwimmen 24h. Alle Rechte vorbehalten.</div>
+      <form action="/logout" style="margin-left: auto">
+        <button type="submit" title="Logout" style="font-size: 30px; color: inherit; background: none; border: none; cursor: pointer">⏻</button>
+      </form>
+    </footer>
+
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
+  </body>
+</html>

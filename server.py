@@ -1,10 +1,14 @@
-import socket
-import os
+import os, sys
+import re #Regular Expressions
 import json
 import db
 from datetime import datetime
 import logging
+from flask import Flask, request, jsonify, send_from_directory, redirect, url_for, session, render_template_string, render_template
 from logging_config import configure_logging
+from utils import generiere_passwort
+from werkzeug.security import check_password_hash
+
 
 # Konfiguration des Loggings
 configure_logging()
@@ -12,158 +16,205 @@ configure_logging()
 # Logger verwenden
 logger = logging.getLogger()
 
-hostname = socket.gethostname()
-HOST = socket.gethostbyname(hostname)
-PORT = 8080
+# Konfiguration laden
+try:
+    with open("config.json", encoding="utf-8") as f:
+        config =json.load(f)
+        logger.info("Konfiguration geladen")
+except json.JSONDecodeError as e:
+    print(f"Fehler beim Einlesen von '{CONFIG_PATH}': {e}")
+    logger.error(f"Fehler beim Einlesen von '{CONFIG_PATH}': {e}")
+    sys.exit(0)
+except Exception as e:
+    print("Fehler beim lesen der Konfiguration")
+    logger.error("allgemeiner Fehler beim lesen der Konfiguration")
+    sys.exit(0)
 
-if not os.path.exists("data/verlauf.json"):
-    with open("data/verlauf.json", "w", encoding="utf-8") as f:
-        f.write("[]")
-        
-if not os.path.exists("data/data.json"):
-    with open("data/data.json", "w", encoding="utf-8") as f:
-        f.write("[]")
+
+app = Flask(__name__, static_folder="static", template_folder="flask_templates")
+app.secret_key = config["flask_secret_key"]  # nötig für Sessions
+if not app.secret_key:
+    print("Fehler: 'flask_secret_key' fehlt in der config.json.")
+    logger.error("Fehler: 'flask secret_key' fehlt in der config.json.")
+    sys.exit(1)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['DEBUG'] = True
+
+# Benutzer admin prüfen
+if not db.finde_benutzer_by_username("admin"):
+    passwort = config["default_admin_pass"]
+    if not passwort:
+        passwort = generiere_passwort();
+
+    print(f"Benutzer 'admin' wird angelegt mit passwort: {passwort}")
+    db.erstelle_benutzer("Administrator", "admin", passwort, admin=True)
+
+
+
+# Dateien sicherstellen
+os.makedirs("data", exist_ok=True)
+for name in ["verlauf.json", "data.json"]:
+    path = f"data/{name}"
+    if not os.path.exists(path):
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("[]")
 
 def addVersion(new, dateipfad="data/verlauf.json"):
-    daten = []
-
-    if os.path.exists(dateipfad):
+    try:
         with open(dateipfad, "r", encoding="utf-8") as f:
-            try:
-                daten = json.load(f)
-                if not isinstance(daten, list):
-                    daten = []
-            except json.JSONDecodeError:
-                daten = []
-
-    # Zeit hinzufügen
-    new_data = {
-        "Zeit": datetime.now().strftime("%H:%M:%S"),
-        "Data": new
-    }
-
-    daten.append(new_data)
-
+            daten = json.load(f)
+    except:
+        daten = []
+    daten.append({"Zeit": datetime.now().strftime("%H:%M:%S"), "Data": new})
     with open(dateipfad, "w", encoding="utf-8") as f:
         json.dump(daten, f, ensure_ascii=False, indent=4)
 
-def build_response(status, body, content_type="text/html"):
-    return f"HTTP/1.1 {status}\nContent-Type: {content_type}\n\n{body}"
+# Immer prüfen, ob der Benutzer angemeldet ist
+# bzw. zur Login-Seite durchlassen
+@app.before_request
+def before_request():
+    # Überprüfen, ob der Benutzer authentifiziert ist
+    if 'user' not in session and request.endpoint != 'login':
+        return redirect(url_for('login'))  # Wenn der Benutzer nicht eingeloggt ist, zur Login-Seite weiterleiten
 
-def get_content_type(path):
-    """
-    Gibt den richtigen Content-Type basierend auf der Dateiendung zurück.
-    """
-    if path.endswith(".html"):
-        return "text/html"
-    elif path.endswith(".css"):
-        return "text/css"
-    elif path.endswith(".js"):
-        return "application/javascript"
-    elif path.endswith(".png"):
-        return "image/png"
-    elif path.endswith(".jpg") or path.endswith(".jpeg"):
-        return "image/jpeg"
-    elif path.endswith(".gif"):
-        return "image/gif"
-    else:
-        return "application/octet-stream"  # Default für unbekannte Dateien
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        benutzername = request.form['benutzername']
+        passwort = request.form['passwort']
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.bind((HOST, PORT))
-    s.listen(1)
-    print(f"Server läuft auf http://{HOST}:{PORT}")
+        # Benutzerdaten aus der Datenbank holen
+        benutzer = db.finde_benutzer_by_username(benutzername)
+        
+        if benutzer and check_password_hash(benutzer['passwort'], passwort):  # Passwort prüfen (angenommen, es ist gehasht)
+            # Erfolgreich eingeloggt, Benutzer zur Hauptseite weiterleiten
+            session['user'] = benutzername  # Benutzername in der Session speichern
+            session['realname'] = benutzer['name']
+            session['clientID'] = db.erstelle_client(request.remote_addr,benutzer['id']) #Speichere die ClientID in der Session
+            if benutzer['admin']:
+                logging.info(f"Admin-Benutzer {benutzername} angemeldet")
+                session['user_role']='admin'
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error=True)  # Login-Seite anzeigen
+            #return 'Falscher Benutzername oder Passwort', 401  # Fehler bei der Anmeldung
 
-    while True:
-        conn, addr = s.accept()
-        with conn:
-            request = conn.recv(1024).decode()
-            print("Anfrage erhalten:")
-            print(f"request: {request}\naddr: {addr}")
-            
-            if not request:
-                continue
+    return render_template('login.html')  # Login-Seite anzeigen
 
-            # Methode und Pfad analysieren
-            lines = request.splitlines()
+@app.route("/logout", methods=['GET', 'POST'])
+def logout():
+    #session.pop("user", None)
+    session.clear() # alle infos löschen
+    return redirect(url_for("login"))
 
-            method, path, *_ = lines[0].split()
+#****************************
+#  Admin-Angelegenheiten
+#****************************
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if session.get('user_role') != 'admin':
+        return "Zugriff verweigert", 403
 
-            # Nur GET-Anfragen verarbeiten (ganz simpel)
-            if "GET / " in request or "GET /index.html" in request:
-                try:
-                    with open("static/index.html", "r", encoding="utf-8") as f:
-                        body = f.read()
-                    response = build_response("200 OK", body)
-                except FileNotFoundError:
-                    response = build_response("404 Not Found", "<h1>Seite nicht gefunden</h1>")
-            elif method == "GET" and path == "/daten":
-                try:
-                    with open("data/data.json", "r", encoding="utf-8") as f:
-                        daten = f.read()
-                    response = build_response("200 OK", daten, "application/json")
-                except FileNotFoundError:
-                    response = build_response("200 OK", "[]", "application/json")
-            elif method == "GET":
-                # Prüfen, ob eine Datei aus dem static-Verzeichnis angefordert wird
-                path = request.split(" ")[1].strip("/")
-                file_path = os.path.join("static", path)
+    if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form
+        action = data.get('action')
 
-                if os.path.exists(file_path):
-                    try:
-                        with open(file_path, "r", encoding="utf-8") as f:
-                            body = f.read()
-                        content_type = content_type = get_content_type(path)
-                        response = build_response("200 OK", body, content_type)
-                    except Exception as e:
-                        response = build_response("500 Internal Server Error", f"<h1>Fehler: {str(e)}</h1>")
-                else:
-                    response = build_response("404 Not Found", "<h1>Datei nicht gefunden</h1>")
+        if action == 'create_user':
+            # Benutzer erstellen
+            print(data)
+            realname = data.get('realname', '').strip()
+            username = data.get('username', '').strip()
+            password = data.get('password', '')
 
-            elif method == "POST" and path == "/action":
-                body = request.split("\r\n\r\n", 1)[1]
-                logging.debug(f"Gesendet vom Client: {body}")
+            if not re.fullmatch(r"[A-Za-zÄÖÜäöüß\s]+", realname):
+                logging.error(f"Versuch Benutzer mit ungültigem Real-Namen anzulegen {realname}")
+                return "Ungültiger Name", 400
+            if not re.fullmatch(r"[A-Za-z0-9]+", username):
+                return "Ungültiger Benutzername", 400
+            if len(password) < 3:
+                return "Passwort zu kurz", 400
 
-            elif method == "POST" and path == "/senden":
-                body = request.split("\r\n\r\n", 1)[1]
-                print("Gesendet vom Client:", body)
-                antwort = f"Server hat bekommen: {body}"
-                response = build_response("200 OK", antwort, "text/plain")
-                # bestehende Daten laden
-                try:
-                    with open("data/data.json", "r", encoding="utf-8") as f:
-                        bestehende_daten = json.load(f)
-                except FileNotFoundError:
-                    bestehende_daten = []
-                
-                neue_daten = json.loads(body)
-                # neue daten verarbeiten
-                for neuer in neue_daten:
-                    nummer = neuer["Nummer"]
-                    bahnen = int(neuer["Bahnen"])
-                    abwesend = neuer.get("Abwesend", False)  # fallback auf False, falls nicht vorhanden
+            db.erstelle_benutzer(realname, username, password, admin=data.get('admin',False))
+            return "Benutzer erstellt"
 
-                    gefunden = False
-                    for bestehender in bestehende_daten:
-                        if bestehender["Nummer"] == nummer:
-                            bestehender["Bahnen"] = bahnen
-                            bestehender["Abwesend"] = abwesend
-                            gefunden = True
-                            break
+        elif action == 'delete_user':
+            # Benutzer löschen
+            pass
+            return "Benutzer gelöscht"
+        elif action == 'get_table_benutzer':
+            return jsonify(db.liste_tabelle('benutzer'))
+        elif action == 'get_table_clients':
+            logging.info("Tabelle clients wird abgerufen")
+            print(db.liste_tabelle('clients'))
+            return jsonify(db.liste_tabelle('clients'))
+        # usw.
 
-                    if not gefunden:
-                        bestehende_daten.append({
-                            "Nummer": nummer,
-                            "Bahnen": bahnen,
-                            "Abwesend": abwesend
-                        })
+    params = {
+        'user_role': session.get('user_role',""),
+        'userrealname': session.get('realname',"Unbekannt"),
+        'username': session.get('user',"unknown"),
+        'clientID': session.get('clientID',"--")
+    }
+    return render_template('admin.html',**params)
 
-                # daten speichern
-                with open("data/data.json", "w", encoding="utf-8") as f:
-                    json.dump(bestehende_daten, f, ensure_ascii=False, indent=4)
-                
-                addVersion(bestehende_daten)
-            else:
-                response = "HTTP/1.1 404 Not Found\n\n<h1>404 - Nicht gefunden</h1>"
 
-            conn.sendall(response.encode())
+@app.route("/")
+def index():
+    #return send_from_directory("static", "index.html")
+    params = {
+        'user_role': session.get('user_role',""),
+        'userrealname': session.get('realname',"Unbekannt"),
+        'username': session.get('user',"unknown"),
+        'clientID': session.get('clientID',"--")
+    }
+    return render_template("index.html", **params)
+
+@app.route("/<path:filename>")
+def static_files(filename):
+    return send_from_directory("static", filename)
+
+@app.route("/daten")
+def daten():
+    try:
+        with open("data/data.json", "r", encoding="utf-8") as f:
+            return jsonify(json.load(f))
+    except FileNotFoundError:
+        return jsonify([])
+
+@app.route("/senden", methods=["POST"])
+def senden():
+    neue_daten = request.get_json()
+    try:
+        with open("data/data.json", "r", encoding="utf-8") as f:
+            bestehende = json.load(f)
+    except:
+        bestehende = []
+
+    for neuer in neue_daten:
+        nummer = neuer["Nummer"]
+        bahnen = int(neuer["Bahnen"])
+        abwesend = neuer.get("Abwesend", False)
+        for item in bestehende:
+            if item["Nummer"] == nummer:
+                item.update({"Bahnen": bahnen, "Abwesend": abwesend})
+                break
+        else:
+            bestehende.append({"Nummer": nummer, "Bahnen": bahnen, "Abwesend": abwesend})
+
+    with open("data/data.json", "w", encoding="utf-8") as f:
+        json.dump(bestehende, f, ensure_ascii=False, indent=4)
+
+    addVersion(bestehende)
+    return "Daten empfangen", 200
+
+@app.route("/action", methods=["POST"])
+def action():
+    print("Clientdaten:", request.get_data(as_text=True))
+    return "OK", 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080, threaded=False)
+    #app.run(ssl_context=('cert.pem', 'key.pem'), debug=True)
