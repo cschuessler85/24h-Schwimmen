@@ -1,3 +1,14 @@
+let formIsDirty = true; // Flag, das anzeigt, ob Daten geändert wurden
+// Beim Verlassen der Seite warnen, falls Änderungen vorhanden sind
+window.addEventListener('beforeunload', function (event) {
+    if (formIsDirty) {
+        // Zeigt eine Bestätigungsmeldung an, wenn der Benutzer versucht, die Seite zu verlassen
+        const message = "Es gibt ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?";
+        event.returnValue = message;  // Standard für viele Browser
+        return message; // Für einige andere Browser
+    }
+});
+
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', schwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
 
@@ -29,22 +40,22 @@ function schwimmerHinzufuegen() {
 
     // Neue Zeile erstellen
     var neueZeile = document.createElement('tr');
-      
+
     // Zellen in der neuen Zeile erstellen
     var nummerZelle = document.createElement('td');
     nummerZelle.className = 'nummer';
 
     var bahnenZelle = document.createElement('td');
     bahnenZelle.className = 'bahnen';
-                
+
     // Text in die Zellen einfügen
     nummerZelle.innerText = nummer;
     bahnenZelle.innerText = 0;
-    
+
     // Zellen zur neuen Zeile hinzufügen
     neueZeile.appendChild(nummerZelle);
     neueZeile.appendChild(bahnenZelle);
-    
+
     // Die neue Zeile in die Tabelle einfügen
     var tabelle = document.getElementById('schwimmer');
     tabelle.appendChild(neueZeile);
@@ -134,7 +145,7 @@ let clickedRow = null;
 table.addEventListener("click", function (event) {
     if (event.target.classList.contains("nummer")) {
         const schwimmer_nr = event.target.innerText;
-        console.log("schwimmer_nr",schwimmer_nr);
+        console.log("schwimmer_nr", schwimmer_nr);
         const row = event.target.parentElement;
         const bahnenCell = row.querySelector(".bahnen");
 
@@ -178,11 +189,11 @@ function send() {
             "Content-Type": "application/json"
         }
     })
-    .then(response => response.text())
-    .then(text => {
-        document.getElementById("antwort").innerText = text;
-    });
-    
+        .then(response => response.text())
+        .then(text => {
+            document.getElementById("antwort").innerText = text;
+        });
+
     fetch("/daten")
         .then(res => res.json())
         .then(daten => {
@@ -190,15 +201,15 @@ function send() {
             // Alte Zeilen löschen (außer Header)
             const rows = table.querySelectorAll("tr:not(:first-child)");
             rows.forEach(row => row.remove());
-            
+
             daten.sort((a, b) => {
                 return (a.Abwesend === b.Abwesend) ? 0 : a.Abwesend ? 1 : -1;
             });
-            
+
             // Neue Zeilen einfügen
             daten.forEach(schwimmer => {
                 const tr = document.createElement("tr");
-                
+
                 if (schwimmer.Abwesend) {
                     tr.classList.add("abwesend");
                     table.appendChild(tr);
