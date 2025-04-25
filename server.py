@@ -85,11 +85,11 @@ def login():
 
         # Benutzerdaten aus der Datenbank holen
         benutzer = db.finde_benutzer_by_username(benutzername)
-        print(benutzer)
         
         if benutzer and check_password_hash(benutzer['passwort'], passwort):  # Passwort prüfen (angenommen, es ist gehasht)
             # Erfolgreich eingeloggt, Benutzer zur Hauptseite weiterleiten
             session['user'] = benutzername  # Benutzername in der Session speichern
+            session['clientID'] = db.erstelle_client(request.remote_addr,benutzer['id']) #Speichere die ClientID in der Session
             if benutzer['admin']:
                 logging.info(f"Admin-Benutzer {benutzername} angemeldet")
                 session['user_role']='admin'

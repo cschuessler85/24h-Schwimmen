@@ -326,6 +326,8 @@ def erstelle_client(ip, benutzer_id=None):
     '''
     params = (ip, benutzer_id, datetime.now().isoformat())
     db.execute(query, params)
+    #print("LASTID:",db.cursor.lastrowid)
+    return db.cursor.lastrowid
 
 def finde_client(ip):
     """
