@@ -11,52 +11,56 @@
 
   <body>
     <header>
-      <!-- Linke Schaltfläche (z.B. für Schwimmer hinzufügen) -->
-      <button id="schwimmerHinzufuegen" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">+</button>
-
-      <!-- Zentrierter Titel -->
-      <div style="position: absolute; left: 50%; transform: translateX(-50%); font-size: 24px; color: white">
-        <h1>24h Schwimmen</h1>
-        <input type="number" id="schwimmerNum" /><br />
+      <!-- Info-Zeile (togglebar) -->
+      <div id="infoBar" style="display: none">
+        <span style="display: inline-block; text-align: left">
+          <span id="serverStatus" style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px"></span>
+          Verbunden
+        </span>
+        <span style="display: inline-block; text-align: center"> Angemeldet als: <strong>{{userrealname}} ({{username}})</strong></span>
+        <span style="display: inline-block; text-align: right"> Client-ID: <strong>{{clientID}}</strong></span>
       </div>
 
-      <!-- Rechte Schaltflächen (z.B. für Datei-Download und Info) -->
-      <div>
-        <button id="downloadJsonBtn" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">
-          <i class="fa-solid fa-download"></i>
-        </button>
-        <button onclick="toggleInfoBar()" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">🛈</button>
+      <!-- Header-Inhalt -->
+      <div id="header">
+        <!-- Linke Schaltfläche (z.B. für Schwimmer hinzufügen) -->
+        <button id="schwimmerHinzufuegen" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">+</button>
+
+        <!-- Zentrierter Titel -->
+        <div style="display: flex;flex-direction: column;position: absolute; left: 50%; transform: translateX(-50%); font-size: 24px; color: white; text-align: center;">
+          <h1>24h Schwimmen</h1>
+          <input type="number" id="schwimmerNum" /><br />
+        </div>
+
+        <!-- Rechte Schaltflächen (z.B. für Datei-Download und Info) -->
+        <div>
+          <button id="downloadJsonBtn" style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">
+            <i class="fa-solid fa-download"></i>
+          </button>
+          <button onclick="toggleInfoBar()" style="padding-left: 0px; font-size: 30px; cursor: pointer; color: white; background: none; border: none">🛈</button>
+        </div>
       </div>
     </header>
 
-    <!-- Info-Zeile (togglebar) -->
-    <div id="infoBar" style="display: none;">
-      <span>
-        <span id="serverStatus" style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px"></span>
-        Verbunden
-      </span>
-      <span>Angemeldet als: <strong>{{userrealname}} ({{username}})</strong></span>
-      <span>Client-ID: <strong>{{clientID}}</strong></span>
-    </div>
-    <main style="padding-bottom: 60px;">
-    <table id="schwimmer">
-      <tr>
-        <th data-key="Nummer">Schwimmer*innen Startnummer</th>
-        <th data-key="Bahnen">Geschwommene Bahnen</th>
-      </tr>
-    </table>
-    <p id="antwort"></p>
+    <main style="padding-bottom: 60px">
+      <table id="schwimmer">
+        <tr>
+          <th data-key="Nummer">Schwimmer*innen Startnummer</th>
+          <th data-key="Bahnen">Geschwommene Bahnen</th>
+        </tr>
+      </table>
+      <p id="antwort"></p>
 
-    <!-- Kontextmenü -->
-    <div id="contextMenu">
-      <ul>
-        <li id="abwesendOption">Abwesenheit wechseln</li>
-        <li id="rundeAbziehenOption">Runde abziehen</li>
-        <li id="deleteSwimmer">Schwimmer*innen entfernen</li>
-        <li id="bahnHinzufuegenOption" style="display: none">Bahn hinzufügen</li>
-      </ul>
-    </div>
-  </main>
+      <!-- Kontextmenü -->
+      <div id="contextMenu">
+        <ul>
+          <li id="abwesendOption">Abwesenheit wechseln</li>
+          <li id="rundeAbziehenOption">Runde abziehen</li>
+          <li id="deleteSwimmer">Schwimmer*innen entfernen</li>
+          <li id="bahnHinzufuegenOption" style="display: none">Bahn hinzufügen</li>
+        </ul>
+      </div>
+    </main>
     <footer style="display: flex; justify-content: space-between; align-items: center; padding: 10px">
       {% if user_role == 'admin' %}
       <!-- Admin/Nutzer-Wechsel -->
