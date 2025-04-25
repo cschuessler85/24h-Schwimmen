@@ -175,3 +175,6 @@ cython_debug/
 
 # project specific files
 testdata.sqlite
+data.sqlite
+verlauf.json
+data.json

@@ -22,8 +22,8 @@ try:
         config =json.load(f)
         logger.info("Konfiguration geladen")
 except json.JSONDecodeError as e:
-    print(f"Fehler beim Einlesen von '{CONFIG_PATH}': {e}")
-    logger.error(f"Fehler beim Einlesen von '{CONFIG_PATH}': {e}")
+    print(f"Fehler beim JSON-Decode der Konfiguration: {e}")
+    logger.error(f"Fehler beim JSON-Decode der Konfiguration: {e}")
     sys.exit(0)
 except Exception as e:
     print("Fehler beim lesen der Konfiguration")

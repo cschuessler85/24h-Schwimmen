@@ -10,9 +10,12 @@ Die Erfassung soll auf möglichst vielen verschiedenen Endgeräten möglich sein
 
 ## Quick-Start
 
-Repository clonen 
-mit ``pip install -r requirements.txt`` die benötigten Pakete installieren und die Datei ``server.py`` ausführen.
-Dies startet einen Server auf dem Port 8080, der in der Regel unter ``http://localhost:8080`` zu erreichen ist. Eine Basisdatenbank mit dem Benutzer ``admin`` und dem Passwort ``swim24`` wird automatisch angelegt.
+* Repository clonen.
+* Dann mit ``pip install -r requirements.txt`` die benötigten Pakete installieren und
+* die Datei ``server.py`` ausführen.
+* Dies startet einen Web-Server auf dem Port 8080, der in der Regel unter ``http://localhost:8080`` mit dem Browser zu erreichen ist.
+
+Eine Basisdatenbank mit dem Benutzer ``admin`` und dem Passwort ``swim24`` wird automatisch angelegt.
 
 ## grobe Planung
 
@@ -85,6 +88,20 @@ Die Daten werden auf dem Server in einer SQLite Datenbank gehalten (Absturzsiche
     zeitstempel: ISO-Zeitstempel
     kommando: String (BAHN, ...)
     parameterliste: Array
+```
+
+mögliche Kommandos
+
+```text
+    ADD - parameter: <schwimmerNr> <Anzahl> <bahnnr>
+    SUB - parameter: <schwimmerNr> <Anzahl> <bahnnr>
+```
+
+mit Beispielen
+
+```text
+    ADD [832,1,1]
+    SUB [732,10,2]
 ```
 
 ## Projektverzeichnisstruktur
