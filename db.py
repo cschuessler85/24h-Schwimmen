@@ -320,6 +320,7 @@ def erstelle_client(ip, benutzer_id=None):
     - ip (str): IP-Adresse des Clients
     - benutzer_id (int, optional): ID des zugeordneten Benutzers, kann None sein
     """
+    logger.debug(f"Client mit IP {ip} und benutzer_id {benutzer_id} wird erstellt")
     query = '''
         INSERT INTO clients (ip, benutzer_id, zeitpunkt_letzte_aktion)
         VALUES (?, ?, ?)

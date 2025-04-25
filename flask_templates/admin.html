@@ -5,14 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>Admin-Bereich</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='main.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
       #adminMenu ul li {
         padding: 8px 12px;
@@ -28,30 +22,8 @@
   </head>
   <body>
     <header>
-      <button
-        id="adminAktionen"
-        style="
-          position: fixed;
-          top: 20px;
-          left: 20px;
-          font-size: 30px;
-          cursor: pointer;
-          color: white;
-        "
-      >
-        +
-      </button>
-      <button
-        id="downloadBackupBtn"
-        style="
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          font-size: 30px;
-          cursor: pointer;
-          color: white;
-        "
-      >
+      <button id="adminAktionen" style="position: fixed; top: 20px; left: 20px; font-size: 30px; cursor: pointer; color: white">+</button>
+      <button id="downloadBackupBtn" style="position: fixed; top: 20px; right: 20px; font-size: 30px; cursor: pointer; color: white">
         <i class="fa-solid fa-download"></i>
       </button>
       <h1>Admin-Bereich</h1>
@@ -79,26 +51,25 @@
     </section>
 
     <section id="adduser" class="admin-section">
-        <h2>Benutzer anlegen</h2>
-        <form onsubmit="createUser(event)">
-          <label for="realname">Name:</label>
-          <input type="text" id="realname" required />
-      
-          <label for="username">Benutzername:</label>
-          <input type="text" id="username" required />
-      
-          <label for="password">Passwort:</label>
-          <input type="password" id="password" required />
-      
-          <label>
-            <input type="checkbox" id="admin" />
-            Administrator
-          </label>
-      
-          <button type="submit">Erstellen</button>
-        </form>
-      </section>
-      
+      <h2>Benutzer anlegen</h2>
+      <form onsubmit="createUser(event)">
+        <label for="realname">Name:</label>
+        <input type="text" id="realname" required />
+
+        <label for="username">Benutzername:</label>
+        <input type="text" id="username" required />
+
+        <label for="password">Passwort:</label>
+        <input type="password" id="password" required />
+
+        <label>
+          <input type="checkbox" id="admin" />
+          Administrator
+        </label>
+
+        <button type="submit">Erstellen</button>
+      </form>
+    </section>
 
     <section id="swimmer" class="admin-section" style="display: none">
       <h2>Schwimmerbereich (Platzhalter)</h2>
@@ -108,22 +79,25 @@
       <h2>Aktionen ansehen (Platzhalter)</h2>
     </section>
     <!-- Kontextmenü für Admin-Aktionen -->
-    <div
-      id="adminMenu"
-      style="
-        display: none;
-        position: absolute;
-        background: white;
-        border: 1px solid #ccc;
-        z-index: 100;
-      "
-    >
+    <div id="adminMenu" style="display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 100">
       <ul style="list-style: none; padding: 10px; margin: 0">
         <li onclick="showSection('adduser')">Benutzer anlegen</li>
         <li onclick="showSection('swimmer')">Schwimmer verwalten</li>
         <li onclick="showSection('logs')">Aktionen ansehen</li>
       </ul>
     </div>
+
+    <footer style="display: flex; justify-content: space-between; align-items: center; padding: 10px">
+      <!-- Admin/Nutzer-Wechsel -->
+      <form action="/" method="get">
+        <button type="submit" title="Nutzerbereich" style="font-size: 30px; color: inherit; background: none; border: none; cursor: pointer">⬅️</button>
+      </form>
+      <div style="position: absolute; left: 50%; transform: translateX(-50%)">&copy; 2025 Schwimmen 24h. Alle Rechte vorbehalten.</div>
+      <form action="/logout" style="margin-left: auto">
+        <button type="submit" title="Logout" style="font-size: 30px; color: inherit; background: none; border: none; cursor: pointer">⏻</button>
+      </form>
+    </footer>
+
     <script src="{{ url_for('static', filename='admin.js') }}"></script>
   </body>
 </html>

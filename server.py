@@ -100,9 +100,10 @@ def login():
 
     return render_template('login.html')  # Login-Seite anzeigen
 
-@app.route("/logout")
+@app.route("/logout", methods=['GET', 'POST'])
 def logout():
-    session.pop("user", None)
+    #session.pop("user", None)
+    session.clear() # alle infos löschen
     return redirect(url_for("login"))
 
 #****************************
@@ -155,7 +156,8 @@ def admin():
 
 @app.route("/")
 def index():
-    return send_from_directory("static", "index.html")
+    #return send_from_directory("static", "index.html")
+    return render_template("index.html", user_role=session.get("user_role"))
 
 @app.route("/<path:filename>")
 def static_files(filename):
