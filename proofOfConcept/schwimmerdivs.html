@@ -42,12 +42,6 @@
         display: inline;
       }
 
-      @media (max-width: 600px) {
-        #container {
-          flex-direction: column;
-          align-items: center;
-        }
-      }
     </style>
   </head>
   <body>
@@ -95,7 +89,7 @@
       setInterval(() => {
         schwimmer.forEach((s) => (s.prio += Math.floor(Math.random() * 5) - 2)); // Prio leicht ändern
         render();
-      }, 1000);
+      }, 100000);
 
       render();
     </script>

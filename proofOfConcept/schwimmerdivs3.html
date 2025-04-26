@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Schwimmer Übersicht</title>
+  <style>
+    #container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .schwimmer {
+      border: 1px solid black;
+      padding: 1rem;
+      background-color: lightblue;
+      text-align: center;
+      transition: all 0.5s;
+    }
+
+    .schwimmer .nummer {
+      font-size: 2rem;
+    }
+
+    .schwimmer .bahnen {
+      font-size: 1.2rem;
+    }
+
+    .schwimmer .name {
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .schwimmer .prio {
+      display: none;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      color: gray;
+    }
+
+    .schwimmer:hover .prio {
+      display: inline;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container"></div>
+
+  <script>
+    let schwimmer = [
+      { nummer: 1, name: "Anna", bahnen: 5, prio: 10 },
+      { nummer: 2, name: "Ben", bahnen: 3, prio: 15 },
+      { nummer: 3, name: "Anna", bahnen: 5, prio: 10 },
+      { nummer: 4, name: "Ben", bahnen: 3, prio: 15 },
+      { nummer: 5, name: "Anna", bahnen: 5, prio: 10 },
+      { nummer: 6, name: "Ben", bahnen: 3, prio: 15 },
+      { nummer: 7, name: "Anna", bahnen: 5, prio: 10 },
+      { nummer: 8, name: "Ben", bahnen: 3, prio: 15 },
+      { nummer: 9, name: "Anna", bahnen: 5, prio: 10 },
+      { nummer: 10, name: "Anna", bahnen: 5, prio: 10 },
+      { nummer: 11, name: "Ben", bahnen: 3, prio: 15 },
+      { nummer: 12, name: "Anna", bahnen: 5, prio: 10 },
+      { nummer: 13, name: "Ben", bahnen: 3, prio: 15 },
+      { nummer: 14, name: "Anna", bahnen: 5, prio: 10 },
+      { nummer: 15, name: "Ben", bahnen: 3, prio: 15 },
+      { nummer: 16, name: "Ben", bahnen: 3, prio: 15 },
+      { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },
+    ];
+
+    function render() {
+      const container = document.getElementById("container");
+      container.innerHTML = "";
+      schwimmer
+        .sort((a, b) => b.prio - a.prio) // höchste Priorität zuerst
+        .forEach((s) => {
+          const div = document.createElement("div");
+          div.className = "schwimmer";
+          div.innerHTML = `
+        <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
+        <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
+        </div>
+      `;
+          container.appendChild(div);
+        });
+    }
+
+    // Jede Sekunde Prioritäten ändern und neu zeichnen
+    setInterval(() => {
+      schwimmer.forEach((s) => (s.prio += Math.floor(Math.random() * 5) - 2)); // Prio leicht ändern
+      render();
+    }, 1000);
+
+    render();
+  </script>
+</body>
+
+</html>
