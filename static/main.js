@@ -4,10 +4,17 @@ window.addEventListener('beforeunload', function (event) {
     if (formIsDirty) {
         // Zeigt eine Bestätigungsmeldung an, wenn der Benutzer versucht, die Seite zu verlassen
         const message = "Es gibt ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?";
-        event.returnValue = message;  // Standard für viele Browser
+        //event.returnValue = message;  // Laut Chat-GPT Standard für viele Browser
         return message; // Für einige andere Browser
     }
 });
+
+let verwaltete_bahnen = [7]; //Liste der Bahnen, die von diesem Client verwaltet werden
+const input = document.getElementById("bahnen");
+if (isBahnenInputValid(input.value)) {
+    verwaltete_bahnen = input.value.split(",").map(s => parseInt(s.trim(), 10));
+    //console.log("Verwaltete Bahnen", verwaltete_bahnen);
+}
 
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', schwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
@@ -93,10 +100,22 @@ function tableToJSON(tableId) {
     return jsonData;
 }
 
+function showStatusMessage(text, isSuccess = true, duration = 3000) {
+    const msg = document.getElementById("statusMessage");
+    msg.textContent = text;
+    msg.style.backgroundColor = isSuccess ? "#4CAF50" : "#f44336";
+    msg.style.display = "block";
+
+    setTimeout(() => {
+        msg.style.display = "none";
+    }, duration);
+}
+
+
 function toggleInfoBar() {
     // Das Info-Bar-Element auswählen
     const infoBar = document.getElementById("infoBar");
- 
+
     // Überprüfen, ob die Info-Leiste gerade sichtbar ist
     if (infoBar.style.display === "none" || infoBar.style.display === "") {
         // Info-Leiste einblenden
@@ -131,6 +150,33 @@ function downloadJSON() {
     // Aufräumen
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+}
+
+function isBahnenInputValid(value) {
+    return /^(\d+(,\d+)*)?$/.test(value.trim());
+}
+
+function checkBahnenInput() {
+    const input = document.getElementById("bahnen");
+    if (isBahnenInputValid(input.value)) {
+        input.style.backgroundColor = ""; // gültig
+    } else {
+        input.style.backgroundColor = "#fdd"; // ungültig (rot)
+    }
+}
+
+function parseBahnenInput() {
+    const input = document.getElementById("bahnen");
+    if (isBahnenInputValid(input.value)) {
+        const zahlen = input.value.split(",").map(s => parseInt(s.trim(), 10));
+        console.log("Gültige Bahnnummern:", zahlen);
+        verwaltete_bahnen = zahlen;
+        showStatusMessage("Bahnen geändert",true,1000);
+    } else { //Fehlerhafte Bahnnummern
+        showStatusMessage("Ungültiges Format! Bitte nur Zahlen, getrennt durch Kommas.", false);
+        input.value = verwaltete_bahnen.join(',');
+        checkBahnenInput(); //Farbe wieder richtig setzen
+    }
 }
 
 const table = document.getElementById("schwimmer");
@@ -254,32 +300,6 @@ document.getElementById("abwesendOption").addEventListener("click", function () 
     }
 
     contextMenu.style.display = "none";
-});
-
-document.getElementById("schwimmerNum").addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-        if (search(document.getElementById("schwimmerNum").value)) {
-            const eingabe = document.getElementById("schwimmerNum").value.trim();
-
-            const zelle = Array.from(document.querySelectorAll(".nummer")).find(nr =>
-                nr.textContent.trim() === eingabe
-            );
-            if (zelle) {
-                console.log(zelle.closest("tr"))
-                clickedRow = zelle.closest("tr");
-
-                // Menü mittig im Viewport platzieren
-                const menuWidth = 200; // Breite ungefähr
-                const menuHeight = 120; // Höhe ungefähr
-
-                contextMenu.style.top = (window.innerHeight / 2 - menuHeight / 2) + "px";
-                contextMenu.style.left = (window.innerWidth / 2 - menuWidth / 2) + "px";
-                contextMenu.style.display = "block";
-
-                document.getElementById("bahnHinzufuegenOption").style.display = "block";
-            }
-        }
-    }
 });
 
 // Option: Runde abziehen
