@@ -221,6 +221,7 @@ def senden():
 @app.route("/action", methods=["POST"])
 def action():
     print("Clientdaten:", request.get_data(as_text=True))
+    #return "Fehler", 400
     return "OK", 200
 
 if __name__ == "__main__":

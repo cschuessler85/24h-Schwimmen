@@ -2,6 +2,7 @@ let formIsDirty = true; // Flag, das anzeigt, ob Daten geändert wurden
 // Beim Verlassen der Seite warnen, falls Änderungen vorhanden sind
 window.addEventListener('beforeunload', function (event) {
     if (formIsDirty) {
+        event.preventDefault();
         // Zeigt eine Bestätigungsmeldung an, wenn der Benutzer versucht, die Seite zu verlassen
         const message = "Es gibt ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?";
         //event.returnValue = message;  // Laut Chat-GPT Standard für viele Browser
@@ -36,6 +37,7 @@ let schwimmer = [
     { nummer: 16, name: "Ben", bahnen: 3, prio: 15 },
     { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },*/
 ];
+let actions = [];
 
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', schwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
@@ -264,6 +266,7 @@ container.addEventListener('click', async (event) => {
     }
 
     const nummer = clicked_schwimmer.dataset.nummer; // oder eine andere Info
+    clicked_schwimmer.style.backgroundColor="aqua";
     console.log(`Schwimmer ${nummer} wurde geklickt.`);
     // Falls schon ein Fade läuft: abbrechen
     if (fadeControllers.has(nummer)) {
@@ -272,6 +275,7 @@ container.addEventListener('click', async (event) => {
         clicked_schwimmer.style.opacity = 1; // sofort wieder sichtbar
         //Angezeigte Bahn wieder um eins Verringern
         aendereBahnenInDiv(clicked_schwimmer, -1);
+        clicked_schwimmer.style.backgroundColor="";
         //console.log(`Fade von Div ${nummer} abgebrochen.`);
         return;
     }
@@ -298,7 +302,13 @@ container.addEventListener('click', async (event) => {
                 //das Div löschen - wird beim rendern wieder hinten angehangen
                 clicked_schwimmer.remove();
                 render();
-                //TODO - Server-Aktion auslösen/speichern
+                actions.push({
+                    kommando: "ADD",
+                    parameter: [nummer, 1],
+                    timestamp: new Date().toISOString(),
+                    transmitted: false
+                });
+                
             }
         }
     } catch (e) {
@@ -362,6 +372,70 @@ render();
 // ----------------------------------------------------------
 //  ENDE  Behandlung und Verarbeitung der DIV-Darstellung
 // ----------------------------------------------------------
+
+// **********************************************************
+//  DATENAUSTAUSCH mit dem Server
+// **********************************************************
+let isFetching = false;
+let server_verbunden = false;
+updateServerStatus(true);
+
+async function transmitActions() {
+    if (isFetching) return;
+    const pending = actions.filter(a => !a.transmitted);
+    if (pending.length === 0) return;
+
+    try {
+        console.log("transmit Action");
+        isFetching = true;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 Sekunden Timeout
+
+        const response = await fetch('/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pending),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            pending.forEach(a => a.transmitted = true);
+            updateServerStatus(true);
+        } else {
+            updateServerStatus(false);
+        }
+    } catch (error) {
+        console.log("Error on transmit",error);
+        updateServerStatus(false);
+    } finally {
+        isFetching = false;
+    }
+}
+
+function updateServerStatus(neu) {
+    console.log("updateServerStatus - alt", server_verbunden, "neu", neu);
+    if (server_verbunden != neu) { //Server status hat sich geändert
+        server_verbunden = neu;
+        //TODO kleines InfoModal einbelnden
+        const statusspan = document.getElementById('serverStatus');
+        if (server_verbunden) {
+            statusspan.innerHTML=`
+            <span style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px">
+            </span> Verbunden
+            `;
+            showStatusMessage("Server wieder verbunden", true);
+        } else {
+            statusspan.innerHTML=`
+            <span style="height: 10px; width: 10px; background-color: red; border-radius: 50%; display: inline-block; margin-right: 5px">
+            </span> Nicht Verbunden
+            `;
+            showStatusMessage("Serververbindung verloren", false);
+        }
+
+    }
+}
 
 
 // Bahn hinzufügen bei Linksklick auf Nummer
@@ -514,5 +588,6 @@ document.getElementById("deleteSwimmer").addEventListener("click", function () {
     contextMenu.style.display = "none";
 });
 
-setInterval(send, 50000);
+//setInterval(send, 50000);
+setInterval(transmitActions,10000);
 send()

@@ -121,10 +121,11 @@ td.truncated:hover {
 
 /* DIV-Container */
 #container {
+  align-self: center;
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  justify-content: flex-start; /*center;*/
+  justify-content: center; /*center;*/
 }
 .schwimmer {
   flex: 0 1 200px;
