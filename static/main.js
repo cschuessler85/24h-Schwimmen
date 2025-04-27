@@ -16,6 +16,27 @@ if (isBahnenInputValid(input.value)) {
     //console.log("Verwaltete Bahnen", verwaltete_bahnen);
 }
 
+// Daten schwimmer und actions
+let schwimmer = [
+    { nummer: 1, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 2, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 3, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 4, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 5, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 6, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 7, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 8, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 9, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 10, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 11, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 12, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 13, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 14, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 15, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 16, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },
+];
+
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', schwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
 
@@ -171,7 +192,7 @@ function parseBahnenInput() {
         const zahlen = input.value.split(",").map(s => parseInt(s.trim(), 10));
         console.log("Gültige Bahnnummern:", zahlen);
         verwaltete_bahnen = zahlen;
-        showStatusMessage("Bahnen geändert",true,1000);
+        showStatusMessage("Bahnen geändert", true, 1000);
     } else { //Fehlerhafte Bahnnummern
         showStatusMessage("Ungültiges Format! Bitte nur Zahlen, getrennt durch Kommas.", false);
         input.value = verwaltete_bahnen.join(',');
@@ -182,6 +203,67 @@ function parseBahnenInput() {
 const table = document.getElementById("schwimmer");
 const contextMenu = document.getElementById("contextMenu");
 let clickedRow = null;
+
+// **********************************************************
+//   Behandlung und Verarbeitung der DIV-Darstellung
+// **********************************************************
+const container = document.getElementById('container');
+
+// Click auf ein Element in dem Container mit den Schimmern
+container.addEventListener('click', (event) => {
+    const clicked_schwimmer = event.target.closest('.schwimmer');
+    console.log("Klick in Container", clicked_schwimmer);
+
+    if (!clicked_schwimmer || !container.contains(clicked_schwimmer)) {
+        return; // Klick war außerhalb eines Box-Elements
+    }
+
+    const nummer = clicked_schwimmer.dataset.nummer; // oder eine andere Info
+    console.log(`Schwimmer ${nummer} wurde geklickt.`);
+    const s_data = schwimmer.find(s => s.nummer == nummer);
+    console.log("s_data",s_data);
+    if (s_data) {
+        console.log("Schwimmer: Bahnene erhöhen und Prio auf 0 setzen", s_data);
+        s_data.prio=0;
+        s_data.bahnen+=1;
+        render();
+    }
+
+});
+
+// Schwimmer neu zeichnen
+function render() {
+    const container = document.getElementById("container");
+    container.innerHTML = "";
+    schwimmer
+        .sort((a, b) => b.prio - a.prio) // höchste Priorität zuerst
+        .forEach((s) => {
+            const div = document.createElement("div");
+            div.className = "schwimmer";
+            div.dataset.nummer = s.nummer;
+            div.innerHTML = `
+    <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
+    <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
+    </div>
+  `;
+            container.appendChild(div);
+        });
+}
+
+// Sekündliches auffrischen der darstellung
+const interval = 5000; // Auffrischung in ms
+setInterval(() => {
+    schwimmer.forEach((s) => (s.prio += interval/1000)); // Prio um 1 erhöhen
+    render();
+}, interval); 
+
+// zu Beginn einmal zeichnen
+render();
+
+// ----------------------------------------------------------
+//  ENDE  Behandlung und Verarbeitung der DIV-Darstellung
+// ----------------------------------------------------------
+
 
 // Bahn hinzufügen bei Linksklick auf Nummer
 table.addEventListener("click", function (event) {

@@ -183,6 +183,7 @@ def init_db():
             bahnanzahl INTEGER,
             strecke INTEGER,
             auf_bahn INTEGER,
+            avg_roundtime INTEGER, 
             aktiv BOOLEAN,
             FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id),
             CONSTRAINT unique_schwimmer UNIQUE (nummer, erstellt_von_client_id)
@@ -293,18 +294,16 @@ def update_schwimmer(schwimmer_id, **kwargs):
     db.execute_query(query, values)
 
 # Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück
-def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv):
+def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv):
     """
     Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück.
     """
     query = """
-        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
+        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """
-    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
+    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
     return db.execute(query, params)
-
-
 
 
 

@@ -137,6 +137,105 @@ function showClientTable() {
 }
 
 
+function showSwimmerTable() {
+    showSection('swimmer');
+    // Client-Daten per POST vom Server holen
+    fetch('/admin', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',  // URL-encoded
+        },
+        body: new URLSearchParams({
+            action: 'get_table_swimmer'  // Action zum Abrufen der Benutzertabelle
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Schwimmer-Table füllen, data.length", data.length);
+            const sectionTitle = document.querySelector('#swimmer h2');
+            sectionTitle.textContent = `Schwimmer (${data.length})`;
+            const table = document.getElementById('swimmerTable');
+            table.innerHTML = '';  // Alte Inhalte löschen
+
+            // Kopfzeile der Tabelle erstellen
+            if (data.length > 0) {
+                const headerRow = document.createElement('tr');
+                // Dynamisch die Keys als Header hinzufügen
+                Object.keys(data[0]).forEach(key => {
+                    const th = document.createElement('th');
+                    th.textContent = key.charAt(0).toUpperCase() + key.slice(1);  // Erstes Zeichen groß machen
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+
+                // Benutzer-Datenzeilen erstellen
+                data.forEach(client => {
+                    const row = document.createElement('tr');
+                    Object.values(client).forEach(value => {
+                        const td = document.createElement('td');
+                        td.classList.add('truncated');
+                        td.textContent = value;
+                        row.appendChild(td);
+                    });
+                    table.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Fehler beim Abrufen der Clientdaten:', error);
+        });
+}
+
+function showActionsTable() {
+    showSection('actions');
+    // Client-Daten per POST vom Server holen
+    fetch('/admin', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',  // URL-encoded
+        },
+        body: new URLSearchParams({
+            action: 'get_table_actions'  // Action zum Abrufen der Benutzertabelle
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Actions-Table füllen, data.length", data.length);
+            const sectionTitle = document.querySelector('#actions h2');
+            sectionTitle.textContent = `Actions (${data.length})`;
+            const table = document.getElementById('clientTable');
+            table.innerHTML = '';  // Alte Inhalte löschen
+
+            // Kopfzeile der Tabelle erstellen
+            if (data.length > 0) {
+                const headerRow = document.createElement('tr');
+                // Dynamisch die Keys als Header hinzufügen
+                Object.keys(data[0]).forEach(key => {
+                    const th = document.createElement('th');
+                    th.textContent = key.charAt(0).toUpperCase() + key.slice(1);  // Erstes Zeichen groß machen
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+
+                // Benutzer-Datenzeilen erstellen
+                data.forEach(client => {
+                    const row = document.createElement('tr');
+                    Object.values(client).forEach(value => {
+                        const td = document.createElement('td');
+                        td.classList.add('truncated');
+                        td.textContent = value;
+                        row.appendChild(td);
+                    });
+                    table.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Fehler beim Abrufen der Clientdaten:', error);
+        });
+}
+
+
 function createUser(event) {
     event.preventDefault();
 

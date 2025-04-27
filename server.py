@@ -148,8 +148,16 @@ def admin():
             return jsonify(db.liste_tabelle('benutzer'))
         elif action == 'get_table_clients':
             logging.info("Tabelle clients wird abgerufen")
-            print(db.liste_tabelle('clients'))
+            #print(db.liste_tabelle('clients'))
             return jsonify(db.liste_tabelle('clients'))
+        elif action == 'get_table_swimmer':
+            logging.info("Tabelle swimmer wird abgerufen")
+            #print(db.liste_tabelle('schwimmer'))
+            return jsonify(db.liste_tabelle('schwimmer'))
+        elif action == 'get_table_actions':
+            logging.info("Tabelle actions wird abgerufen")
+            #print(db.liste_tabelle('schwimmer'))
+            return jsonify(db.liste_tabelle('actions'))
         # usw.
 
     params = {

@@ -76,6 +76,7 @@ Die Daten werden auf dem Server in einer SQLite Datenbank gehalten (Absturzsiche
     bahnen: Integer (Anzahl)
     strecke: Integer (Meter)
     aufBahn: Integer (letzte Aktive Bahn - sonst 0)
+    avg_roundtime: Integer (durchnittliche Rundenzeit)
     aktiv: Boolean
 ```
 
