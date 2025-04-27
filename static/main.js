@@ -18,14 +18,14 @@ if (isBahnenInputValid(input.value)) {
 
 // Daten schwimmer und actions
 let schwimmer = [
-    { nummer: 1, name: "Anna", bahnen: 5, prio: 10 },
+    { nummer: 1, name: "Anna", bahnen: 5, aufBahn: 1, aktiv: true, prio: 10 },
     { nummer: 2, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 3, name: "Anna", bahnen: 5, prio: 10 },
-    { nummer: 4, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 5, name: "Anna", bahnen: 5, prio: 10 },
-    { nummer: 6, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 7, name: "Anna", bahnen: 5, prio: 10 },
-    { nummer: 8, name: "Ben", bahnen: 3, prio: 15 },
+    { nummer: 3, name: "Charly", bahnen: 5, prio: 10 },
+    { nummer: 4, name: "Doris", bahnen: 3, prio: 15 },
+    { nummer: 5, name: "Emil", bahnen: 5, prio: 10 },
+    { nummer: 6, name: "Fritz", bahnen: 3, prio: 15 },
+    { nummer: 7, name: "Günter", bahnen: 5, prio: 10 },
+/*    { nummer: 8, name: "Ben", bahnen: 3, prio: 15 },
     { nummer: 9, name: "Anna", bahnen: 5, prio: 10 },
     { nummer: 10, name: "Anna", bahnen: 5, prio: 10 },
     { nummer: 11, name: "Ben", bahnen: 3, prio: 15 },
@@ -34,7 +34,7 @@ let schwimmer = [
     { nummer: 14, name: "Anna", bahnen: 5, prio: 10 },
     { nummer: 15, name: "Ben", bahnen: 3, prio: 15 },
     { nummer: 16, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },
+    { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },*/
 ];
 
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', schwimmerHinzufuegen);
@@ -209,8 +209,53 @@ let clickedRow = null;
 // **********************************************************
 const container = document.getElementById('container');
 
+// Map für laufende Fade-Operationen - soll auf ein DIV nach einem Klick angewandt werden
+const fadeControllers = new Map();
+
+// Fading-Funktion blendet ein Div langsam aus
+async function fadeOut(div, duration = 3000) {
+    return new Promise((resolve, reject) => {
+        let opacity = 1;
+        const interval = 50;
+        const decrement = interval / duration;
+
+        const controller = fadeControllers.get(div.dataset.nummer);
+
+        if (!controller || controller.signal.aborted) {
+            return reject('Fade abgebrochen');
+        }
+
+        const fade = setInterval(() => {
+            if (!controller || controller.signal.aborted) {
+                clearInterval(fade);
+                div.style.opacity = 1;
+                return reject('Fade abgebrochen');
+            }
+            opacity -= decrement;
+            div.style.opacity = opacity;
+            if (opacity <= 0) {
+                clearInterval(fade);
+                resolve();
+            }
+        }, interval);
+    });
+}
+
+
+// Angezeigte Bahnen in einem Schwimmer-Div verändern
+function aendereBahnenInDiv(div, anz) {
+    // Finde das span mit der Klasse "bahnen"
+    const bahnenSpan = div.querySelector('.bahnen');
+    // Extrahiere die Zahl aus dem Textinhalt des span
+    let bahnen = parseInt(bahnenSpan.textContent.match(/\d+/)[0], 10);
+    // Ändere um Anzahl
+    bahnen += anz;
+    // Setze die neue Zahl im span
+    bahnenSpan.textContent = `(${bahnen})`;
+}
+
 // Click auf ein Element in dem Container mit den Schimmern
-container.addEventListener('click', (event) => {
+container.addEventListener('click', async (event) => {
     const clicked_schwimmer = event.target.closest('.schwimmer');
     console.log("Klick in Container", clicked_schwimmer);
 
@@ -220,42 +265,96 @@ container.addEventListener('click', (event) => {
 
     const nummer = clicked_schwimmer.dataset.nummer; // oder eine andere Info
     console.log(`Schwimmer ${nummer} wurde geklickt.`);
-    const s_data = schwimmer.find(s => s.nummer == nummer);
-    console.log("s_data",s_data);
-    if (s_data) {
-        console.log("Schwimmer: Bahnene erhöhen und Prio auf 0 setzen", s_data);
-        s_data.prio=0;
-        s_data.bahnen+=1;
-        render();
+    // Falls schon ein Fade läuft: abbrechen
+    if (fadeControllers.has(nummer)) {
+        fadeControllers.get(nummer).abort();
+        fadeControllers.delete(nummer);
+        clicked_schwimmer.style.opacity = 1; // sofort wieder sichtbar
+        //Angezeigte Bahn wieder um eins Verringern
+        aendereBahnenInDiv(clicked_schwimmer, -1);
+        //console.log(`Fade von Div ${nummer} abgebrochen.`);
+        return;
     }
+
+    // Angezeigte Bahn um eins erhöhen
+    aendereBahnenInDiv(clicked_schwimmer, 1);
+
+    // Neuen Controller speichern
+    const controller = new AbortController();
+    fadeControllers.set(nummer, controller);
+
+    try {
+        await fadeOut(clicked_schwimmer);
+        if (fadeControllers.has(nummer)) {
+            fadeControllers.delete(nummer);
+            console.log(`Aktion nach Fade von Div ${nummer} ausführen.`);
+            // Hier deine eigentliche Klick-Aktion!
+            const s_data = schwimmer.find(s => s.nummer == nummer);
+            console.log("s_data", s_data);
+            if (s_data) {
+                console.log("Schwimmer: Bahnene erhöhen und Prio auf 0 setzen", s_data);
+                s_data.prio = 0;
+                s_data.bahnen += 1;
+                //das Div löschen - wird beim rendern wieder hinten angehangen
+                clicked_schwimmer.remove();
+                render();
+                //TODO - Server-Aktion auslösen/speichern
+            }
+        }
+    } catch (e) {
+        console.log(e);
+    }
+
 
 });
 
-// Schwimmer neu zeichnen
 function render() {
     const container = document.getElementById("container");
-    container.innerHTML = "";
-    schwimmer
-        .sort((a, b) => b.prio - a.prio) // höchste Priorität zuerst
-        .forEach((s) => {
-            const div = document.createElement("div");
+
+    // Aktuelle Divs nach Nummer erfassen
+    const existingDivs = new Map();
+    container.querySelectorAll(".schwimmer").forEach(div => {
+        existingDivs.set(Number(div.dataset.nummer), div);
+    });
+
+    // Schwimmer nach Prio sortieren
+    const sortedSchwimmer = [...schwimmer].sort((a, b) => b.prio - a.prio);
+
+    // Divs neu anordnen
+    sortedSchwimmer.forEach((s) => {
+        let div = existingDivs.get(s.nummer);
+
+        if (!div) {
+            // Div existiert noch nicht → neu erstellen
+            div = document.createElement("div");
             div.className = "schwimmer";
             div.dataset.nummer = s.nummer;
-            div.innerHTML = `
-    <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
-    <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
-    </div>
-  `;
             container.appendChild(div);
-        });
+        }
+
+        // Inhalt (fast) immer aktualisieren
+        div.dataset.prio = s.prio ?? 0;
+        if (!fadeControllers.has(div.dataset.nummer)) {
+            div.innerHTML = `
+                <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
+                <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
+            `;
+        } else {
+            console.log("Hier wird gefadet", s.nummer);
+        }
+
+        // Div richtig platzieren
+        container.appendChild(div); // appendChild verschiebt div, wenn es schon existiert
+    });
 }
 
+
 // Sekündliches auffrischen der darstellung
-const interval = 5000; // Auffrischung in ms
+const interval = 1000; // Auffrischung in ms
 setInterval(() => {
-    schwimmer.forEach((s) => (s.prio += interval/1000)); // Prio um 1 erhöhen
+    schwimmer.forEach((s) => (s.prio += interval / 1000)); // Prio um 1 erhöhen
     render();
-}, interval); 
+}, interval);
 
 // zu Beginn einmal zeichnen
 render();
