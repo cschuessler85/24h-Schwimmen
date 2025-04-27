@@ -38,201 +38,64 @@ function showSection(id) {
 }
 
 function showUserTable() {
-    showSection('user');
-    // Benutzer-Daten per POST an den Server senden
-    fetch('/admin', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',  // URL-encoded
-        },
-        body: new URLSearchParams({
-            action: 'get_table_benutzer'  // Action zum Abrufen der Benutzertabelle
-        })
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Benutzer-Table füllen, data.length", data.length);
-            const sectionTitle = document.querySelector('#user h2');
-            sectionTitle.textContent = `Benutzer (${data.length})`;
-
-            const table = document.getElementById('userTable');
-            table.innerHTML = '';  // Alte Inhalte löschen
-
-            // Kopfzeile der Tabelle erstellen
-            if (data.length > 0) {
-                const headerRow = document.createElement('tr');
-                // Dynamisch die Keys als Header hinzufügen
-                Object.keys(data[0]).forEach(key => {
-                    const th = document.createElement('th');
-                    th.textContent = key.charAt(0).toUpperCase() + key.slice(1);  // Erstes Zeichen groß machen
-                    headerRow.appendChild(th);
-                });
-                table.appendChild(headerRow);
-
-                // Benutzer-Datenzeilen erstellen
-                data.forEach(user => {
-                    const row = document.createElement('tr');
-                    Object.values(user).forEach(value => {
-                        const td = document.createElement('td');
-                        td.classList.add('truncated');
-                        td.textContent = value;
-                        row.appendChild(td);
-                    });
-                    table.appendChild(row);
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Fehler beim Abrufen der Benutzerdaten:', error);
-        });
+    fetchAndFillTable('user', 'userTable', 'get_table_benutzer', 'Benutzer');
 }
 
 function showClientTable() {
-    showSection('client');
-    // Client-Daten per POST vom Server holen
-    fetch('/admin', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',  // URL-encoded
-        },
-        body: new URLSearchParams({
-            action: 'get_table_clients'  // Action zum Abrufen der Benutzertabelle
-        })
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Client-Table füllen, data.length", data.length);
-            const sectionTitle = document.querySelector('#client h2');
-            sectionTitle.textContent = `Clients (${data.length})`;
-            const table = document.getElementById('clientTable');
-            table.innerHTML = '';  // Alte Inhalte löschen
-
-            // Kopfzeile der Tabelle erstellen
-            if (data.length > 0) {
-                const headerRow = document.createElement('tr');
-                // Dynamisch die Keys als Header hinzufügen
-                Object.keys(data[0]).forEach(key => {
-                    const th = document.createElement('th');
-                    th.textContent = key.charAt(0).toUpperCase() + key.slice(1);  // Erstes Zeichen groß machen
-                    headerRow.appendChild(th);
-                });
-                table.appendChild(headerRow);
-
-                // Benutzer-Datenzeilen erstellen
-                data.forEach(client => {
-                    const row = document.createElement('tr');
-                    Object.values(client).forEach(value => {
-                        const td = document.createElement('td');
-                        td.classList.add('truncated');
-                        td.textContent = value;
-                        row.appendChild(td);
-                    });
-                    table.appendChild(row);
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Fehler beim Abrufen der Clientdaten:', error);
-        });
+    fetchAndFillTable('client', 'clientTable', 'get_table_clients', 'Clients');
 }
 
-
 function showSwimmerTable() {
-    showSection('swimmer');
-    // Client-Daten per POST vom Server holen
-    fetch('/admin', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',  // URL-encoded
-        },
-        body: new URLSearchParams({
-            action: 'get_table_swimmer'  // Action zum Abrufen der Benutzertabelle
-        })
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Schwimmer-Table füllen, data.length", data.length);
-            const sectionTitle = document.querySelector('#swimmer h2');
-            sectionTitle.textContent = `Schwimmer (${data.length})`;
-            const table = document.getElementById('swimmerTable');
-            table.innerHTML = '';  // Alte Inhalte löschen
-
-            // Kopfzeile der Tabelle erstellen
-            if (data.length > 0) {
-                const headerRow = document.createElement('tr');
-                // Dynamisch die Keys als Header hinzufügen
-                Object.keys(data[0]).forEach(key => {
-                    const th = document.createElement('th');
-                    th.textContent = key.charAt(0).toUpperCase() + key.slice(1);  // Erstes Zeichen groß machen
-                    headerRow.appendChild(th);
-                });
-                table.appendChild(headerRow);
-
-                // Benutzer-Datenzeilen erstellen
-                data.forEach(client => {
-                    const row = document.createElement('tr');
-                    Object.values(client).forEach(value => {
-                        const td = document.createElement('td');
-                        td.classList.add('truncated');
-                        td.textContent = value;
-                        row.appendChild(td);
-                    });
-                    table.appendChild(row);
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Fehler beim Abrufen der Clientdaten:', error);
-        });
+    fetchAndFillTable('swimmer', 'swimmerTable', 'get_table_swimmer', 'Schwimmer');
 }
 
 function showActionsTable() {
-    showSection('actions');
-    // Client-Daten per POST vom Server holen
+    fetchAndFillTable('actions', 'clientTable', 'get_table_actions', 'Actions');
+}
+
+
+
+function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
+    showSection(sectionId);
     fetch('/admin', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',  // URL-encoded
-        },
-        body: new URLSearchParams({
-            action: 'get_table_actions'  // Action zum Abrufen der Benutzertabelle
-        })
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: actionName })
     })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Actions-Table füllen, data.length", data.length);
-            const sectionTitle = document.querySelector('#actions h2');
-            sectionTitle.textContent = `Actions (${data.length})`;
-            const table = document.getElementById('clientTable');
-            table.innerHTML = '';  // Alte Inhalte löschen
+    .then(response => response.json())
+    .then(data => {
+        console.log(`${titleName}-Table füllen, data.length`, data.length);
 
-            // Kopfzeile der Tabelle erstellen
-            if (data.length > 0) {
-                const headerRow = document.createElement('tr');
-                // Dynamisch die Keys als Header hinzufügen
-                Object.keys(data[0]).forEach(key => {
-                    const th = document.createElement('th');
-                    th.textContent = key.charAt(0).toUpperCase() + key.slice(1);  // Erstes Zeichen groß machen
-                    headerRow.appendChild(th);
-                });
-                table.appendChild(headerRow);
+        const sectionTitle = document.querySelector(`#${sectionId} h2`);
+        sectionTitle.textContent = `${titleName} (${data.length})`;
 
-                // Benutzer-Datenzeilen erstellen
-                data.forEach(client => {
-                    const row = document.createElement('tr');
-                    Object.values(client).forEach(value => {
-                        const td = document.createElement('td');
-                        td.classList.add('truncated');
-                        td.textContent = value;
-                        row.appendChild(td);
-                    });
-                    table.appendChild(row);
+        const table = document.getElementById(tableId);
+        table.innerHTML = '';
+
+        if (data.length > 0) {
+            const headerRow = document.createElement('tr');
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            data.forEach(entry => {
+                const row = document.createElement('tr');
+                Object.values(entry).forEach(value => {
+                    const td = document.createElement('td');
+                    td.classList.add('truncated');
+                    td.textContent = value;
+                    row.appendChild(td);
                 });
-            }
-        })
-        .catch(error => {
-            console.error('Fehler beim Abrufen der Clientdaten:', error);
-        });
+                table.appendChild(row);
+            });
+        }
+    })
+    .catch(error => {
+        console.error(`Fehler beim Abrufen der ${titleName}-Daten:`, error);
+    });
 }
 
 
