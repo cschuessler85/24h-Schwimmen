@@ -418,7 +418,6 @@ function updateServerStatus(neu) {
     console.log("updateServerStatus - alt", server_verbunden, "neu", neu);
     if (server_verbunden != neu) { //Server status hat sich geändert
         server_verbunden = neu;
-        //TODO kleines InfoModal einbelnden
         const statusspan = document.getElementById('serverStatus');
         if (server_verbunden) {
             statusspan.innerHTML=`
@@ -436,6 +435,45 @@ function updateServerStatus(neu) {
 
     }
 }
+
+/**
+ * Holt die Daten aller auf dem Server gespeicherten Schwimmer und legt sie in 
+ * alleSchwimmer ab
+ * 
+ * @returns {void}
+ */
+async function fetchAlleSchwimmer() {
+    try {
+        console.log("Schwimmer holen");
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 Sekunden Timeout
+
+        const response = await fetch('/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([{'kommando': "GET", 'parameter':[], 'timestamp': new Date().toISOString()}]),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            alleSchwimmer = await response.json();
+            console.log(alleSchwimmer);
+            updateServerStatus(true);
+        } else {
+            updateServerStatus(false);
+        }
+    } catch (error) {
+        console.log("Error on fetchAlleSchwimmer",error);
+        updateServerStatus(false);
+    } finally {
+    }
+}
+
+// ----------------------------------------------------------
+//  ENDE DATENAUSTAUSCH mit dem Server
+// ----------------------------------------------------------
 
 
 // Bahn hinzufügen bei Linksklick auf Nummer

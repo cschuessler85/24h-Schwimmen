@@ -246,9 +246,11 @@ def action():
                 except (ValueError, IndexError) as e:
                     print(f"Fehler bei ADD-Parametern: {e}")
                     results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
-            elif kommando == "REMOVE":
-                print(f"REMOVE ausgeführt mit Parametern: {parameter}")
-                # Logik für REMOVE
+            elif kommando == "GET":
+                print(f"GET ausgeführt mit Parametern: {parameter}")
+                logging.info(f"Tabelle swimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
+                #print(db.liste_tabelle('schwimmer'))
+                return jsonify(db.liste_tabelle('schwimmer'))
             elif kommando == "UPDATE":
                 print(f"UPDATE ausgeführt mit Parametern: {parameter}")
                 # Logik für UPDATE
