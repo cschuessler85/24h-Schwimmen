@@ -38,6 +38,7 @@ let schwimmer = [
     { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },*/
 ];
 let actions = [];
+let alleSchwimmer = []; // Beinhaltet die Schwimmer in der Datenbank
 
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', schwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
@@ -377,8 +378,7 @@ render();
 //  DATENAUSTAUSCH mit dem Server
 // **********************************************************
 let isFetching = false;
-let server_verbunden = false;
-updateServerStatus(true);
+let server_verbunden = true;
 
 async function transmitActions() {
     if (isFetching) return;

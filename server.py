@@ -218,11 +218,48 @@ def senden():
     addVersion(bestehende)
     return "Daten empfangen", 200
 
+
 @app.route("/action", methods=["POST"])
 def action():
-    print("Clientdaten:", request.get_data(as_text=True))
-    #return "Fehler", 400
-    return "OK", 200
+    try:
+        clientid = session.get("clientID",-1)
+        user = session.get("user","unknown")
+        actions = request.get_json()
+        print("Empfangene Actions:", actions)
+
+        results = []
+
+        for action in actions:
+            kommando = action.get("kommando")
+            parameter = action.get("parameter")
+            timestamp = action.get("timestamp")
+
+            db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
+
+            if kommando == "ADD":
+                try:
+                    nummer = int(parameter[0])
+                    anzahl = int(parameter[1])
+                    print(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}")
+                    db.aendere_bahnanzahl_um(nummer,anzahl,clientid)
+                    results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
+                except (ValueError, IndexError) as e:
+                    print(f"Fehler bei ADD-Parametern: {e}")
+                    results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
+            elif kommando == "REMOVE":
+                print(f"REMOVE ausgeführt mit Parametern: {parameter}")
+                # Logik für REMOVE
+            elif kommando == "UPDATE":
+                print(f"UPDATE ausgeführt mit Parametern: {parameter}")
+                # Logik für UPDATE
+            else:
+                print(f"Unbekanntes Kommando: {kommando}")
+
+        return "OK", 200
+
+    except Exception as e:
+        print(f"Fehler beim Verarbeiten der Actions: {e}")
+        return "Fehler", 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, threaded=False)

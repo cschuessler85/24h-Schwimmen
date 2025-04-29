@@ -50,7 +50,7 @@ function showSwimmerTable() {
 }
 
 function showActionsTable() {
-    fetchAndFillTable('actions', 'clientTable', 'get_table_actions', 'Actions');
+    fetchAndFillTable('actions', 'actionsTable', 'get_table_actions', 'Actions');
 }
 
 
