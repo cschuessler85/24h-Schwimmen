@@ -19,28 +19,21 @@ if (isBahnenInputValid(input.value)) {
 
 // Daten schwimmer und actions
 let schwimmer = [
-    { nummer: 1, name: "Anna", bahnen: 5, aufBahn: 1, aktiv: true, prio: 10 },
-    { nummer: 2, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 3, name: "Charly", bahnen: 5, prio: 10 },
-    { nummer: 4, name: "Doris", bahnen: 3, prio: 15 },
-    { nummer: 5, name: "Emil", bahnen: 5, prio: 10 },
-    { nummer: 6, name: "Fritz", bahnen: 3, prio: 15 },
-    { nummer: 7, name: "Günter", bahnen: 5, prio: 10 },
-/*    { nummer: 8, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 9, name: "Anna", bahnen: 5, prio: 10 },
-    { nummer: 10, name: "Anna", bahnen: 5, prio: 10 },
-    { nummer: 11, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 12, name: "Anna", bahnen: 5, prio: 10 },
-    { nummer: 13, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 14, name: "Anna", bahnen: 5, prio: 10 },
-    { nummer: 15, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 16, name: "Ben", bahnen: 3, prio: 15 },
-    { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },*/
+    /*    { nummer: 8, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 9, name: "Anna", bahnen: 5, prio: 10 },
+        { nummer: 10, name: "Anna", bahnen: 5, prio: 10 },
+        { nummer: 11, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 12, name: "Anna", bahnen: 5, prio: 10 },
+        { nummer: 13, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 14, name: "Anna", bahnen: 5, prio: 10 },
+        { nummer: 15, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 16, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },*/
 ];
 let actions = [];
 let alleSchwimmer = []; // Beinhaltet die Schwimmer in der Datenbank
 
-document.getElementById('schwimmerHinzufuegen').addEventListener('click', schwimmerHinzufuegen);
+document.getElementById('schwimmerHinzufuegen').addEventListener('click', promptSchwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
 
 function search(number) {
@@ -57,13 +50,18 @@ function search(number) {
     }
 }
 
-function schwimmerHinzufuegen() {
+function promptSchwimmerHinzufuegen() {
     var nummer = prompt("Nummer:");
 
     if (!(nummer !== null && nummer.trim() !== "" && !isNaN(nummer))) {
         return;
     }
 
+    schwimmerHinzufuegen(nummer);
+}
+
+
+function schwimmerHinzufuegen(nummer) {
     console.log("Schwimmer Nr. ", nummer, "wird gesucht...");
 
     // Der gesuchte Schwimmer soll auf jeden Fall oben in die Liste
@@ -72,39 +70,63 @@ function schwimmerHinzufuegen() {
     //Wenn der schwimmer schon in der Liste ist schwimmer ist, wird seine Priorität auf das aktuelle Maximum gesetzt
     const aktiver = schwimmer.find(s => s.nummer == nummer);
     if (aktiver) {
-        console.log("... aktiver Schwimmer")
+        console.log("... aktiver Schwimmer");
         // prio auf max
-        aktiver.prio = maxPrio+1;///Wenn der schwimmer in der Liste alleSchwimmer ist, wird er in die Liste schwimmer übernommen ...
+        aktiver.prio = maxPrio + 1; ///Wenn der schwimmer in der Liste alleSchwimmer ist, wird er in die Liste schwimmer übernommen ...
     } else {
         const bekannter = alleSchwimmer.find(s => s.nummer == nummer);
         if (bekannter) {
             console.log("Schwimmer Nummer war schon vorhanden");
-            const scopy = { 
-                nummer: parseInt(nummer), 
-                name: bekannter.name, 
-                bahnen: bekannter.bahnanzahl, 
-                aufBahn: 1, 
-                aktiv: true, 
-                prio: maxPrio+1 
+            const scopy = {
+                nummer: parseInt(nummer),
+                name: bekannter.name,
+                bahnen: bekannter.bahnanzahl,
+                aktiv: true,
+                prio: maxPrio + 1
             };
+            if (!bekannter.auf_bahn || !bekannter.auf_bahn in verwaltete_bahnen) {
+                scopy.aufBahn = verwaltete_bahnen[0];
+            } else {
+                scopy.aufBahn = bekannter.auf_bahn;
+            }
             console.log("SchwimmerKopie", scopy);
-            // prio auf max
-            scopy.prio = maxPrio+1;
             schwimmer.push(scopy);
-        } else {     //Ansonsten wird er in der Liste Schwimmer neu erzeugt
-            const neuer = { 
-                nummer: parseInt(nummer), 
-                name: `Schwimmer ${nummer}`, 
-                bahnen: 0, 
-                aufBahn: 1, 
-                aktiv: true, 
-                prio: maxPrio+1 
+        } else { //Ansonsten wird er in der Liste Schwimmer neu erzeugt
+            const neuer = {
+                nummer: parseInt(nummer),
+                name: `Schwimmer ${nummer}`,
+                bahnen: 0,
+                aufBahn: verwaltete_bahnen[0],
+                aktiv: true,
+                prio: maxPrio + 1
             };
             schwimmer.push(neuer);
         }
     }
 }
 
+function fillSchwimmerAusMeinenBahnen() {
+    console.log("AlleSchwimmer",alleSchwimmer);
+    console.log("verwaltete_bahnen",verwaltete_bahnen);
+    const meineSchwimmer = alleSchwimmer.filter(s => verwaltete_bahnen.includes(s.auf_bahn));
+    console.log(meineSchwimmer);
+    // Alle Schwimmer die davon noch nicht in schwimmer sind einfügen
+    meineSchwimmer.forEach(s_neu => {
+        console.log("Prüfe: ",s_neu);
+        if (!schwimmer.some(s => s.nummer == s_neu.nummer)) {
+            const scopy = {
+                nummer: parseInt(s_neu.nummer),
+                name: s_neu.name,
+                bahnen: s_neu.bahnanzahl,
+                aktiv: true,
+                aufBahn: s_neu.auf_bahn,
+                prio: 0 //hinten anfügen
+            };
+            console.log("SchwimmerKopie", scopy);
+            schwimmer.push(scopy);
+        }
+    });
+}
 
 function showStatusMessage(text, isSuccess = true, duration = 3000) {
     const msg = document.getElementById("statusMessage");
@@ -159,7 +181,14 @@ function downloadJSON() {
 }
 
 function isBahnenInputValid(value) {
-    return /^(\d+(,\d+)*)?$/.test(value.trim());
+    // Prüft, ob der Eingabewert eine durch Kommas getrennte Liste von Zahlen ist,
+    // z. B. "3", "1,2", "10,20,30", aber kein leerer String.
+    // Regulärer Ausdruck:
+    // ^         → Anfang des Strings
+    // \d+       → mindestens eine Ziffer
+    // (,\d+)*   → optional beliebig viele Gruppen aus Komma gefolgt von mindestens einer Ziffer
+    // $         → Ende des Strings
+    return /^(\d+(,\d+)*)$/.test(value.trim());
 }
 
 function checkBahnenInput() {
@@ -178,6 +207,7 @@ function parseBahnenInput() {
         console.log("Gültige Bahnnummern:", zahlen);
         verwaltete_bahnen = zahlen;
         showStatusMessage("Bahnen geändert", true, 1000);
+        fillSchwimmerAusMeinenBahnen();
     } else { //Fehlerhafte Bahnnummern
         showStatusMessage("Ungültiges Format! Bitte nur Zahlen, getrennt durch Kommas.", false);
         input.value = verwaltete_bahnen.join(',');
@@ -250,7 +280,7 @@ container.addEventListener('click', async (event) => {
     }
 
     const nummer = clicked_schwimmer.dataset.nummer; // oder eine andere Info
-    clicked_schwimmer.style.backgroundColor="aqua";
+    clicked_schwimmer.style.backgroundColor = "aqua";
     console.log(`Schwimmer ${nummer} wurde geklickt.`);
     // Falls schon ein Fade läuft: abbrechen
     if (fadeControllers.has(nummer)) {
@@ -259,7 +289,7 @@ container.addEventListener('click', async (event) => {
         clicked_schwimmer.style.opacity = 1; // sofort wieder sichtbar
         //Angezeigte Bahn wieder um eins Verringern
         aendereBahnenInDiv(clicked_schwimmer, -1);
-        clicked_schwimmer.style.backgroundColor="";
+        clicked_schwimmer.style.backgroundColor = "";
         //console.log(`Fade von Div ${nummer} abgebrochen.`);
         return;
     }
@@ -280,7 +310,11 @@ container.addEventListener('click', async (event) => {
             const s_data = schwimmer.find(s => s.nummer == nummer);
             console.log("s_data", s_data);
             if (s_data) {
-                console.log("Schwimmer: Bahnene erhöhen und Prio auf 0 setzen", s_data);
+                console.log("Schwimmer: Bahnen erhöhen und Prio auf 0 setzen", s_data);
+                if (!s_data.aufBahn || !verwaltete_bahnen.includes(s_data.aufBahn)) {
+                    console.log(`Bahn des Schwimmers ${nummer} auf ${verwaltete_bahnen[0]} gesetzt`);
+                    s_data.aufBahn = verwaltete_bahnen[0];
+                }
                 s_data.prio = 0;
                 s_data.bahnen += 1;
                 //das Div löschen - wird beim rendern wieder hinten angehangen
@@ -288,11 +322,11 @@ container.addEventListener('click', async (event) => {
                 render();
                 actions.push({
                     kommando: "ADD",
-                    parameter: [nummer, 1],
+                    parameter: [nummer, 1, s_data.aufBahn],
                     timestamp: new Date().toISOString(),
                     transmitted: false
                 });
-                
+
             }
         }
     } catch (e) {
@@ -314,10 +348,10 @@ container.addEventListener('contextmenu', function (event) {
     event.preventDefault(); // Standard-Rechtsklick unterdrücken
     clickedDiv = clicked_schwimmer;
 
-        // Menü an Mausposition anzeigen
-        contextMenu.style.top = event.pageY + "px";
-        contextMenu.style.left = event.pageX + "px";
-        contextMenu.style.display = "block";
+    // Menü an Mausposition anzeigen
+    contextMenu.style.top = event.pageY + "px";
+    contextMenu.style.left = event.pageX + "px";
+    contextMenu.style.display = "block";
 });
 
 // Kontextmenü ausblenden bei Klick außerhalb
@@ -385,8 +419,7 @@ setInterval(() => {
     render();
 }, interval);
 
-// zu Beginn einmal zeichnen
-render();
+
 
 // ----------------------------------------------------------
 //  ENDE  Behandlung und Verarbeitung der DIV-Darstellung
@@ -425,7 +458,7 @@ async function transmitActions() {
             updateServerStatus(false);
         }
     } catch (error) {
-        console.log("Error on transmit",error);
+        console.log("Error on transmit", error);
         updateServerStatus(false);
     } finally {
         isFetching = false;
@@ -438,13 +471,13 @@ function updateServerStatus(neu) {
         server_verbunden = neu;
         const statusspan = document.getElementById('serverStatus');
         if (server_verbunden) {
-            statusspan.innerHTML=`
+            statusspan.innerHTML = `
             <span style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px">
             </span> Verbunden
             `;
             showStatusMessage("Server wieder verbunden", true);
         } else {
-            statusspan.innerHTML=`
+            statusspan.innerHTML = `
             <span style="height: 10px; width: 10px; background-color: red; border-radius: 50%; display: inline-block; margin-right: 5px">
             </span> Nicht Verbunden
             `;
@@ -469,7 +502,7 @@ async function fetchAlleSchwimmer() {
         const response = await fetch('/action', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify([{'kommando': "GET", 'parameter':[], 'timestamp': new Date().toISOString()}]),
+            body: JSON.stringify([{ 'kommando': "GET", 'parameter': [], 'timestamp': new Date().toISOString() }]),
             signal: controller.signal
         });
 
@@ -483,7 +516,7 @@ async function fetchAlleSchwimmer() {
             updateServerStatus(false);
         }
     } catch (error) {
-        console.log("Error on fetchAlleSchwimmer",error);
+        console.log("Error on fetchAlleSchwimmer", error);
         updateServerStatus(false);
     } finally {
     }
@@ -520,6 +553,15 @@ document.getElementById("deleteSwimmer").addEventListener("click", function () {
     contextMenu.style.display = "none";
 });
 
-//setInterval(send, 50000);
-setInterval(transmitActions,10000);
+console.log("Initial commands - Grundlagen einrichten");
+//alle Zehn Sekunden die Daten zum Server schicken
+setInterval(transmitActions, 10000);
+
+// zu Beginn Daten vom Server holen
+fetchAlleSchwimmer().then(() => {
+    // und  nach erhalt die der verwalteten Bahnen eintragen
+    fillSchwimmerAusMeinenBahnen();
+    // und einmal zeichnen
+    render();
+});
 

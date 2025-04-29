@@ -306,13 +306,14 @@ def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke
     params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
     return db.execute(query, params)
 
-def aendere_bahnanzahl_um(nummer, anzahl, client_id):
+def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
     """
     Ändert die Bahnanzahl eines Schwimmers. 
     Falls der Schwimmer nicht existiert, wird er mit Standardwerten angelegt.
     """
     schwimmer = lies_schwimmer(nummer)
-    print(schwimmer)
+    logging.debug("Schwimmer Ändern")
+    print(schwimmer if (schwimmer) else f"Schwimmer {nummer} Nicht gefunden")
     
     if schwimmer is None:
         # Schwimmer existiert nicht → neu anlegen
@@ -322,7 +323,7 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id):
             name=f"Schwimmer {nummer}",
             bahnanzahl=max(anzahl, 0),
             strecke=0,
-            auf_bahn=client_id,
+            auf_bahn=bahnnr,
             avg_roundtime=0,
             aktiv=1
         )
@@ -331,7 +332,7 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id):
         neue_bahnanzahl = (schwimmer["bahnanzahl"] or 0) + anzahl
         if neue_bahnanzahl < 0:
             neue_bahnanzahl = 0
-        update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=client_id)
+        update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)
 
 
 

@@ -234,14 +234,16 @@ def action():
             parameter = action.get("parameter")
             timestamp = action.get("timestamp")
 
-            db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
-
+            
             if kommando == "ADD":
+                # ADD - Action muss dokumentiert werden
+                db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
                 try:
                     nummer = int(parameter[0])
                     anzahl = int(parameter[1])
-                    print(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}")
-                    db.aendere_bahnanzahl_um(nummer,anzahl,clientid)
+                    bahnnr = int(parameter[2]) if len(parameter) > 2 else 0
+                    print(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
+                    db.aendere_bahnanzahl_um(nummer,anzahl,clientid,bahnnr=bahnnr)
                     results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
                 except (ValueError, IndexError) as e:
                     print(f"Fehler bei ADD-Parametern: {e}")
@@ -251,10 +253,8 @@ def action():
                 logging.info(f"Tabelle swimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
                 #print(db.liste_tabelle('schwimmer'))
                 return jsonify(db.liste_tabelle('schwimmer'))
-            elif kommando == "UPDATE":
-                print(f"UPDATE ausgeführt mit Parametern: {parameter}")
-                # Logik für UPDATE
             else:
+                logging.debug(f"Unbekanntes Kommando: {kommando}")
                 print(f"Unbekanntes Kommando: {kommando}")
 
         return "OK", 200
