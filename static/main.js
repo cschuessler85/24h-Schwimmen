@@ -106,13 +106,13 @@ function schwimmerHinzufuegen(nummer) {
 }
 
 function fillSchwimmerAusMeinenBahnen() {
-    console.log("AlleSchwimmer",alleSchwimmer);
-    console.log("verwaltete_bahnen",verwaltete_bahnen);
+    console.log("AlleSchwimmer", alleSchwimmer);
+    console.log("verwaltete_bahnen", verwaltete_bahnen);
     const meineSchwimmer = alleSchwimmer.filter(s => verwaltete_bahnen.includes(s.auf_bahn));
     console.log(meineSchwimmer);
     // Alle Schwimmer die davon noch nicht in schwimmer sind einfügen
     meineSchwimmer.forEach(s_neu => {
-        console.log("Prüfe: ",s_neu);
+        console.log("Prüfe: ", s_neu);
         if (!schwimmer.some(s => s.nummer == s_neu.nummer)) {
             const scopy = {
                 nummer: parseInt(s_neu.nummer),
@@ -402,6 +402,12 @@ function render() {
                 <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
                 <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
             `;
+            //Wenn Bahn nicht in verwaltete Bahnen Hintergrund ändern
+            if (!verwaltete_bahnen.includes(s.aufBahn)) {
+                div.style.backgroundColor = "lightgreen";
+            } else {
+                div.style.removeProperty("background-color");
+            }
         } else {
             console.log("Hier wird gefadet", s.nummer);
         }
