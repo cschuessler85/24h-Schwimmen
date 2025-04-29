@@ -188,6 +188,7 @@ function parseBahnenInput() {
 const table = document.getElementById("schwimmer");
 const contextMenu = document.getElementById("contextMenu");
 let clickedRow = null;
+let clickedDiv = null; //Wenn auf ein Div geklickt wird - merken
 
 // **********************************************************
 //   Behandlung und Verarbeitung der DIV-Darstellung
@@ -311,12 +312,12 @@ container.addEventListener('contextmenu', function (event) {
     }
 
     event.preventDefault(); // Standard-Rechtsklick unterdrücken
+    clickedDiv = clicked_schwimmer;
 
         // Menü an Mausposition anzeigen
         contextMenu.style.top = event.pageY + "px";
         contextMenu.style.left = event.pageX + "px";
         contextMenu.style.display = "block";
-        document.getElementById("bahnHinzufuegenOption").style.display = "none";
 });
 
 // Kontextmenü ausblenden bei Klick außerhalb
@@ -492,39 +493,6 @@ async function fetchAlleSchwimmer() {
 //  ENDE DATENAUSTAUSCH mit dem Server
 // ----------------------------------------------------------
 
-
-
-
-document.getElementById("abwesendOption").addEventListener("click", function () {
-    if (clickedRow) {
-        clickedRow.classList.toggle("abwesend");
-
-        const tabelle = clickedRow.parentNode;
-
-        if (clickedRow.classList.contains("abwesend")) {
-            tabelle.appendChild(clickedRow); // Nach unten
-        } else {
-            // Suche erste echte Datenzeile (also: erste <tr>, die NICHT die header-Zeile ist)
-            const zeilen = tabelle.querySelectorAll("tr");
-            let ziel = null;
-
-            for (let i = 0; i < zeilen.length; i++) {
-                if (zeilen[i] !== clickedRow && !zeilen[i].querySelector("th")) {
-                    ziel = zeilen[i];
-                    break;
-                }
-            }
-
-            // Vor erster Datenzeile einfügen
-            if (ziel) {
-                tabelle.insertBefore(clickedRow, ziel);
-            }
-        }
-    }
-
-    contextMenu.style.display = "none";
-});
-
 // Option: Runde abziehen
 document.getElementById("rundeAbziehenOption").addEventListener("click", function () {
     if (clickedRow) {
@@ -535,24 +503,20 @@ document.getElementById("rundeAbziehenOption").addEventListener("click", functio
     contextMenu.style.display = "none";
 });
 
-document.getElementById("bahnHinzufuegenOption").addEventListener("click", function () {
-    if (clickedRow) {
-        const bahnenCell = clickedRow.querySelector(".bahnen");
-
-        if (!clickedRow.classList.contains("abwesend")) {
-            let current = parseInt(bahnenCell.textContent);
-            bahnenCell.textContent = current + 1;
-        }
-    }
-    contextMenu.style.display = "none";
-});
-
 document.getElementById("deleteSwimmer").addEventListener("click", function () {
-    if (clickedRow) {
-        if (confirm("Soll diese Nummer entfernt werden?")) {
-            clickedRow.remove();
+    if (clickedDiv) {
+        const nummer = parseInt(clickedDiv.dataset.nummer);
+        if (confirm(`Soll die Nummer ${nummer} entfernt werden?`)) {
+            //schwimmer = schwimmer.filter(s => s.nummer !== nummer);
+            //in Place löschen
+            const index = schwimmer.findIndex(s => s.nummer === nummer);
+            if (index !== -1) {
+                schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
+            }
+            clickedDiv.remove();
         }
     }
+    clickedDiv = null;
     contextMenu.style.display = "none";
 });
 
