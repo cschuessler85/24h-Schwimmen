@@ -161,7 +161,7 @@ td.truncated:hover {
 
 /* Hauptinhalt */
 main {
-  padding: 2rem;
+  padding: 0px 2rem 60px;
 }
 
 section {
