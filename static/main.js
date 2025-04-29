@@ -352,6 +352,14 @@ container.addEventListener('contextmenu', function (event) {
     contextMenu.style.top = event.pageY + "px";
     contextMenu.style.left = event.pageX + "px";
     contextMenu.style.display = "block";
+    // Option nur Schwimmer auf eigenen Bahnen
+    if (schwimmer.some(s =>  !verwaltete_bahnen.includes(s.aufBahn) )) {
+        //Option anzeigen
+        document.getElementById("nurEigene").style.display = "block";
+    } else {
+        //Option ausblenden
+        document.getElementById("nurEigene").style.display = "none";
+    }
 });
 
 // Kontextmenü ausblenden bei Klick außerhalb
@@ -534,6 +542,7 @@ async function fetchAlleSchwimmer() {
 
 // Option: Runde abziehen
 document.getElementById("rundeAbziehenOption").addEventListener("click", function () {
+    //TODO: auf DIV umschreiben
     if (clickedRow) {
         const bahnenCell = clickedRow.querySelector(".bahnen");
         let current = parseInt(bahnenCell.textContent);
@@ -556,6 +565,19 @@ document.getElementById("deleteSwimmer").addEventListener("click", function () {
         }
     }
     clickedDiv = null;
+    contextMenu.style.display = "none";
+});
+
+document.getElementById("nurEigene").addEventListener("click", function () {
+    let index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
+    while (index !== -1) {
+        const nummer = schwimmer[index].nummer;
+        schwimmer.splice(index, 1); //lösche diesen Eintrag
+        //lösche das DIV
+        const div = document.querySelector(`div[data-nummer="${nummer}"]`);
+        div.remove();
+        index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
+    }
     contextMenu.style.display = "none";
 });
 
