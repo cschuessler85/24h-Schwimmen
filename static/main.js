@@ -390,7 +390,7 @@ function addSwipeHandler(div) {
         e.preventDefault();
         div.dataset.swiping = "true";
         startX = e.touches[0].clientX;
-        div.style.transition = ''; // Bewegung ohne Übergang
+        div.style.transition = 'none'; // Bewegung ohne Übergang - folgt dem Finger sofort
     }, { passive: false });
 
     div.addEventListener('touchmove', e => {
@@ -407,11 +407,11 @@ function addSwipeHandler(div) {
             div.style.backgroundColor = '';
             swiped = false;
         }
-    }, { passive: false }); // wichtig!
+    }, { passive: false }); // wichtig ?!
 
     div.addEventListener('touchend', () => {
         delete div.dataset.swiping;
-        div.style.transition = 'transform 0.2s ease';
+        div.style.transition = 'transform 0.2s ease'; //Springt zurück
         if (swiped) {
             // entferne das Element (du hast das bereits implementiert)
             const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
