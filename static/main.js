@@ -387,12 +387,14 @@ function addSwipeHandler(div) {
     //console.log("Threshold: ",threshold);
 
     div.addEventListener('touchstart', e => {
+        e.preventDefault();
         div.dataset.swiping = "true";
         startX = e.touches[0].clientX;
         div.style.transition = ''; // Bewegung ohne Übergang
-    });
+    }, { passive: false });
 
     div.addEventListener('touchmove', e => {
+        e.preventDefault();
         currentX = e.touches[0].clientX;
         const deltaX = currentX - startX;
         div.style.transform = `translateX(${deltaX}px)`;
@@ -405,7 +407,7 @@ function addSwipeHandler(div) {
             div.style.backgroundColor = '';
             swiped = false;
         }
-    });
+    }, { passive: false }); // wichtig!
 
     div.addEventListener('touchend', () => {
         delete div.dataset.swiping;

@@ -121,13 +121,17 @@ td.truncated:hover {
 
 /* DIV-Container */
 #container {
-  align-self: center;
-  display: flex;
+  overflow-x: hidden; /* Damit beim swipen keine Veränderung entsteht*/
+  width: 100vw;        /* 100% der Viewport-Breite */
+  box-sizing: border-box;
+    display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: center; /*center;*/
 }
 .schwimmer {
+  touch-action: pan-y; /* 'pan-y' oder 'none', je nach Bedarf */
+  will-change: transform; 
   flex: 0 1 200px;
   border: 1px solid black;
   padding: 1rem;
@@ -161,7 +165,7 @@ td.truncated:hover {
 
 /* Hauptinhalt */
 main {
-  padding: 0px 2rem 60px;
+  padding: 0px 0px 60px;
 }
 
 section {
