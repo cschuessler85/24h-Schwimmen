@@ -377,6 +377,53 @@ document.addEventListener("contextmenu", function (e) {
     }
 });
 
+function addSwipeHandler(div) {
+    let startX = 0;
+    let currentX = 0;
+    let swiped = false;
+
+    const threshold = div.offsetWidth / 2; // Funktioniert nur, wenn das div schon gerendert ist
+    //const threshold = div.getBoundingClientRect().width; //Alternative
+    //console.log("Threshold: ",threshold);
+
+    div.addEventListener('touchstart', e => {
+        div.dataset.swiping = "true";
+        startX = e.touches[0].clientX;
+        div.style.transition = ''; // Bewegung ohne Übergang
+    });
+
+    div.addEventListener('touchmove', e => {
+        currentX = e.touches[0].clientX;
+        const deltaX = currentX - startX;
+        div.style.transform = `translateX(${deltaX}px)`;
+
+        // Wenn mehr als die Hälfte verschoben → Farbe ändern
+        if (Math.abs(deltaX) > threshold) {
+            div.style.backgroundColor = 'red';
+            swiped = true;
+        } else {
+            div.style.backgroundColor = '';
+            swiped = false;
+        }
+    });
+
+    div.addEventListener('touchend', () => {
+        delete div.dataset.swiping;
+        div.style.transition = 'transform 0.2s ease';
+        if (swiped) {
+            // entferne das Element (du hast das bereits implementiert)
+            const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
+            if (index !== -1) {
+                schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
+            }
+            div.remove();
+        } else {
+            // zurücksetzen
+            div.style.transform = 'translateX(0)';
+            div.style.backgroundColor = '';
+        }
+    });
+}
 
 
 function render() {
@@ -401,11 +448,12 @@ function render() {
             div.className = "schwimmer";
             div.dataset.nummer = s.nummer;
             container.appendChild(div);
+            addSwipeHandler(div);
         }
 
         // Inhalt (fast) immer aktualisieren
         div.dataset.prio = s.prio ?? 0;
-        if (!fadeControllers.has(div.dataset.nummer)) {
+        if (!fadeControllers.has(div.dataset.nummer) && div.dataset.swiping !== "true") {
             div.innerHTML = `
                 <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
                 <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
