@@ -382,12 +382,13 @@ function addSwipeHandler(div) {
     let currentX = 0;
     let swiped = false;
 
-    const threshold = div.offsetWidth / 2; // Funktioniert nur, wenn das div schon gerendert ist
+    const threshold = div.offsetWidth / 4; // Funktioniert nur, wenn das div schon gerendert ist
     //const threshold = div.getBoundingClientRect().width; //Alternative
     //console.log("Threshold: ",threshold);
+    const maxmovedist = 1.5*threshold;
 
     div.addEventListener('touchstart', e => {
-        e.preventDefault();
+        //e.preventDefault(); /* dann geht kein Klicken mehr */
         div.dataset.swiping = "true";
         startX = e.touches[0].clientX;
         div.style.transition = 'none'; // Bewegung ohne Übergang - folgt dem Finger sofort
@@ -396,7 +397,8 @@ function addSwipeHandler(div) {
     div.addEventListener('touchmove', e => {
         e.preventDefault();
         currentX = e.touches[0].clientX;
-        const deltaX = currentX - startX;
+        const deltaX = Math.max(-maxmovedist,Math.min(maxmovedist, currentX - startX));
+
         div.style.transform = `translateX(${deltaX}px)`;
 
         // Wenn mehr als die Hälfte verschoben → Farbe ändern
