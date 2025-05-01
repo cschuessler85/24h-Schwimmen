@@ -183,6 +183,7 @@ def init_db():
             bahnanzahl INTEGER,
             strecke INTEGER,
             auf_bahn INTEGER,
+            avg_roundtime INTEGER, 
             aktiv BOOLEAN,
             FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id),
             CONSTRAINT unique_schwimmer UNIQUE (nummer, erstellt_von_client_id)
@@ -253,6 +254,7 @@ Funktionen zur Verwaltung von Schwimmern:
 - Schwimmer erstellen
 - Schwimmer suchen
 - Schwimmer aktualisieren
+- Schwimmer Bahnanzahl ändern
 """
 
 # Sucht einen Schwimmer anhand seines Namens
@@ -262,7 +264,7 @@ def finde_schwimmer(name):
     """
     query = "SELECT * FROM schwimmer WHERE name = ?"
     params = (name,)
-    return db.fetch_one(query, params)
+    return db.fetchone(query, params)
 
 
 # Liest einen Schwimmer anhand seiner ID aus der Datenbank
@@ -270,9 +272,9 @@ def lies_schwimmer(schwimmer_id):
     """
     Liest einen Schwimmer anhand seiner ID aus der Datenbank.
     """
-    query = "SELECT * FROM schwimmer WHERE id = ?"
+    query = "SELECT * FROM schwimmer WHERE nummer = ?"
     params = (schwimmer_id,)
-    return db.fetch_one(query, params)
+    return db.fetchone(query, params)
 
 
 # Aktualisiert Felder eines Schwimmers anhand der ID
@@ -289,22 +291,48 @@ def update_schwimmer(schwimmer_id, **kwargs):
     # Baut dynamisch das SET-Statement für SQL, z. B. "bahnanzahl=?, aktiv=?"
     keys = ', '.join([f"{k}=?" for k in kwargs])
     values = list(kwargs.values()) + [schwimmer_id]
-    query = f"UPDATE schwimmer SET {keys} WHERE id = ?"
-    db.execute_query(query, values)
+    query = f"UPDATE schwimmer SET {keys} WHERE nummer = ?"
+    db.execute(query, values)
 
 # Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück
-def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv):
+def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv):
     """
     Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück.
     """
     query = """
-        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """
-    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
+    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
     return db.execute(query, params)
 
-
+def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
+    """
+    Ändert die Bahnanzahl eines Schwimmers. 
+    Falls der Schwimmer nicht existiert, wird er mit Standardwerten angelegt.
+    """
+    schwimmer = lies_schwimmer(nummer)
+    logging.debug("Schwimmer Ändern")
+    print(schwimmer if (schwimmer) else f"Schwimmer {nummer} Nicht gefunden")
+    
+    if schwimmer is None:
+        # Schwimmer existiert nicht → neu anlegen
+        erstelle_schwimmer(
+            nummer=nummer,
+            erstellt_von_client_id=client_id,
+            name=f"Schwimmer {nummer}",
+            bahnanzahl=max(anzahl, 0),
+            strecke=0,
+            auf_bahn=bahnnr,
+            avg_roundtime=0,
+            aktiv=1
+        )
+    else:
+        # Schwimmer existiert → Bahnanzahl ändern
+        neue_bahnanzahl = (schwimmer["bahnanzahl"] or 0) + anzahl
+        if neue_bahnanzahl < 0:
+            neue_bahnanzahl = 0
+        update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)
 
 
 
@@ -346,7 +374,7 @@ def update_client_aktion(client_id):
     """
     query = 'UPDATE clients SET zeitpunkt_letzte_aktion = ? WHERE id = ?'
     params = (datetime.now().isoformat(), client_id)
-    db.execute_query(query, params)
+    db.execute(query, params)
 
 #========================
 #    Abschnitt: Benutzer
@@ -459,10 +487,11 @@ if __name__ == "__main__":
 
     # Beispiel: Schwimmer hinzufügen und abfragen
     print("\nHinzufügen eines neuen Schwimmers...")
-    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max Mustermann", 3, 400, 1, True)
+    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max Mustermann", 3, 400, 1, 0, True)
+    aendere_bahnanzahl_um(123,1,7)
     schwimmer = liste_tabelle('schwimmer')
     print(f"Schwimmer in der Datenbank: {schwimmer}")
-
+    
     # Beispiel: Action hinzufügen und abfragen (falls du eine action-tabelle hast)
     print("\nHinzufügen einer neuen Action...")
     erstelle_action(1, 1,datetime.now().strftime('%Y-%m-%d %H:%M:%S'),  'login', 'param1')

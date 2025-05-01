@@ -119,10 +119,53 @@ td.truncated:hover {
   white-space: nowrap; /* verhindert Zeilenumbruch zwischen Label und Input */
 }
 
+/* DIV-Container */
+#container {
+  overflow-x: hidden; /* Damit beim swipen keine Veränderung entsteht*/
+  width: 100vw;        /* 100% der Viewport-Breite */
+  box-sizing: border-box;
+    display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center; /*center;*/
+}
+.schwimmer {
+  touch-action: pan-y; /* 'pan-y' oder 'none', je nach Bedarf */
+  will-change: transform; 
+  flex: 0 1 200px;
+  border: 1px solid black;
+  padding: 1rem;
+  background-color: lightblue;
+  text-align: center;
+  transition: all 0.5s;
+}
+.schwimmer .nummer {
+  font-size: 2rem;
+}
+
+.schwimmer .bahnen {
+  font-size: 1.2rem;
+}
+
+.schwimmer .name {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.schwimmer .prio {
+  display: none;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  color: gray;
+}
+
+.schwimmer:hover .prio {
+  display: inline;
+}
 
 /* Hauptinhalt */
 main {
-  padding: 2rem;
+  padding: 0px 0px 60px;
 }
 
 section {

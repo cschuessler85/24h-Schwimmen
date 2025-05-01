@@ -2,6 +2,7 @@ let formIsDirty = true; // Flag, das anzeigt, ob Daten geändert wurden
 // Beim Verlassen der Seite warnen, falls Änderungen vorhanden sind
 window.addEventListener('beforeunload', function (event) {
     if (formIsDirty) {
+        event.preventDefault();
         // Zeigt eine Bestätigungsmeldung an, wenn der Benutzer versucht, die Seite zu verlassen
         const message = "Es gibt ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?";
         //event.returnValue = message;  // Laut Chat-GPT Standard für viele Browser
@@ -16,7 +17,23 @@ if (isBahnenInputValid(input.value)) {
     //console.log("Verwaltete Bahnen", verwaltete_bahnen);
 }
 
-document.getElementById('schwimmerHinzufuegen').addEventListener('click', schwimmerHinzufuegen);
+// Daten schwimmer und actions
+let schwimmer = [
+    /*    { nummer: 8, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 9, name: "Anna", bahnen: 5, prio: 10 },
+        { nummer: 10, name: "Anna", bahnen: 5, prio: 10 },
+        { nummer: 11, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 12, name: "Anna", bahnen: 5, prio: 10 },
+        { nummer: 13, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 14, name: "Anna", bahnen: 5, prio: 10 },
+        { nummer: 15, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 16, name: "Ben", bahnen: 3, prio: 15 },
+        { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },*/
+];
+let actions = [];
+let alleSchwimmer = []; // Beinhaltet die Schwimmer in der Datenbank
+
+document.getElementById('schwimmerHinzufuegen').addEventListener('click', promptSchwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
 
 function search(number) {
@@ -33,71 +50,82 @@ function search(number) {
     }
 }
 
-function schwimmerHinzufuegen() {
+function promptSchwimmerHinzufuegen() {
     var nummer = prompt("Nummer:");
 
     if (!(nummer !== null && nummer.trim() !== "" && !isNaN(nummer))) {
         return;
     }
 
-    if (search(nummer)) {
-        alert("Schwimmer*in existiert bereits!");
-        return;
-    }
-
-    // Neue Zeile erstellen
-    var neueZeile = document.createElement('tr');
-
-    // Zellen in der neuen Zeile erstellen
-    var nummerZelle = document.createElement('td');
-    nummerZelle.className = 'nummer';
-
-    var bahnenZelle = document.createElement('td');
-    bahnenZelle.className = 'bahnen';
-
-    // Text in die Zellen einfügen
-    nummerZelle.innerText = nummer;
-    bahnenZelle.innerText = 0;
-
-    // Zellen zur neuen Zeile hinzufügen
-    neueZeile.appendChild(nummerZelle);
-    neueZeile.appendChild(bahnenZelle);
-
-    // Die neue Zeile in die Tabelle einfügen
-    var tabelle = document.getElementById('schwimmer');
-    tabelle.appendChild(neueZeile);
+    schwimmerHinzufuegen(nummer);
 }
 
 
-function tableToJSON(tableId) {
-    const table = document.getElementById(tableId);
-    const rows = table.querySelectorAll("tr");
+function schwimmerHinzufuegen(nummer) {
+    console.log("Schwimmer Nr. ", nummer, "wird gesucht...");
 
-    const headers = Array.from(rows[0].querySelectorAll("th")).map(th =>
-        th.getAttribute("data-key")
-    );
+    // Der gesuchte Schwimmer soll auf jeden Fall oben in die Liste
+    const maxPrio = Math.max(...schwimmer.map(s => s.prio));
 
-    const jsonData = [];
-
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const cells = row.querySelectorAll("td");
-        const rowData = {};
-
-        cells.forEach((cell, index) => {
-            const key = headers[index];
-            rowData[key] = cell.textContent.trim();
-        });
-
-        // HIER die Abwesenheit ergänzen
-        rowData["Abwesend"] = row.classList.contains("abwesend");
-
-        if (Object.keys(rowData).length > 0) {
-            jsonData.push(rowData);
+    //Wenn der schwimmer schon in der Liste ist schwimmer ist, wird seine Priorität auf das aktuelle Maximum gesetzt
+    const aktiver = schwimmer.find(s => s.nummer == nummer);
+    if (aktiver) {
+        console.log("... aktiver Schwimmer");
+        // prio auf max
+        aktiver.prio = maxPrio + 1; ///Wenn der schwimmer in der Liste alleSchwimmer ist, wird er in die Liste schwimmer übernommen ...
+    } else {
+        const bekannter = alleSchwimmer.find(s => s.nummer == nummer);
+        if (bekannter) {
+            console.log("Schwimmer Nummer war schon vorhanden");
+            const scopy = {
+                nummer: parseInt(nummer),
+                name: bekannter.name,
+                bahnen: bekannter.bahnanzahl,
+                aktiv: true,
+                prio: maxPrio + 1
+            };
+            if (!bekannter.auf_bahn || !bekannter.auf_bahn in verwaltete_bahnen) {
+                scopy.aufBahn = verwaltete_bahnen[0];
+            } else {
+                scopy.aufBahn = bekannter.auf_bahn;
+            }
+            console.log("SchwimmerKopie", scopy);
+            schwimmer.push(scopy);
+        } else { //Ansonsten wird er in der Liste Schwimmer neu erzeugt
+            const neuer = {
+                nummer: parseInt(nummer),
+                name: `Schwimmer ${nummer}`,
+                bahnen: 0,
+                aufBahn: verwaltete_bahnen[0],
+                aktiv: true,
+                prio: maxPrio + 1
+            };
+            schwimmer.push(neuer);
         }
     }
+}
 
-    return jsonData;
+function fillSchwimmerAusMeinenBahnen() {
+    console.log("AlleSchwimmer", alleSchwimmer);
+    console.log("verwaltete_bahnen", verwaltete_bahnen);
+    const meineSchwimmer = alleSchwimmer.filter(s => verwaltete_bahnen.includes(s.auf_bahn));
+    console.log(meineSchwimmer);
+    // Alle Schwimmer die davon noch nicht in schwimmer sind einfügen
+    meineSchwimmer.forEach(s_neu => {
+        console.log("Prüfe: ", s_neu);
+        if (!schwimmer.some(s => s.nummer == s_neu.nummer)) {
+            const scopy = {
+                nummer: parseInt(s_neu.nummer),
+                name: s_neu.name,
+                bahnen: s_neu.bahnanzahl,
+                aktiv: true,
+                aufBahn: s_neu.auf_bahn,
+                prio: 0 //hinten anfügen
+            };
+            console.log("SchwimmerKopie", scopy);
+            schwimmer.push(scopy);
+        }
+    });
 }
 
 function showStatusMessage(text, isSuccess = true, duration = 3000) {
@@ -153,7 +181,14 @@ function downloadJSON() {
 }
 
 function isBahnenInputValid(value) {
-    return /^(\d+(,\d+)*)?$/.test(value.trim());
+    // Prüft, ob der Eingabewert eine durch Kommas getrennte Liste von Zahlen ist,
+    // z. B. "3", "1,2", "10,20,30", aber kein leerer String.
+    // Regulärer Ausdruck:
+    // ^         → Anfang des Strings
+    // \d+       → mindestens eine Ziffer
+    // (,\d+)*   → optional beliebig viele Gruppen aus Komma gefolgt von mindestens einer Ziffer
+    // $         → Ende des Strings
+    return /^(\d+(,\d+)*)$/.test(value.trim());
 }
 
 function checkBahnenInput() {
@@ -171,7 +206,8 @@ function parseBahnenInput() {
         const zahlen = input.value.split(",").map(s => parseInt(s.trim(), 10));
         console.log("Gültige Bahnnummern:", zahlen);
         verwaltete_bahnen = zahlen;
-        showStatusMessage("Bahnen geändert",true,1000);
+        showStatusMessage("Bahnen geändert", true, 1000);
+        fillSchwimmerAusMeinenBahnen();
     } else { //Fehlerhafte Bahnnummern
         showStatusMessage("Ungültiges Format! Bitte nur Zahlen, getrennt durch Kommas.", false);
         input.value = verwaltete_bahnen.join(',');
@@ -182,34 +218,147 @@ function parseBahnenInput() {
 const table = document.getElementById("schwimmer");
 const contextMenu = document.getElementById("contextMenu");
 let clickedRow = null;
+let clickedDiv = null; //Wenn auf ein Div geklickt wird - merken
 
-// Bahn hinzufügen bei Linksklick auf Nummer
-table.addEventListener("click", function (event) {
-    if (event.target.classList.contains("nummer")) {
-        const schwimmer_nr = event.target.innerText;
-        console.log("schwimmer_nr", schwimmer_nr);
-        const row = event.target.parentElement;
-        const bahnenCell = row.querySelector(".bahnen");
+// **********************************************************
+//   Behandlung und Verarbeitung der DIV-Darstellung
+// **********************************************************
+const container = document.getElementById('container');
 
-        if (!row.classList.contains("abwesend")) {
-            let current = parseInt(bahnenCell.textContent);
-            bahnenCell.textContent = current + 1;
+// Map für laufende Fade-Operationen - soll auf ein DIV nach einem Klick angewandt werden
+const fadeControllers = new Map();
+
+// Fading-Funktion blendet ein Div langsam aus
+async function fadeOut(div, duration = 3000) {
+    return new Promise((resolve, reject) => {
+        let opacity = 1;
+        const interval = 50;
+        const decrement = interval / duration;
+
+        const controller = fadeControllers.get(div.dataset.nummer);
+
+        if (!controller || controller.signal.aborted) {
+            return reject('Fade abgebrochen');
         }
+
+        const fade = setInterval(() => {
+            if (!controller || controller.signal.aborted) {
+                clearInterval(fade);
+                div.style.opacity = 1;
+                return reject('Fade abgebrochen');
+            }
+            opacity -= decrement;
+            div.style.opacity = opacity;
+            if (opacity <= 0) {
+                clearInterval(fade);
+                resolve();
+            }
+        }, interval);
+    });
+}
+
+
+// Angezeigte Bahnen in einem Schwimmer-Div verändern
+function aendereBahnenInDiv(div, anz) {
+    // Finde das span mit der Klasse "bahnen"
+    const bahnenSpan = div.querySelector('.bahnen');
+    // Extrahiere die Zahl aus dem Textinhalt des span
+    let bahnen = parseInt(bahnenSpan.textContent.match(/\d+/)[0], 10);
+    // Ändere um Anzahl
+    bahnen += anz;
+    // Setze die neue Zahl im span
+    bahnenSpan.textContent = `(${bahnen})`;
+}
+
+// Click auf ein Element in dem Container mit den Schimmern
+container.addEventListener('click', async (event) => {
+    const clicked_schwimmer = event.target.closest('.schwimmer');
+    console.log("Klick in Container", clicked_schwimmer);
+
+    if (!clicked_schwimmer || !container.contains(clicked_schwimmer)) {
+        return; // Klick war außerhalb eines Box-Elements
     }
+
+    const nummer = clicked_schwimmer.dataset.nummer; // oder eine andere Info
+    clicked_schwimmer.style.backgroundColor = "aqua";
+    console.log(`Schwimmer ${nummer} wurde geklickt.`);
+    // Falls schon ein Fade läuft: abbrechen
+    if (fadeControllers.has(nummer)) {
+        fadeControllers.get(nummer).abort();
+        fadeControllers.delete(nummer);
+        clicked_schwimmer.style.opacity = 1; // sofort wieder sichtbar
+        //Angezeigte Bahn wieder um eins Verringern
+        aendereBahnenInDiv(clicked_schwimmer, -1);
+        clicked_schwimmer.style.backgroundColor = "";
+        //console.log(`Fade von Div ${nummer} abgebrochen.`);
+        return;
+    }
+
+    // Angezeigte Bahn um eins erhöhen
+    aendereBahnenInDiv(clicked_schwimmer, 1);
+
+    // Neuen Controller speichern
+    const controller = new AbortController();
+    fadeControllers.set(nummer, controller);
+
+    try {
+        await fadeOut(clicked_schwimmer);
+        if (fadeControllers.has(nummer)) {
+            fadeControllers.delete(nummer);
+            console.log(`Aktion nach Fade von Div ${nummer} ausführen.`);
+            // Hier deine eigentliche Klick-Aktion!
+            const s_data = schwimmer.find(s => s.nummer == nummer);
+            console.log("s_data", s_data);
+            if (s_data) {
+                console.log("Schwimmer: Bahnen erhöhen und Prio auf 0 setzen", s_data);
+                if (!s_data.aufBahn || !verwaltete_bahnen.includes(s_data.aufBahn)) {
+                    console.log(`Bahn des Schwimmers ${nummer} auf ${verwaltete_bahnen[0]} gesetzt`);
+                    s_data.aufBahn = verwaltete_bahnen[0];
+                }
+                s_data.prio = 0;
+                s_data.bahnen += 1;
+                //das Div löschen - wird beim rendern wieder hinten angehangen
+                clicked_schwimmer.remove();
+                render();
+                actions.push({
+                    kommando: "ADD",
+                    parameter: [nummer, 1, s_data.aufBahn],
+                    timestamp: new Date().toISOString(),
+                    transmitted: false
+                });
+
+            }
+        }
+    } catch (e) {
+        console.log(e);
+    }
+
+
 });
 
-// Kontextmenü bei Rechtsklick auf Nummer
-table.addEventListener("contextmenu", function (event) {
-    if (event.target.classList.contains("nummer")) {
-        event.preventDefault(); // Standard-Rechtsklick unterdrücken
+// Kontextmenü bei Rechtsklick auf Schwimmer div
+container.addEventListener('contextmenu', function (event) {
+    const clicked_schwimmer = event.target.closest('.schwimmer');
+    console.log("RechtsKlick in Container", clicked_schwimmer);
 
-        clickedRow = event.target.parentElement;
+    if (!clicked_schwimmer || !container.contains(clicked_schwimmer)) {
+        return; // Klick war außerhalb eines Box-Elements
+    }
 
-        // Menü an Mausposition anzeigen
-        contextMenu.style.top = event.pageY + "px";
-        contextMenu.style.left = event.pageX + "px";
-        contextMenu.style.display = "block";
-        document.getElementById("bahnHinzufuegenOption").style.display = "none";
+    event.preventDefault(); // Standard-Rechtsklick unterdrücken
+    clickedDiv = clicked_schwimmer;
+
+    // Menü an Mausposition anzeigen
+    contextMenu.style.top = event.pageY + "px";
+    contextMenu.style.left = event.pageX + "px";
+    contextMenu.style.display = "block";
+    // Option nur Schwimmer auf eigenen Bahnen
+    if (schwimmer.some(s =>  !verwaltete_bahnen.includes(s.aufBahn) )) {
+        //Option anzeigen
+        document.getElementById("nurEigene").style.display = "block";
+    } else {
+        //Option ausblenden
+        document.getElementById("nurEigene").style.display = "none";
     }
 });
 
@@ -219,91 +368,233 @@ document.addEventListener("click", function (e) {
         contextMenu.style.display = "none";
     }
 });
+document.addEventListener("contextmenu", function (e) {
+    const clicked_schwimmer = e.target.closest('.schwimmer');
+    console.log("RechtsKlick in Container", clicked_schwimmer);
 
-function send() {
-    const jsonDaten = tableToJSON("schwimmer");
-    const msg = JSON.stringify(jsonDaten);
+    if (!clicked_schwimmer || !container.contains(clicked_schwimmer)) {
+        contextMenu.style.display = "none";
+    }
+});
 
-    fetch("/senden", {
-        method: "POST",
-        body: msg,
-        headers: {
-            "Content-Type": "application/json"
+function addSwipeHandler(div) {
+    let startX = 0;
+    let currentX = 0;
+    let swiped = false;
+
+    const threshold = div.offsetWidth / 4; // Funktioniert nur, wenn das div schon gerendert ist
+    //const threshold = div.getBoundingClientRect().width; //Alternative
+    //console.log("Threshold: ",threshold);
+    const maxmovedist = 1.5*threshold;
+
+    div.addEventListener('touchstart', e => {
+        //e.preventDefault(); /* dann geht kein Klicken mehr */
+        div.dataset.swiping = "true";
+        startX = e.touches[0].clientX;
+        div.style.transition = 'none'; // Bewegung ohne Übergang - folgt dem Finger sofort
+    }, { passive: false });
+
+    div.addEventListener('touchmove', e => {
+        e.preventDefault();
+        currentX = e.touches[0].clientX;
+        const deltaX = Math.max(-maxmovedist,Math.min(maxmovedist, currentX - startX));
+
+        div.style.transform = `translateX(${deltaX}px)`;
+
+        // Wenn mehr als die Hälfte verschoben → Farbe ändern
+        if (Math.abs(deltaX) > threshold) {
+            div.style.backgroundColor = 'red';
+            swiped = true;
+        } else {
+            div.style.backgroundColor = '';
+            swiped = false;
         }
-    })
-        .then(response => response.text())
-        .then(text => {
-            document.getElementById("antwort").innerText = text;
-        });
+    }, { passive: false }); // wichtig ?!
 
-    fetch("/daten")
-        .then(res => res.json())
-        .then(daten => {
-            const table = document.getElementById("schwimmer");
-            // Alte Zeilen löschen (außer Header)
-            const rows = table.querySelectorAll("tr:not(:first-child)");
-            rows.forEach(row => row.remove());
-
-            daten.sort((a, b) => {
-                return (a.Abwesend === b.Abwesend) ? 0 : a.Abwesend ? 1 : -1;
-            });
-
-            // Neue Zeilen einfügen
-            daten.forEach(schwimmer => {
-                const tr = document.createElement("tr");
-
-                if (schwimmer.Abwesend) {
-                    tr.classList.add("abwesend");
-                    table.appendChild(tr);
-                }
-                const tdNummer = document.createElement("td");
-                tdNummer.className = "nummer";
-                tdNummer.textContent = schwimmer.Nummer;
-
-                const tdBahnen = document.createElement("td");
-                tdBahnen.className = "bahnen";
-                tdBahnen.textContent = schwimmer.Bahnen;
-
-                tr.appendChild(tdNummer);
-                tr.appendChild(tdBahnen);
-
-                table.appendChild(tr);
-            });
-        });
+    div.addEventListener('touchend', () => {
+        delete div.dataset.swiping;
+        div.style.transition = 'transform 0.2s ease'; //Springt zurück
+        if (swiped) {
+            // entferne das Element (du hast das bereits implementiert)
+            const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
+            if (index !== -1) {
+                schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
+            }
+            div.remove();
+        } else {
+            // zurücksetzen
+            div.style.transform = 'translateX(0)';
+            div.style.backgroundColor = '';
+        }
+    });
 }
 
-document.getElementById("abwesendOption").addEventListener("click", function () {
-    if (clickedRow) {
-        clickedRow.classList.toggle("abwesend");
 
-        const tabelle = clickedRow.parentNode;
+function render() {
+    const container = document.getElementById("container");
 
-        if (clickedRow.classList.contains("abwesend")) {
-            tabelle.appendChild(clickedRow); // Nach unten
-        } else {
-            // Suche erste echte Datenzeile (also: erste <tr>, die NICHT die header-Zeile ist)
-            const zeilen = tabelle.querySelectorAll("tr");
-            let ziel = null;
+    // Aktuelle Divs nach Nummer erfassen
+    const existingDivs = new Map();
+    container.querySelectorAll(".schwimmer").forEach(div => {
+        existingDivs.set(Number(div.dataset.nummer), div);
+    });
 
-            for (let i = 0; i < zeilen.length; i++) {
-                if (zeilen[i] !== clickedRow && !zeilen[i].querySelector("th")) {
-                    ziel = zeilen[i];
-                    break;
-                }
-            }
+    // Schwimmer nach Prio sortieren
+    const sortedSchwimmer = [...schwimmer].sort((a, b) => b.prio - a.prio);
 
-            // Vor erster Datenzeile einfügen
-            if (ziel) {
-                tabelle.insertBefore(clickedRow, ziel);
-            }
+    // Divs neu anordnen
+    sortedSchwimmer.forEach((s) => {
+        let div = existingDivs.get(s.nummer);
+
+        if (!div) {
+            // Div existiert noch nicht → neu erstellen
+            div = document.createElement("div");
+            div.className = "schwimmer";
+            div.dataset.nummer = s.nummer;
+            container.appendChild(div);
+            addSwipeHandler(div);
         }
-    }
 
-    contextMenu.style.display = "none";
-});
+        // Inhalt (fast) immer aktualisieren
+        div.dataset.prio = s.prio ?? 0;
+        if (!fadeControllers.has(div.dataset.nummer) && div.dataset.swiping !== "true") {
+            div.innerHTML = `
+                <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
+                <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
+            `;
+            //Wenn Bahn nicht in verwaltete Bahnen Hintergrund ändern
+            if (!verwaltete_bahnen.includes(s.aufBahn)) {
+                div.style.backgroundColor = "lightgreen";
+            } else {
+                div.style.removeProperty("background-color");
+            }
+        } else {
+            console.log("Hier wird gefadet", s.nummer);
+        }
+
+        // Div richtig platzieren
+        container.appendChild(div); // appendChild verschiebt div, wenn es schon existiert
+    });
+}
+
+
+// Sekündliches auffrischen der darstellung
+const interval = 1000; // Auffrischung in ms
+setInterval(() => {
+    schwimmer.forEach((s) => (s.prio += interval / 1000)); // Prio um 1 erhöhen
+    render();
+}, interval);
+
+
+
+// ----------------------------------------------------------
+//  ENDE  Behandlung und Verarbeitung der DIV-Darstellung
+// ----------------------------------------------------------
+
+// **********************************************************
+//  DATENAUSTAUSCH mit dem Server
+// **********************************************************
+let isFetching = false;
+let server_verbunden = true;
+
+async function transmitActions() {
+    if (isFetching) return;
+    const pending = actions.filter(a => !a.transmitted);
+    if (pending.length === 0) return;
+
+    try {
+        console.log("transmit Action");
+        isFetching = true;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 Sekunden Timeout
+
+        const response = await fetch('/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pending),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            pending.forEach(a => a.transmitted = true);
+            updateServerStatus(true);
+        } else {
+            updateServerStatus(false);
+        }
+    } catch (error) {
+        console.log("Error on transmit", error);
+        updateServerStatus(false);
+    } finally {
+        isFetching = false;
+    }
+}
+
+function updateServerStatus(neu) {
+    console.log("updateServerStatus - alt", server_verbunden, "neu", neu);
+    if (server_verbunden != neu) { //Server status hat sich geändert
+        server_verbunden = neu;
+        const statusspan = document.getElementById('serverStatus');
+        if (server_verbunden) {
+            statusspan.innerHTML = `
+            <span style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px">
+            </span> Verbunden
+            `;
+            showStatusMessage("Server wieder verbunden", true);
+        } else {
+            statusspan.innerHTML = `
+            <span style="height: 10px; width: 10px; background-color: red; border-radius: 50%; display: inline-block; margin-right: 5px">
+            </span> Nicht Verbunden
+            `;
+            showStatusMessage("Serververbindung verloren", false);
+        }
+
+    }
+}
+
+/**
+ * Holt die Daten aller auf dem Server gespeicherten Schwimmer und legt sie in 
+ * alleSchwimmer ab
+ * 
+ * @returns {void}
+ */
+async function fetchAlleSchwimmer() {
+    try {
+        console.log("Schwimmer holen");
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 Sekunden Timeout
+
+        const response = await fetch('/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([{ 'kommando': "GET", 'parameter': [], 'timestamp': new Date().toISOString() }]),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            alleSchwimmer = await response.json();
+            console.log(alleSchwimmer);
+            updateServerStatus(true);
+        } else {
+            updateServerStatus(false);
+        }
+    } catch (error) {
+        console.log("Error on fetchAlleSchwimmer", error);
+        updateServerStatus(false);
+    } finally {
+    }
+}
+
+// ----------------------------------------------------------
+//  ENDE DATENAUSTAUSCH mit dem Server
+// ----------------------------------------------------------
 
 // Option: Runde abziehen
 document.getElementById("rundeAbziehenOption").addEventListener("click", function () {
+    //TODO: auf DIV umschreiben
     if (clickedRow) {
         const bahnenCell = clickedRow.querySelector(".bahnen");
         let current = parseInt(bahnenCell.textContent);
@@ -312,26 +603,45 @@ document.getElementById("rundeAbziehenOption").addEventListener("click", functio
     contextMenu.style.display = "none";
 });
 
-document.getElementById("bahnHinzufuegenOption").addEventListener("click", function () {
-    if (clickedRow) {
-        const bahnenCell = clickedRow.querySelector(".bahnen");
-
-        if (!clickedRow.classList.contains("abwesend")) {
-            let current = parseInt(bahnenCell.textContent);
-            bahnenCell.textContent = current + 1;
-        }
-    }
-    contextMenu.style.display = "none";
-});
-
 document.getElementById("deleteSwimmer").addEventListener("click", function () {
-    if (clickedRow) {
-        if (confirm("Soll diese Nummer entfernt werden?")) {
-            clickedRow.remove();
+    if (clickedDiv) {
+        const nummer = parseInt(clickedDiv.dataset.nummer);
+        if (confirm(`Soll die Nummer ${nummer} entfernt werden?`)) {
+            //schwimmer = schwimmer.filter(s => s.nummer !== nummer);
+            //in Place löschen
+            const index = schwimmer.findIndex(s => s.nummer === nummer);
+            if (index !== -1) {
+                schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
+            }
+            clickedDiv.remove();
         }
+    }
+    clickedDiv = null;
+    contextMenu.style.display = "none";
+});
+
+document.getElementById("nurEigene").addEventListener("click", function () {
+    let index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
+    while (index !== -1) {
+        const nummer = schwimmer[index].nummer;
+        schwimmer.splice(index, 1); //lösche diesen Eintrag
+        //lösche das DIV
+        const div = document.querySelector(`div[data-nummer="${nummer}"]`);
+        div.remove();
+        index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
     }
     contextMenu.style.display = "none";
 });
 
-setInterval(send, 50000);
-send()
+console.log("Initial commands - Grundlagen einrichten");
+//alle Zehn Sekunden die Daten zum Server schicken
+setInterval(transmitActions, 10000);
+
+// zu Beginn Daten vom Server holen
+fetchAlleSchwimmer().then(() => {
+    // und  nach erhalt die der verwalteten Bahnen eintragen
+    fillSchwimmerAusMeinenBahnen();
+    // und einmal zeichnen
+    render();
+});
+

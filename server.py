@@ -148,8 +148,16 @@ def admin():
             return jsonify(db.liste_tabelle('benutzer'))
         elif action == 'get_table_clients':
             logging.info("Tabelle clients wird abgerufen")
-            print(db.liste_tabelle('clients'))
+            #print(db.liste_tabelle('clients'))
             return jsonify(db.liste_tabelle('clients'))
+        elif action == 'get_table_swimmer':
+            logging.info("Tabelle swimmer wird abgerufen")
+            #print(db.liste_tabelle('schwimmer'))
+            return jsonify(db.liste_tabelle('schwimmer'))
+        elif action == 'get_table_actions':
+            logging.info("Tabelle actions wird abgerufen")
+            #print(db.liste_tabelle('schwimmer'))
+            return jsonify(db.liste_tabelle('actions'))
         # usw.
 
     params = {
@@ -210,10 +218,50 @@ def senden():
     addVersion(bestehende)
     return "Daten empfangen", 200
 
+
 @app.route("/action", methods=["POST"])
 def action():
-    print("Clientdaten:", request.get_data(as_text=True))
-    return "OK", 200
+    try:
+        clientid = session.get("clientID",-1)
+        user = session.get("user","unknown")
+        actions = request.get_json()
+        print("Empfangene Actions:", actions)
+
+        results = []
+
+        for action in actions:
+            kommando = action.get("kommando")
+            parameter = action.get("parameter")
+            timestamp = action.get("timestamp")
+
+            
+            if kommando == "ADD":
+                # ADD - Action muss dokumentiert werden
+                db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
+                try:
+                    nummer = int(parameter[0])
+                    anzahl = int(parameter[1])
+                    bahnnr = int(parameter[2]) if len(parameter) > 2 else 0
+                    print(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
+                    db.aendere_bahnanzahl_um(nummer,anzahl,clientid,bahnnr=bahnnr)
+                    results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
+                except (ValueError, IndexError) as e:
+                    print(f"Fehler bei ADD-Parametern: {e}")
+                    results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
+            elif kommando == "GET":
+                print(f"GET ausgeführt mit Parametern: {parameter}")
+                logging.info(f"Tabelle swimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
+                #print(db.liste_tabelle('schwimmer'))
+                return jsonify(db.liste_tabelle('schwimmer'))
+            else:
+                logging.debug(f"Unbekanntes Kommando: {kommando}")
+                print(f"Unbekanntes Kommando: {kommando}")
+
+        return "OK", 200
+
+    except Exception as e:
+        print(f"Fehler beim Verarbeiten der Actions: {e}")
+        return "Fehler", 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, threaded=False)

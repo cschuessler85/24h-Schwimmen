@@ -17,9 +17,9 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
   <header>
     <!-- Info-Zeile (togglebar) -->
     <div id="infoBar" style="display: none">
-      <span style="display: inline-block; text-align: left">
-        <span id="serverStatus"
-          style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px"></span>
+      <span id="serverStatus" style="display: inline-block; text-align: left">
+        <span style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px">
+        </span>
         Verbunden
       </span>
       <span style="display: inline-block; text-align: center"> Angemeldet als: <strong>{{userrealname}}
@@ -58,21 +58,15 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
   </header>
 
   <main style="padding-bottom: 60px">
-    <table id="schwimmer">
-      <tr>
-        <th data-key="Nummer">Schwimmer*innen Startnummer</th>
-        <th data-key="Bahnen">Geschwommene Bahnen</th>
-      </tr>
-    </table>
+    <div id="container"></div>
     <p id="antwort"></p>
 
     <!-- Kontextmenü -->
     <div id="contextMenu">
       <ul>
-        <li id="abwesendOption">Abwesenheit wechseln</li>
         <li id="rundeAbziehenOption">Runde abziehen</li>
         <li id="deleteSwimmer">Schwimmer*innen entfernen</li>
-        <li id="bahnHinzufuegenOption" style="display: none">Bahn hinzufügen</li>
+        <li id="nurEigene">Fremdbahnen entfernen</li>
       </ul>
     </div>
   </main>
