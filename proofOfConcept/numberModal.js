@@ -1,6 +1,10 @@
+const input = document.getElementById("nummer");
+
 // Funktion, um das Modal anzuzeigen
 function schwimmerNummerErfragen() {
+    clearNummer();
     document.getElementById('schwimmerModal').style.display = 'block';
+    input.focus();
     checkNummerInput();
 }
 
@@ -11,7 +15,7 @@ function closeModal() {
 
 // Funktion zum Bestätigen der Nummer
 function confirmNummer() {
-    const nummer = document.getElementById('nummer').value;
+    const nummer = input.value;
     if (nummer) {
         alert('Schwimmer Nummer ' + nummer + ' wurde bestätigt!');
         closeModal(); // Modal schließen nach Bestätigung
@@ -32,7 +36,6 @@ function isNummerInputValid(value) {
 }
 
 function checkNummerInput() {
-    const input = document.getElementById("nummer");
     const confirmBtn = document.getElementById("confirmBtn");
     if (isNummerInputValid(input.value)) {
         input.style.backgroundColor = ""; // gültig
@@ -44,19 +47,27 @@ function checkNummerInput() {
 }
 
 
+input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        confirmNummer();
+    }
+});
+
 // Funktion zum Löschen der Eingabe
 function clearNummer() {
-    document.getElementById('nummer').value = ''; // Eingabefeld leeren
+    document.getElementById("nummer").value = ''; // Eingabefeld leeren
 }
 
 window.addEventListener('resize', () => {
    const ueberschrift = document.querySelector("h2");
    ueberschrift.style.color = "blue";
+   const sichtbareHoehe = window.innerHeight;
+   ueberschrift.innerText = `Schwmer Nummer (${sichtbareHoehe})`;
 });
 
 setInterval(() => {
     const ueberschrift = document.querySelector("h2");
     ueberschrift.style.color = "";
-    const modalContent = document.getElementById("modalContent");
-    modalContent.style.top = "10%";
+    //const modalContent = document.getElementById("modalContent");
+    //modalContent.style.top = "10%";
   }, 5000);
