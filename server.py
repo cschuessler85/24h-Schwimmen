@@ -123,7 +123,7 @@ def admin():
         action = data.get('action')
 
         if action == 'create_user':
-            # Benutzer erstellen
+    # Benutzer erstellen
             print(data)
             realname = data.get('realname', '').strip()
             username = data.get('username', '').strip()
@@ -136,6 +136,9 @@ def admin():
                 return "Ungültiger Benutzername", 400
             if len(password) < 3:
                 return "Passwort zu kurz", 400
+            if db.finde_benutzer_by_username(username):
+                return "Benutzer exitiert bereits"
+                
 
             db.erstelle_benutzer(realname, username, password, admin=data.get('admin',False))
             return "Benutzer erstellt"
