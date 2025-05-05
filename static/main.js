@@ -55,6 +55,13 @@ function schwimmerHinzufuegen() {
     var bahnenZelle = document.createElement('td');
     bahnenZelle.className = 'bahnen';
 
+    // Plus Button Zelle erstellen
+    var plusButtonZelle = document.createElement('td');
+    var plusButton = document.createElement('button');
+    plusButton.innerText = '+';
+    plusButton.className = 'plusButton';
+    plusButtonZelle.appendChild(plusButton);
+
     // Text in die Zellen einfügen
     nummerZelle.innerText = nummer;
     bahnenZelle.innerText = 0;
@@ -62,10 +69,19 @@ function schwimmerHinzufuegen() {
     // Zellen zur neuen Zeile hinzufügen
     neueZeile.appendChild(nummerZelle);
     neueZeile.appendChild(bahnenZelle);
+    neueZeile.appendChild(plusButtonZelle); // Hinzufügen des Plus-Buttons
 
     // Die neue Zeile in die Tabelle einfügen
     var tabelle = document.getElementById('schwimmer');
     tabelle.appendChild(neueZeile);
+
+    // Event-Listener für den Plus-Button
+    plusButton.addEventListener('click', function() {
+        if (!neueZeile.classList.contains("abwesend")) {
+            let current = parseInt(bahnenZelle.textContent);
+            bahnenZelle.textContent = current + 1;
+        }
+    });
 }
 
 
