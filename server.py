@@ -128,6 +128,7 @@ def admin():
             realname = data.get('realname', '').strip()
             username = data.get('username', '').strip()
             password = data.get('password', '')
+            username = username.lower()
 
             if not re.fullmatch(r"[A-Za-zÄÖÜäöüß\s]+", realname):
                 logging.error(f"Versuch Benutzer mit ungültigem Real-Namen anzulegen {realname}")
