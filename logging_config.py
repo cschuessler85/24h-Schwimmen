@@ -2,6 +2,8 @@
 
 # Globales Logging konfigurieren
 import logging
+import os
+os.makedirs("data", exist_ok=True)
 
 # Globales Logging konfigurieren
 def configure_logging():
