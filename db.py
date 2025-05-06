@@ -264,7 +264,7 @@ def finde_schwimmer(name):
     """
     query = "SELECT * FROM schwimmer WHERE name = ?"
     params = (name,)
-    return db.fetchone(query, params)
+    return dict_from_row(db.fetchone(query, params),"schwimmer")
 
 
 # Liest einen Schwimmer anhand seiner ID aus der Datenbank
@@ -274,7 +274,7 @@ def lies_schwimmer(schwimmer_id):
     """
     query = "SELECT * FROM schwimmer WHERE nummer = ?"
     params = (schwimmer_id,)
-    return db.fetchone(query, params)
+    return dict_from_row(db.fetchone(query, params),"schwimmer")
 
 
 # Aktualisiert Felder eines Schwimmers anhand der ID

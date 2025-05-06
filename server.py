@@ -252,7 +252,11 @@ def action():
                 print(f"GET ausgeführt mit Parametern: {parameter}")
                 logging.info(f"Tabelle swimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
                 #print(db.liste_tabelle('schwimmer'))
-                return jsonify(db.liste_tabelle('schwimmer'))
+                if parameter == []:
+                    return jsonify({ "updates": db.liste_tabelle('schwimmer')})
+                else:
+                    nummer = int(parameter[0])
+                    return jsonify({ "updates": [db.lies_schwimmer(nummer)]})
             else:
                 logging.debug(f"Unbekanntes Kommando: {kommando}")
                 print(f"Unbekanntes Kommando: {kommando}")

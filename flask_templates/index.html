@@ -39,7 +39,7 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
         <h1>24h Schwimmen</h1>
         <div class="form-group">
           <label for="bahnen" style="font-size: 0.7em;">Bahn(en):</label>
-          <input type="text" value="1"  id="bahnen" oninput="checkBahnenInput()" onblur="parseBahnenInput()" onkeydown="if(event.key === 'Enter') { event.preventDefault(); parseBahnenInput(); }" /><br />
+          <input type="text" value="1"  id="bahnen" /><br />
         </div>
       </div>
 
@@ -49,7 +49,7 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
           style="font-size: 30px; cursor: pointer; color: white; background: none; border: none">
           <i class="fa-solid fa-download"></i>
         </button>
-        <button onclick="toggleInfoBar()"
+        <button id="toggleInfoBar"
           style="padding-left: 0px; font-size: 30px; cursor: pointer; color: white; background: none; border: none">
           <i class="fa-solid fa-circle-info"></i>
         </button>

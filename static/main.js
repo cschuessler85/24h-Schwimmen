@@ -33,7 +33,7 @@ let schwimmer = [
         { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },*/
 ];
 let actions = [];
-let alleSchwimmer = []; // Beinhaltet die Schwimmer in der Datenbank
+let alleSchwimmer = {}; // Beinhaltet die Schwimmer in der Datenbank in einem Dictionary mit nummer als Key
 
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', promptSchwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
@@ -79,9 +79,10 @@ function schwimmerHinzufuegen(nummer) {
         // prio auf max
         aktiver.prio = maxPrio + 1; 
     } else { //Wenn der schwimmer in der Liste alleSchwimmer ist, wird er in die Liste schwimmer übernommen ...
-        const bekannter = alleSchwimmer.find(s => s.nummer == nummer);
+        fetchSchwimmer(nummer);
+        const bekannter = alleSchwimmer[nummer] ?? null;
         if (bekannter) {
-            console.log("Schwimmer Nummer war schon vorhanden");
+            console.log(`Schwimmer ${nummer} Nummer war schon vorhanden`);
             const scopy = {
                 nummer: parseInt(nummer),
                 name: bekannter.name,
@@ -113,7 +114,10 @@ function schwimmerHinzufuegen(nummer) {
 function fillSchwimmerAusMeinenBahnen() {
     console.log("AlleSchwimmer", alleSchwimmer);
     console.log("verwaltete_bahnen", verwaltete_bahnen);
-    const meineSchwimmer = alleSchwimmer.filter(s => verwaltete_bahnen.includes(s.auf_bahn));
+    const alleSchwimmerValues = Object.keys(alleSchwimmer).map(function (key){
+        return alleSchwimmer[key];
+    });
+    const meineSchwimmer = alleSchwimmerValues.filter(s => verwaltete_bahnen.includes(s.auf_bahn));
     console.log(meineSchwimmer);
     // Alle Schwimmer die davon noch nicht in schwimmer sind einfügen
     meineSchwimmer.forEach(s_neu => {
@@ -559,37 +563,49 @@ function updateServerStatus(neu) {
 }
 
 /**
- * Holt die Daten aller auf dem Server gespeicherten Schwimmer und legt sie in 
+ * Holt die Daten der auf dem Server gespeicherten Schwimmer und legt sie in 
  * alleSchwimmer ab
  * 
+ * @param {number} [id=-1] // id des zu holenden Schwimmers -1 gleich alle
  * @returns {void}
  */
-async function fetchAlleSchwimmer() {
+async function fetchSchwimmer(id = -1) {
     try {
         console.log("Schwimmer holen");
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 Sekunden Timeout
-
+        const parameters = (id ==-1) ? [] : [id];
+           
         const response = await fetch('/action', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify([{ 'kommando': "GET", 'parameter': [], 'timestamp': new Date().toISOString() }]),
+            body: JSON.stringify([{ 'kommando': "GET", 'parameter': parameters, 'timestamp': new Date().toISOString() }]),
             signal: controller.signal
         });
 
         clearTimeout(timeoutId);
 
         if (response.ok) {
-            alleSchwimmer = await response.json();
+            const resp=await response.json();
+            console.log(resp);
+            if (resp["updates"]) parseUpdates(resp);
             console.log(alleSchwimmer);
             updateServerStatus(true);
         } else {
             updateServerStatus(false);
         }
     } catch (error) {
-        console.log("Error on fetchAlleSchwimmer", error);
+        console.log(`Error on fetchSchwimmer mit ID ${id} (-1 steht für alle)`, error);
         updateServerStatus(false);
     } finally {
+    }
+}
+
+function parseUpdates(resp) {
+    if (resp["updates"] && Array.isArray(resp["updates"])) {
+        resp["updates"].forEach((eintrag) => {
+            alleSchwimmer[eintrag["nummer"]] = eintrag;
+        });        
     }
 }
 
@@ -638,12 +654,24 @@ document.getElementById("nurEigene").addEventListener("click", function () {
     contextMenu.style.display = "none";
 });
 
+document.getElementById("toggleInfoBar").addEventListener("click", toggleInfoBar);
+document.getElementById("bahnen").addEventListener("input",checkBahnenInput);
+document.getElementById("bahnen").addEventListener("blur",(event) => {parseBahnenInput();});
+document.getElementById("bahnen").addEventListener("keydown", (event) => {
+    if(event.key === 'Enter') { 
+        event.preventDefault(); 
+        parseBahnenInput();
+    }
+});
+
+
+
 console.log("Initial commands - Grundlagen einrichten");
 //alle Zehn Sekunden die Daten zum Server schicken
 setInterval(transmitActions, 10000);
 
 // zu Beginn Daten vom Server holen
-fetchAlleSchwimmer().then(() => {
+fetchSchwimmer().then(() => {
     // und  nach erhalt die der verwalteten Bahnen eintragen
     fillSchwimmerAusMeinenBahnen();
     // und einmal zeichnen
