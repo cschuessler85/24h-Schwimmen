@@ -1,3 +1,5 @@
+import { schwimmerNummerErfragen } from './mymodals.js'
+
 let formIsDirty = true; // Flag, das anzeigt, ob Daten geändert wurden
 // Beim Verlassen der Seite warnen, falls Änderungen vorhanden sind
 window.addEventListener('beforeunload', function (event) {
@@ -50,10 +52,13 @@ function search(number) {
     }
 }
 
-function promptSchwimmerHinzufuegen() {
-    var nummer = prompt("Nummer:");
+async function promptSchwimmerHinzufuegen() {
+    // var nummer = prompt("Nummer:");
+    var nummer = await schwimmerNummerErfragen();
+    console.log("Erfrage Nummer:", nummer);
 
     if (!(nummer !== null && nummer.trim() !== "" && !isNaN(nummer))) {
+        showStatusMessage("Ungültige Schwimmernummer", false);
         return;
     }
 
@@ -67,13 +72,13 @@ function schwimmerHinzufuegen(nummer) {
     // Der gesuchte Schwimmer soll auf jeden Fall oben in die Liste
     const maxPrio = Math.max(...schwimmer.map(s => s.prio));
 
-    //Wenn der schwimmer schon in der Liste ist schwimmer ist, wird seine Priorität auf das aktuelle Maximum gesetzt
+    //Wenn der schwimmer schon in der Liste schwimmer ist, wird seine Priorität auf das aktuelle Maximum gesetzt
     const aktiver = schwimmer.find(s => s.nummer == nummer);
     if (aktiver) {
         console.log("... aktiver Schwimmer");
         // prio auf max
-        aktiver.prio = maxPrio + 1; ///Wenn der schwimmer in der Liste alleSchwimmer ist, wird er in die Liste schwimmer übernommen ...
-    } else {
+        aktiver.prio = maxPrio + 1; 
+    } else { //Wenn der schwimmer in der Liste alleSchwimmer ist, wird er in die Liste schwimmer übernommen ...
         const bekannter = alleSchwimmer.find(s => s.nummer == nummer);
         if (bekannter) {
             console.log("Schwimmer Nummer war schon vorhanden");
