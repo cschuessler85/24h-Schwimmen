@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+Quelle: https://exord.de/blog/perfekte-modals-in-minuten
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="dialog.css">
+</head>
+
+<body>
+    <button id="open_modal">Modal öffnen</button>
+    <dialog>
+        <form method="dialog">
+            Hallo Exord
+            <input type="number" id="nummer" name="nummer" oninput="checkNummerInput()" placeholder="xxx" maxlength="3" style="font-size: 3em;text-align: center; width: 100%;">
+            <br>
+            <button>Schließen</button>
+        </form>
+    </dialog>
+    <script src="dialog.js"></script>
+</body>
+
+</html>
