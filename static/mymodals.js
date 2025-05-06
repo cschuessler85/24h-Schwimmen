@@ -23,6 +23,10 @@ export function initMyModal() {
         transform: translate(-50%, -50%);
         width: 300px;
     }
+
+    .mymodal-content button:disabled {
+        background-color: grey;
+    }
     `;
     document.head.appendChild(style);
 
@@ -53,11 +57,14 @@ export function schwimmerNummerErfragen() {
         const modal = document.getElementById('myModal');
         const input = document.getElementById("nummer");
         const confirmBtn = document.getElementById("confirmBtn");
+        confirmBtn.disabled = true;
         const closeBtn = document.getElementById("closeBtn");
 
         input.value = "";
         modal.style.display = 'block';
         input.focus();
+
+        input.addEventListener('input', checkNummerInput);
 
         confirmBtn.onclick = () => {
             const nummer = input.value.trim();
@@ -81,8 +88,6 @@ export function schwimmerNummerErfragen() {
 function closeModal() {
     document.getElementById('myModal').style.display = 'none';
 }
-
-
 
 function isNummerInputValid(value, regexp = /^\d\d\d$/) {
     // Prüft, ob der Eingabewert aus drei aufeinander folgenden Ziffern besteht
