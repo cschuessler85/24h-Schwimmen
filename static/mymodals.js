@@ -1,5 +1,32 @@
 
 function initMyModal() {
+    // erst die CSS-Styles
+    const style = document.createElement('style');
+    style.textContent = `
+    .mymodal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    .mymodal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        position: relative;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+    }
+    `;
+    document.head.appendChild(style);
+
+    // dann die HTML-Zeilen
     const modalHTML = `
     <div id="myModal" class="mymodal">
         <div id="modalContent" class="mymodal-content" style="text-align: center;">
