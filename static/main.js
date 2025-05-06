@@ -528,6 +528,9 @@ async function transmitActions() {
 
         if (response.ok) {
             pending.forEach(a => a.transmitted = true);
+            const resp=await response.json();
+            //console.log(resp);
+            if (resp["updates"]) parseUpdates(resp);
             updateServerStatus(true);
         } else {
             updateServerStatus(false);

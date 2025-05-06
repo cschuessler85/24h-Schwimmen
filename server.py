@@ -228,6 +228,7 @@ def action():
         print("Empfangene Actions:", actions)
 
         results = []
+        updates = []
 
         for action in actions:
             kommando = action.get("kommando")
@@ -245,6 +246,7 @@ def action():
                     print(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
                     db.aendere_bahnanzahl_um(nummer,anzahl,clientid,bahnnr=bahnnr)
                     results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
+                    updates.append(db.lies_schwimmer(nummer))
                 except (ValueError, IndexError) as e:
                     print(f"Fehler bei ADD-Parametern: {e}")
                     results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
@@ -253,15 +255,15 @@ def action():
                 logging.info(f"Tabelle swimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
                 #print(db.liste_tabelle('schwimmer'))
                 if parameter == []:
-                    return jsonify({ "updates": db.liste_tabelle('schwimmer')})
+                    updates = db.liste_tabelle('schwimmer')
                 else:
                     nummer = int(parameter[0])
-                    return jsonify({ "updates": [db.lies_schwimmer(nummer)]})
+                    updates = [db.lies_schwimmer(nummer)]
             else:
                 logging.debug(f"Unbekanntes Kommando: {kommando}")
                 print(f"Unbekanntes Kommando: {kommando}")
 
-        return "OK", 200
+        return jsonify({"results": results, "updates": updates}), 200
 
     except Exception as e:
         print(f"Fehler beim Verarbeiten der Actions: {e}")
