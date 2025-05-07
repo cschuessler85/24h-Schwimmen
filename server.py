@@ -128,6 +128,7 @@ def admin():
             realname = data.get('realname', '').strip()
             username = data.get('username', '').strip()
             password = data.get('password', '')
+            username = username.lower()
 
             if not re.fullmatch(r"[A-Za-zÄÖÜäöüß\s]+", realname):
                 logging.error(f"Versuch Benutzer mit ungültigem Real-Namen anzulegen {realname}")
@@ -136,14 +137,19 @@ def admin():
                 return "Ungültiger Benutzername", 400
             if len(password) < 3:
                 return "Passwort zu kurz", 400
+            if db.finde_benutzer_by_username(username):
+                return "Benutzer existiert bereits"
 
             db.erstelle_benutzer(realname, username, password, admin=data.get('admin',False))
             return "Benutzer erstellt"
-
         elif action == 'delete_user':
-            # Benutzer löschen
-            pass
-            return "Benutzer gelöscht"
+            benutzername = request.form.get('benutzername')
+            benutzername = benutzername.lower()
+            if benutzername:
+                db.loesche_benutzername(benutzername)
+            else:
+                return "Kein Benutzername angegeben", 400
+
         elif action == 'get_table_benutzer':
             return jsonify(db.liste_tabelle('benutzer'))
         elif action == 'get_table_clients':

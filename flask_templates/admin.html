@@ -73,6 +73,18 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
     <table id="userTable">
       <!-- Die Tabelle wird hier dynamisch gefüllt -->
     </table>
+    <body>
+      <h1>Benutzer löschen</h1>
+      <form action="/admin" method="post">
+          <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
+          <input type="hidden" name="action" value="delete_user">
+          
+          <label for="benutzername">Benutzer-ID:</label>
+          <input type="text" id="benutzername" name="benutzername" required>
+  
+          <button type="submit">Benutzer löschen</button>
+      </form>
+  </body>
   </section>
 
   <section id="client" class="admin-section">
