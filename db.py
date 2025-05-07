@@ -221,7 +221,7 @@ def dict_from_row(row, table_name):
         columns = ['id', 'benutzer_id', 'client_id', 'zeitstempel', 'kommando', 'parameter']
     else:
         return None
-    return dict(zip(columns, row))
+    return dict(zip(columns, row)) if (row != None) else {}
 
 def liste_tabelle(table_name):
     """
@@ -311,11 +311,11 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
     Ändert die Bahnanzahl eines Schwimmers. 
     Falls der Schwimmer nicht existiert, wird er mit Standardwerten angelegt.
     """
-    schwimmer = lies_schwimmer(nummer)
-    logging.debug("Schwimmer Ändern")
-    print(schwimmer if (schwimmer) else f"Schwimmer {nummer} Nicht gefunden")
+    schwimmer = lies_schwimmer(int(nummer))
+    logging.info(f"Schwimmer Ändern mit Nummer {nummer}")
+    #print(schwimmer if (schwimmer) else f"Schwimmer {nummer} Nicht gefunden")
     
-    if schwimmer is None:
+    if schwimmer is None or len(schwimmer) == 0 :
         # Schwimmer existiert nicht → neu anlegen
         erstelle_schwimmer(
             nummer=nummer,
