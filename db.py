@@ -391,6 +391,18 @@ def erstelle_benutzer(name, benutzername, passwort, admin=False):
     '''
     params = (name, benutzername, generate_password_hash(passwort), int(admin))
     return db.execute(query, params)
+from werkzeug.security import generate_password_hash
+
+def passwort_ändern(benutzername, neues_passwort):
+    """
+    Ändert das Passwort eines Benutzers.
+    """
+    neues_gehashtes_passwort = generate_password_hash(neues_passwort)
+    update_query = "UPDATE benutzer SET passwort = ? WHERE benutzername = ?"
+    db.execute(update_query, (neues_gehashtes_passwort, benutzername))
+
+    return "Passwort erfolgreich geändert."
+
 
 def loesche_benutzername(benutzername):
     """

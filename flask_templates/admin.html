@@ -79,12 +79,27 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
           <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
           <input type="hidden" name="action" value="delete_user">
           
-          <label for="benutzername">Benutzer-ID:</label>
+          <label for="benutzername">Benutzername:</label>
           <input type="text" id="benutzername" name="benutzername" required>
   
           <button type="submit">Benutzer löschen</button>
       </form>
-  </body>
+    <h1>Neues Passwort</h1>
+    <form action="/admin" method="post">
+        <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
+        <input type="hidden" name="action" value="new_passwort">
+        
+        <label for="benutzername">Benutzername:</label>
+        <input type="text" id="benutzername" name="benutzername" required>
+
+        <label for="passwort">Neues Passwort:</label>
+        <input type="text" id="new_pass" name="new_pass" required>
+
+
+        <button type="submit">Neues Passwort festlegen</button>
+    </form>
+</body>
+
   </section>
 
   <section id="client" class="admin-section">

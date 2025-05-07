@@ -142,6 +142,10 @@ def admin():
 
             db.erstelle_benutzer(realname, username, password, admin=data.get('admin',False))
             return "Benutzer erstellt"
+        elif action == 'new_passwort':
+            benutzername = request.form.get('benutzername')
+            new_pass = request.form.get('new_pass')
+            db.passwort_ändern(benutzername, new_pass)
         elif action == 'delete_user':
             benutzername = request.form.get('benutzername')
             benutzername = benutzername.lower()
