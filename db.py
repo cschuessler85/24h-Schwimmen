@@ -275,6 +275,21 @@ def lies_schwimmer(schwimmer_id):
     params = (schwimmer_id,)
     return dict_from_table_row(db.fetchone(query, params),"schwimmer")
 
+# Liest alle Schwimmer von der Bahn
+def lies_schwimmer_vonBahn(bahnnr):
+    """
+    Gibt eine Liste aller Schwimmer auf der angegebenen Bahn
+    """
+    try:
+        
+        cursor = db.execute(f"SELECT * FROM schwimmer WHERE auf_bahn == ?", [int(bahnnr)])
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        return [dict_from_row(row, columns) for row in rows]
+    except Exception as e:
+        print(f"Fehler beim Zugriff auf Tabelle schwimmer (auf Bahn {bahnnr}): {e}")
+        return []
+
 
 # Aktualisiert Felder eines Schwimmers anhand der ID
 # Die zu aktualisierenden Felder werden dynamisch übergeben, z. B.:

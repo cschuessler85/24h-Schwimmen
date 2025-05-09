@@ -193,15 +193,24 @@ def action():
                     nummer = int(parameter[0])
                     anzahl = int(parameter[1])
                     bahnnr = int(parameter[2]) if len(parameter) > 2 else 0
-                    print(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
+                    logging.info(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
                     db.aendere_bahnanzahl_um(nummer,anzahl,clientid,bahnnr=bahnnr)
                     results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
                     updates.append(db.lies_schwimmer(nummer))
                 except (ValueError, IndexError) as e:
-                    print(f"Fehler bei ADD-Parametern: {e}")
+                    logging.info(f"Fehler bei ADD-Parametern: {e}")
+                    results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
+            elif kommando == "GETB":
+                try:
+                    logging.info(f"Schwimmer der Bahnen {parameter} werden von Nutzer:{user} und Client-ID: {clientid} abgerufen")
+                    for bahnnr in parameter:
+                        updates.extend(db.lies_schwimmer_vonBahn(bahnnr))
+                    results.append({"kommando": kommando, "status": "erfolgreich", "bahnen": parameter})
+                    
+                except (ValueError, IndexError) as e:
+                    logging.info(f"Fehler bei GETB-Parametern: {e}")
                     results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
             elif kommando == "GET":
-                print(f"GET ausgeführt mit Parametern: {parameter}")
                 logging.info(f"Tabelle swimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
                 #print(db.liste_tabelle('schwimmer'))
                 if parameter == []:

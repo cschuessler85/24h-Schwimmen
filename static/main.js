@@ -216,6 +216,7 @@ function parseBahnenInput() {
         console.log("Gültige Bahnnummern:", zahlen);
         verwaltete_bahnen = zahlen;
         showStatusMessage("Bahnen geändert", true, 1000);
+        fetchSchwimmerVonBahnen();
         fillSchwimmerAusMeinenBahnen();
     } else { //Fehlerhafte Bahnnummern
         showStatusMessage("Ungültiges Format! Bitte nur Zahlen, getrennt durch Kommas.", false);
@@ -603,6 +604,43 @@ async function fetchSchwimmer(id = -1) {
     } finally {
     }
 }
+
+/**
+ * Holt die Daten der auf dem Server gespeicherten Schwimmer auf den verwalteten
+ * Bahnen
+ * 
+ * @returns {void}
+ */
+async function fetchSchwimmerVonBahnen() {
+    try {
+        console.log(`Schwimmer von Bahnen ${verwaltete_bahnen} holen`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 Sekunden Timeout
+           
+        const response = await fetch('/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([{ 'kommando': "GETB", 'parameter': verwaltete_bahnen, 'timestamp': new Date().toISOString() }]),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const resp=await response.json();
+            console.log("In FetchSchwimmerVonBahnen response:",resp);
+            if (resp["updates"]) parseUpdates(resp);
+            updateServerStatus(true);
+        } else {
+            updateServerStatus(false);
+        }
+    } catch (error) {
+        console.log(`Error on fetchSchwimmerVonBahnen (${verwaltete_bahnen}):`, error);
+        updateServerStatus(false);
+    } finally {
+    }
+}
+
 
 function parseUpdates(resp) {
     if (resp["updates"] && Array.isArray(resp["updates"])) {
