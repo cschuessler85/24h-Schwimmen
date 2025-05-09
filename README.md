@@ -76,7 +76,6 @@ Die Daten werden auf dem Server in einer SQLite Datenbank gehalten (Absturzsiche
     bahnen: Integer (Anzahl)
     strecke: Integer (Meter)
     aufBahn: Integer (letzte Aktive Bahn - sonst 0)
-    avg_roundtime: Integer (durchnittliche Rundenzeit)
     aktiv: Boolean
 ```
 
@@ -96,6 +95,8 @@ mögliche Kommandos
 ```text
     ADD - parameter: <schwimmerNr> <Anzahl> <bahnnr>
     SUB - parameter: <schwimmerNr> <Anzahl> <bahnnr>
+    GET - parameter: <schwimmerNr>
+    GETB - parameter: <bahnnummer> <bahnnummer> ...
 ```
 
 mit Beispielen
@@ -103,6 +104,9 @@ mit Beispielen
 ```text
     ADD [832,1,1]
     SUB [732,10,2]
+    GET [123]
+    GET [-1] - holt alle Schwimmer
+    GETB [2,3] - holt die Schwimmer der Bahnen 2,3
 ```
 
 ## Projektverzeichnisstruktur
@@ -111,15 +115,24 @@ Hier ist eine Übersicht über die Verzeichnisstruktur des Projektes:
 
 ```text
 24H-Schwimmen/ 
+├── data/               Verzeichnis für LOG-Dateien
+├── flask_templates/    Vorlagen für dynmaisch generierte Webseiten
+│ └── admin.html        Administrationsseite
+│ └── index.html        Standardseite
+│ └── login.html        Anmeldeseite 
 ├── static/             Dateien, die statisch ausgeliefert werden sollen
-│ └── index.html 
-│ └── style.css 
-├── data/               Verzeichnis für JSON-Daten-Dateien
+│ └── admin.js          Javascript für die Administrationsseite 
+│ └── favicon.ico        
+│ └── main.css          Standard-Style
+│ └── main.js           Javascript der Webseite
+│ └── mymodals.js       Javascript um Modals einzublenden
 ├── db.py               Alles was mit Datenbankzugriffen zu tun hat
+├── logging_config.py   Konfiguration des Loggings
 ├── server.py           Die Hauptdatei mit der Serverfunktionalität
+├── utils.py            Kleine Funktionen (Hilfsfunktionen)
 ├── data.sqlite         Datenbank des Servers
-├── README.md 
-└── requirements.txt
+├── README.md           dieser Text
+└── requirements.txt    Für die Nutzung zu installierende Python-Module
 ```
 
 ## Git-Workflow

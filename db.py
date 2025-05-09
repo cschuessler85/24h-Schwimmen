@@ -59,6 +59,7 @@ class Database:
                 params = []
             self.cursor.execute(query, params)
             self.conn.commit()
+            return self.cursor
         except sqlite3.OperationalError as e:
             logging.error(f"OperationalError: {e}")
             logging.debug(f"execute - query: {query}, params: {params}")
@@ -183,7 +184,6 @@ def init_db():
             bahnanzahl INTEGER,
             strecke INTEGER,
             auf_bahn INTEGER,
-            avg_roundtime INTEGER, 
             aktiv BOOLEAN,
             FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id),
             CONSTRAINT unique_schwimmer UNIQUE (nummer, erstellt_von_client_id)
@@ -207,7 +207,7 @@ def init_db():
 
 init_db()
 
-def dict_from_row(row, table_name):
+def dict_from_table_row(row, table_name):
     """
     Wandelt eine Datenbankzeile (Tupel) in ein Dictionary um.
     """
@@ -221,28 +221,27 @@ def dict_from_row(row, table_name):
         columns = ['id', 'benutzer_id', 'client_id', 'zeitstempel', 'kommando', 'parameter']
     else:
         return None
-    return dict(zip(columns, row))
+    return dict(zip(columns, row)) if (row != None) else {}
+
+def dict_from_row(row, columns):
+    """
+    Wandelt eine Datenbankzeile (Tupel) in ein Dictionary um, basierend auf den Spaltennamen.
+    """
+    return dict(zip(columns, row)) if row is not None else {}
 
 def liste_tabelle(table_name):
     """
-    Gibt eine Liste aller Einträge aus der angegebenen Tabelle zurück.
-    Wenn der Tabellenname ungültig ist, wird eine leere Liste zurückgegeben.
+    Gibt eine Liste aller Einträge aus der angegebenen Tabelle zurück, mit Spaltennamen aus der DB.
     """
-    # Gültige Tabellen
-    valid_tables = ['benutzer', 'clients', 'schwimmer', 'actions']
-    
-    # Überprüfen, ob der angegebene Tabellenname gültig ist
-    if table_name not in valid_tables:
+    try:
+        cursor = db.execute(f"SELECT * FROM {table_name}")
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        return [dict_from_row(row, columns) for row in rows]
+    except Exception as e:
+        print(f"Fehler beim Zugriff auf Tabelle {table_name}: {e}")
         return []
 
-    # Dynamische SQL-Abfrage erstellen, um alle Einträge aus der angegebenen Tabelle zu holen
-    query = f'SELECT * FROM {table_name}'
-    
-    # Datenbankabfrage ausführen
-    rows = db.fetchall(query)
-    
-    # Die Zeilen in Dictionaries umwandeln und zurückgeben
-    return [dict_from_row(r, table_name) for r in rows]
 
 
 
@@ -264,7 +263,7 @@ def finde_schwimmer(name):
     """
     query = "SELECT * FROM schwimmer WHERE name = ?"
     params = (name,)
-    return db.fetchone(query, params)
+    return dict_from_table_row(db.fetchone(query, params),"schwimmer")
 
 
 # Liest einen Schwimmer anhand seiner ID aus der Datenbank
@@ -274,7 +273,22 @@ def lies_schwimmer(schwimmer_id):
     """
     query = "SELECT * FROM schwimmer WHERE nummer = ?"
     params = (schwimmer_id,)
-    return db.fetchone(query, params)
+    return dict_from_table_row(db.fetchone(query, params),"schwimmer")
+
+# Liest alle Schwimmer von der Bahn
+def lies_schwimmer_vonBahn(bahnnr):
+    """
+    Gibt eine Liste aller Schwimmer auf der angegebenen Bahn
+    """
+    try:
+        
+        cursor = db.execute(f"SELECT * FROM schwimmer WHERE auf_bahn == ?", [int(bahnnr)])
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        return [dict_from_row(row, columns) for row in rows]
+    except Exception as e:
+        print(f"Fehler beim Zugriff auf Tabelle schwimmer (auf Bahn {bahnnr}): {e}")
+        return []
 
 
 # Aktualisiert Felder eines Schwimmers anhand der ID
@@ -295,15 +309,15 @@ def update_schwimmer(schwimmer_id, **kwargs):
     db.execute(query, values)
 
 # Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück
-def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv):
+def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv):
     """
     Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück.
     """
     query = """
-        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
+        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """
-    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
+    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
     return db.execute(query, params)
 
 def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
@@ -311,11 +325,11 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
     Ändert die Bahnanzahl eines Schwimmers. 
     Falls der Schwimmer nicht existiert, wird er mit Standardwerten angelegt.
     """
-    schwimmer = lies_schwimmer(nummer)
-    logging.debug("Schwimmer Ändern")
-    print(schwimmer if (schwimmer) else f"Schwimmer {nummer} Nicht gefunden")
+    schwimmer = lies_schwimmer(int(nummer))
+    logging.info(f"Schwimmer Ändern mit Nummer {nummer}")
+    #print(schwimmer if (schwimmer) else f"Schwimmer {nummer} Nicht gefunden")
     
-    if schwimmer is None:
+    if schwimmer is None or len(schwimmer) == 0 :
         # Schwimmer existiert nicht → neu anlegen
         erstelle_schwimmer(
             nummer=nummer,
@@ -324,7 +338,6 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
             bahnanzahl=max(anzahl, 0),
             strecke=0,
             auf_bahn=bahnnr,
-            avg_roundtime=0,
             aktiv=1
         )
     else:
@@ -424,7 +437,7 @@ def finde_benutzer_by_username(benutzername):
     query = 'SELECT * FROM benutzer WHERE benutzername = ?'
     params = (benutzername,)
     row = db.fetchone(query, params)
-    return dict_from_row(row,'benutzer') if row else None
+    return dict_from_table_row(row,'benutzer') if row else None
 
 #========================
 #    Abschnitt: Actions
@@ -449,7 +462,7 @@ def finde_actions_by_benutzer_id(benutzer_id):
     query = 'SELECT * FROM actions WHERE benutzer_id = ?'
     params = (benutzer_id,)
     rows = db.fetchall(query, params)
-    return [dict_from_row(row, 'actions') for row in rows]
+    return [dict_from_table_row(row, 'actions') for row in rows]
 
 def finde_actions_by_client_id(client_id):
     """
@@ -458,7 +471,7 @@ def finde_actions_by_client_id(client_id):
     query = 'SELECT * FROM actions WHERE client_id = ?'
     params = (client_id,)
     rows = db.fetchall(query, params)
-    return [dict_from_row(row, 'actions') for row in rows]
+    return [dict_from_table_row(row, 'actions') for row in rows]
 
 def finde_action_by_id(action_id):
     """
@@ -467,7 +480,7 @@ def finde_action_by_id(action_id):
     query = 'SELECT * FROM actions WHERE id = ?'
     params = (action_id,)
     row = db.fetchone(query, params)
-    return dict_from_row(row, 'actions') if row else None
+    return dict_from_table_row(row, 'actions') if row else None
 
 def finde_actions_after_timestamp(timestamp):
     """
@@ -476,7 +489,7 @@ def finde_actions_after_timestamp(timestamp):
     query = 'SELECT * FROM actions WHERE zeitstempel > ?'
     params = (timestamp,)
     rows = db.fetchall(query, params)
-    return [dict_from_row(row, 'actions') for row in rows]
+    return [dict_from_table_row(row, 'actions') for row in rows]
 
 
 #========================

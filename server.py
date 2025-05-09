@@ -53,21 +53,6 @@ if not db.finde_benutzer_by_username("admin"):
 
 # Dateien sicherstellen
 os.makedirs("data", exist_ok=True)
-for name in ["verlauf.json", "data.json"]:
-    path = f"data/{name}"
-    if not os.path.exists(path):
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("[]")
-
-def addVersion(new, dateipfad="data/verlauf.json"):
-    try:
-        with open(dateipfad, "r", encoding="utf-8") as f:
-            daten = json.load(f)
-    except:
-        daten = []
-    daten.append({"Zeit": datetime.now().strftime("%H:%M:%S"), "Data": new})
-    with open(dateipfad, "w", encoding="utf-8") as f:
-        json.dump(daten, f, ensure_ascii=False, indent=4)
 
 # Immer prüfen, ob der Benutzer angemeldet ist
 # bzw. zur Login-Seite durchlassen
@@ -194,41 +179,6 @@ def index():
 def static_files(filename):
     return send_from_directory("static", filename)
 
-@app.route("/daten")
-def daten():
-    try:
-        with open("data/data.json", "r", encoding="utf-8") as f:
-            return jsonify(json.load(f))
-    except FileNotFoundError:
-        return jsonify([])
-
-@app.route("/senden", methods=["POST"])
-def senden():
-    neue_daten = request.get_json()
-    try:
-        with open("data/data.json", "r", encoding="utf-8") as f:
-            bestehende = json.load(f)
-    except:
-        bestehende = []
-
-    for neuer in neue_daten:
-        nummer = neuer["Nummer"]
-        bahnen = int(neuer["Bahnen"])
-        abwesend = neuer.get("Abwesend", False)
-        for item in bestehende:
-            if item["Nummer"] == nummer:
-                item.update({"Bahnen": bahnen, "Abwesend": abwesend})
-                break
-        else:
-            bestehende.append({"Nummer": nummer, "Bahnen": bahnen, "Abwesend": abwesend})
-
-    with open("data/data.json", "w", encoding="utf-8") as f:
-        json.dump(bestehende, f, ensure_ascii=False, indent=4)
-
-    addVersion(bestehende)
-    return "Daten empfangen", 200
-
-
 @app.route("/action", methods=["POST"])
 def action():
     try:
@@ -238,6 +188,7 @@ def action():
         print("Empfangene Actions:", actions)
 
         results = []
+        updates = []
 
         for action in actions:
             kommando = action.get("kommando")
@@ -252,22 +203,36 @@ def action():
                     nummer = int(parameter[0])
                     anzahl = int(parameter[1])
                     bahnnr = int(parameter[2]) if len(parameter) > 2 else 0
-                    print(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
+                    logging.info(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
                     db.aendere_bahnanzahl_um(nummer,anzahl,clientid,bahnnr=bahnnr)
                     results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
+                    updates.append(db.lies_schwimmer(nummer))
                 except (ValueError, IndexError) as e:
-                    print(f"Fehler bei ADD-Parametern: {e}")
+                    logging.info(f"Fehler bei ADD-Parametern: {e}")
+                    results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
+            elif kommando == "GETB":
+                try:
+                    logging.info(f"Schwimmer der Bahnen {parameter} werden von Nutzer:{user} und Client-ID: {clientid} abgerufen")
+                    for bahnnr in parameter:
+                        updates.extend(db.lies_schwimmer_vonBahn(bahnnr))
+                    results.append({"kommando": kommando, "status": "erfolgreich", "bahnen": parameter})
+                    
+                except (ValueError, IndexError) as e:
+                    logging.info(f"Fehler bei GETB-Parametern: {e}")
                     results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
             elif kommando == "GET":
-                print(f"GET ausgeführt mit Parametern: {parameter}")
                 logging.info(f"Tabelle swimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
                 #print(db.liste_tabelle('schwimmer'))
-                return jsonify(db.liste_tabelle('schwimmer'))
+                if parameter == []:
+                    updates = db.liste_tabelle('schwimmer')
+                else:
+                    nummer = int(parameter[0])
+                    updates = [db.lies_schwimmer(nummer)]
             else:
                 logging.debug(f"Unbekanntes Kommando: {kommando}")
                 print(f"Unbekanntes Kommando: {kommando}")
 
-        return "OK", 200
+        return jsonify({"results": results, "updates": updates}), 200
 
     except Exception as e:
         print(f"Fehler beim Verarbeiten der Actions: {e}")
