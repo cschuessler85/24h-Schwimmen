@@ -608,6 +608,7 @@ function parseUpdates(resp) {
     if (resp["updates"] && Array.isArray(resp["updates"])) {
         resp["updates"].forEach((eintrag) => {
             alleSchwimmer[eintrag["nummer"]] = eintrag;
+            console.log(`Schwimmer Nummer ${eintrag["nummer"]} aktualisiert`);
         });        
     }
 }
@@ -616,7 +617,7 @@ function parseUpdates(resp) {
 //  ENDE DATENAUSTAUSCH mit dem Server
 // ----------------------------------------------------------
 
-// Option: Runde abziehen
+// Option: Runde abziehen - aus dem Kontextmenü des Schwimmers
 document.getElementById("rundeAbziehenOption").addEventListener("click", function () {
     //TODO: auf DIV umschreiben
     if (clickedRow) {
