@@ -184,7 +184,6 @@ def init_db():
             bahnanzahl INTEGER,
             strecke INTEGER,
             auf_bahn INTEGER,
-            avg_roundtime INTEGER, 
             aktiv BOOLEAN,
             FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id),
             CONSTRAINT unique_schwimmer UNIQUE (nummer, erstellt_von_client_id)
@@ -217,7 +216,7 @@ def dict_from_table_row(row, table_name):
     elif table_name == 'clients':
         columns = ['id', 'ip', 'benutzer_id', 'zeitpunkt_letzte_aktion']
     elif table_name == 'schwimmer':
-        columns = ['nummer', 'erstellt_von_client_id', 'name', 'bahnanzahl', 'strecke', 'auf_bahn', 'aktiv','avg_roundtime']
+        columns = ['nummer', 'erstellt_von_client_id', 'name', 'bahnanzahl', 'strecke', 'auf_bahn', 'aktiv']
     elif table_name == 'actions':
         columns = ['id', 'benutzer_id', 'client_id', 'zeitstempel', 'kommando', 'parameter']
     else:
@@ -295,15 +294,15 @@ def update_schwimmer(schwimmer_id, **kwargs):
     db.execute(query, values)
 
 # Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück
-def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv):
+def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv):
     """
     Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück.
     """
     query = """
-        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
+        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """
-    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, avg_roundtime, aktiv)
+    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
     return db.execute(query, params)
 
 def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
@@ -324,7 +323,6 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
             bahnanzahl=max(anzahl, 0),
             strecke=0,
             auf_bahn=bahnnr,
-            avg_roundtime=0,
             aktiv=1
         )
     else:
