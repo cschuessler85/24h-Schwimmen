@@ -46,7 +46,7 @@ export function initMyModal() {
 export function schwimmerNummerErfragen() {
     return new Promise(resolve => {
         const innerHTML = `
-            <h2>Schwimmer Nummer:</h2>
+            <h2 style="color: black;">Schwimmer Nummer:</h2>
             <input type="number" id="nummer" name="nummer" placeholder="xxx" maxlength="3"
                    style="font-size: 3em; text-align: center; width: 100%;">
             <br>
@@ -65,6 +65,7 @@ export function schwimmerNummerErfragen() {
         input.focus();
 
         input.addEventListener('input', checkNummerInput);
+        checkNummerInput();
 
         confirmBtn.onclick = () => {
             const nummer = input.value.trim();
