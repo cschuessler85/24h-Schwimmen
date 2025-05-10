@@ -22,7 +22,7 @@ Eine Basisdatenbank mit dem Benutzer ``admin`` und dem Passwort ``swim24`` wird 
 Ein Mini-Python-Webserver liefert eine HTML-Seite mit Javascript aus und registriert per send requests Bahnen der Schwimmer die auf einem Endgerät per klick erfasst werden. Ebenso liefert der Webserver Daten an die Webseite.
 
 Die Gestaltung der Ansicht auf dem Endgerät ist in etwa wie folgt:
-<img src="./images/ScreenshotOberfl.png" width="400px"></img>
+<img alt="ScreenshotOberfläche" src="./images/ScreenshotOberfl.png" width="400px"></img>
 
 Dabei wird im oberen Bereich die Bahnnummer für die das Gerät genutzt wird angezeigt bzw. geändert. Der (+)-Button links ermöglicht es einen Schwimmer (der über seine Startnummer erfasst wird) hinzuzufügen.
 In einzelnen Feldern werden die aktiv auf der Bahn schwimmenden Schwimmer angezeigt. Grün zeigt an, dass dieser Schwimmer nicht auf der eingestellten Bahn schwimmt. Die Anzeige erfolgt in der Reihenfolge, dass derjenige Schwimmer für den als letztes eine erfolgreich geschwommene Bahn registriert wurde am Ende der Liste geführt wird. So dass die vermutlich als nächstes eintreffenden aktiven Schwimmer ganz oben in der Liste geführt werden.
