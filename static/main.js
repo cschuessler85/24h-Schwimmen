@@ -165,8 +165,8 @@ function toggleInfoBar() {
 
 
 function downloadJSON() {
-    // Tabelle in JSON umwandeln
-    const data = tableToJSON("schwimmer");
+    // Daten für JSON-Umwandlung in ein Dictionary packen
+    const data = {"schwimmer":schwimmer, "alleSchwimmer": alleSchwimmer, "actions": actions};
 
     // In JSON-Text umwandeln
     const jsonString = JSON.stringify(data, null, 2);
