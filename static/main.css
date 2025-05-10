@@ -29,7 +29,7 @@ header {
   position: relative;
   width: 100%;
   box-sizing: border-box; /* Damit die größe Inklusive Padding gerechnet wird */
-  z-index: 1000; /* Damit es immer oben ist */
+  z-index: 900; /* Damit es immer oben ist */
 }
 
 /* Header-Inhalt */

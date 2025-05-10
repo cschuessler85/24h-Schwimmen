@@ -124,6 +124,7 @@ function fillSchwimmerAusMeinenBahnen() {
 
 function showStatusMessage(text, isSuccess = true, duration = 3000) {
     const msg = document.getElementById("statusMessage");
+    msg.zIndex = '1000';
     msg.textContent = text;
     msg.style.backgroundColor = isSuccess ? "#4CAF50" : "#f44336";
     msg.style.display = "block";
