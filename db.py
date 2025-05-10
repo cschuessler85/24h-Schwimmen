@@ -315,7 +315,7 @@ def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke
     """
     query = """
         INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """
     params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
     return db.execute(query, params)

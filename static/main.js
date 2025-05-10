@@ -311,7 +311,8 @@ container.addEventListener('click', async (event) => {
                 s_data.prio = 0;
                 s_data.bahnen += 1;
                 //das Div löschen - wird beim rendern wieder hinten angehangen
-                clicked_schwimmer.remove();
+                //clicked_schwimmer.remove();
+                clicked_schwimmer.style.opacity='';
                 render();
                 actions.push({
                     kommando: "ADD",
@@ -454,30 +455,43 @@ function removeSchwimmerDiv(div) {
         schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
         // Aktualisiere die Daten in alleSchwimmer - Bahnen reicht
         console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
-        console.log(entfernterSchwimmer);
         alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = entfernterSchwimmer.bahnen;
     }
-    div.remove();
+    //div.remove();
+    render();
 }
 
 function render() {
     const container = document.getElementById("container");
 
-    // Aktuelle Divs nach Nummer erfassen
+    // 1. Aktuelle Positionen merken (First)
+    const firstRects = new Map();
+    // 2. Vorhandene Schwimmernummern sammeln
     const existingDivs = new Map();
     container.querySelectorAll(".schwimmer").forEach(div => {
+        firstRects.set(div.dataset.nummer, div.getBoundingClientRect());
         existingDivs.set(Number(div.dataset.nummer), div);
     });
 
-    // Schwimmer nach Prio sortieren
     const sortedSchwimmer = [...schwimmer].sort((a, b) => b.prio - a.prio);
+    const aktuelleSNummern = new Set(sortedSchwimmer.map(s=>s.nummer));
 
-    // Divs neu anordnen
+    // Divs ausblenden, die nicht mehr in aktuelle Nummern vorhanden sind
+    existingDivs.forEach((div, nummer) => {
+        if (!aktuelleSNummern.has(nummer)) {
+            div.classList.add("fade-out");
+            div.style.transition = "opacity 300ms, transform 300ms";
+            div.style.opacity = 0;
+            div.style.transform = "scale(0.9)";
+            setTimeout(() => div.remove(), 300); // Entfernen nach Animation
+        }
+    });
+
+    // Divs nach priorität sortiert in den Container setzen
     sortedSchwimmer.forEach((s) => {
         let div = existingDivs.get(s.nummer);
 
         if (!div) {
-            // Div existiert noch nicht → neu erstellen
             div = document.createElement("div");
             div.className = "schwimmer";
             div.dataset.nummer = s.nummer;
@@ -485,27 +499,45 @@ function render() {
             addSwipeHandler(div);
         }
 
-        // Inhalt (fast) immer aktualisieren
         div.dataset.prio = s.prio ?? 0;
         if (!fadeControllers.has(div.dataset.nummer) && div.dataset.swiping !== "true") {
             div.innerHTML = `
                 <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
                 <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
             `;
-            //Wenn Bahn nicht in verwaltete Bahnen Hintergrund ändern
             if (!verwaltete_bahnen.includes(s.aufBahn)) {
                 div.style.backgroundColor = "lightgreen";
             } else {
                 div.style.removeProperty("background-color");
             }
-        } else {
-            // console.log("Hier wird gefadet", s.nummer);
         }
 
-        // Div richtig platzieren
-        container.appendChild(div); // appendChild verschiebt div, wenn es schon existiert
+        container.appendChild(div); // wird ans Ende gesetzt (neu sortiert)
+    });
+
+    // 3. Nach dem Umordnen: neue Positionen messen (Last) + bewegung dorthin Animate
+    container.querySelectorAll(".schwimmer").forEach(div => {
+        const nummer = div.dataset.nummer;
+        const first = firstRects.get(nummer);
+        const last = div.getBoundingClientRect();
+
+        if (first && !div.classList.contains("fade-out")) {
+            const dx = first.left - last.left;
+            const dy = first.top - last.top;
+
+            if (dx !== 0 || dy !== 0) {
+                div.animate([
+                    { transform: `translate(${dx}px, ${dy}px)` },
+                    { transform: 'translate(0, 0)' }
+                ], {
+                    duration: 300,
+                    easing: 'ease'
+                });
+            }
+        }
     });
 }
+
 
 
 // Sekündliches auffrischen der darstellung
