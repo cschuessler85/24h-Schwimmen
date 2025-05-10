@@ -22,6 +22,7 @@ Eine Basisdatenbank mit dem Benutzer ``admin`` und dem Passwort ``swim24`` wird 
 Ein Mini-Python-Webserver liefert eine HTML-Seite mit Javascript aus und registriert per send requests Bahnen der Schwimmer die auf einem Endgerät per klick erfasst werden. Ebenso liefert der Webserver Daten an die Webseite.
 
 Die Gestaltung der Ansicht auf dem Endgerät ist in etwa wie folgt:
+
 <img alt="ScreenshotOberfläche" src="./images/ScreenshotOberfl.png" width="400px"></img>
 
 Dabei wird im oberen Bereich die Bahnnummer für die das Gerät genutzt wird angezeigt bzw. geändert. Der (+)-Button links ermöglicht es einen Schwimmer (der über seine Startnummer erfasst wird) hinzuzufügen.
@@ -122,6 +123,10 @@ Hier ist eine Übersicht über die Verzeichnisstruktur des Projektes:
 ├── README.md           dieser Text
 └── requirements.txt    Für die Nutzung zu installierende Python-Module
 ```
+
+## Windows-Firewall
+
+Gegebenenfalls muss die Windows-Firewall angepasst werden. Windows-Defender-Firewall -> Erweiterete Einstellungen -> Eingehende Regel -> Neue Regel anlegen -> Port 8080 freigeben
 
 ## Git-Workflow
 
