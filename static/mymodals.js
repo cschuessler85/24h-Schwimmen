@@ -50,8 +50,8 @@ export function schwimmerNummerErfragen() {
             <input type="number" id="nummer" name="nummer" placeholder="xxx" maxlength="3"
                    style="font-size: 3em; text-align: center; width: 100%;">
             <br>
-            <button id="confirmBtn">Bestätigen</button>
             <button id="closeBtn">Schließen</button>
+            <button id="confirmBtn">Bestätigen</button>
         `;
         document.getElementById('modalContent').innerHTML = innerHTML;
         const modal = document.getElementById('myModal');
