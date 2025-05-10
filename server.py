@@ -65,7 +65,7 @@ def before_request():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        benutzername = request.form['benutzername']
+        benutzername = request.form.get('benutzername', '').lower()
         passwort = request.form['passwort']
 
         # Benutzerdaten aus der Datenbank holen
