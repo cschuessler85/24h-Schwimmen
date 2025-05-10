@@ -399,6 +399,10 @@ function addSwipeHandler(div) {
     const maxmovedist = 1.5*threshold;
 
     div.addEventListener('touchstart', e => {
+        if (fadeControllers.has(div.dataset.nummer)) {
+            return;             // bricht die weitere Verarbeitung ab, wenn das Objekt gerade fadet
+        }
+    
         //e.preventDefault(); /* dann geht kein Klicken mehr */
         div.dataset.swiping = "true";
         startX = e.touches[0].clientX;
@@ -408,6 +412,10 @@ function addSwipeHandler(div) {
 
     div.addEventListener('touchmove', e => {
         e.preventDefault();
+        if (div.dataset.swiping != "true") {
+            return;             // bricht die weitere Verarbeitung ab wenn touchstart schon abgebrochen wurde
+        }
+    
         currentX = e.touches[0].clientX;
         const deltaX = Math.max(-maxmovedist,Math.min(maxmovedist, currentX - startX));
 
@@ -430,15 +438,13 @@ function addSwipeHandler(div) {
     }, { passive: false }); // wichtig ?!
 
     div.addEventListener('touchend', () => {
-        delete div.dataset.swiping;
+        if (div.dataset.swiping != "true") {
+            return;             // bricht die weitere Verarbeitung ab, wenn touchstart wg. Fading schon unterbunden wurde
+        }
+            delete div.dataset.swiping;
         div.style.transition = 'transform 0.2s ease'; //Springt zurück
         if (swipedleft) {
-            // entferne das Element (du hast das bereits implementiert)
-            const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
-            if (index !== -1) {
-                schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
-            }
-            div.remove();
+            removeSchwimmerDiv(div);
         } else if (swipedright) {
             // Schiebe das Element ans Ende der Liste
             div.dataset.prio = 0;
@@ -457,6 +463,20 @@ function addSwipeHandler(div) {
     });
 }
 
+function removeSchwimmerDiv(div) {
+    // Abgleich der Daten in alleSchwimmer mit den Daten des Schwimmers der entfernt wird.
+      // entferne das Element (du hast das bereits implementiert)
+      const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
+      let entfernterSchwimmer = schwimmer[index];
+      if (index !== -1) {
+          schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
+      }
+      // Aktualisiere die Daten in alleSchwimmer - Bahnen reicht
+      console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
+      console.log(entfernterSchwimmer);
+      alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = entfernterSchwimmer.bahnen;
+      div.remove();
+    }
 
 function render() {
     const container = document.getElementById("container");
@@ -694,7 +714,7 @@ document.getElementById("deleteSwimmer").addEventListener("click", function () {
             if (index !== -1) {
                 schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
             }
-            clickedDiv.remove();
+            removeSchwimmerDiv(clickedDiv);
         }
     }
     clickedDiv = null;
@@ -708,7 +728,7 @@ document.getElementById("nurEigene").addEventListener("click", function () {
         schwimmer.splice(index, 1); //lösche diesen Eintrag
         //lösche das DIV
         const div = document.querySelector(`div[data-nummer="${nummer}"]`);
-        div.remove();
+        removeSchwimmerDiv(div);
         index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
     }
     contextMenu.style.display = "none";
