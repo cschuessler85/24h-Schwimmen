@@ -197,6 +197,7 @@ function checkBahnenInput() {
 function parseBahnenInput() {
     const input = document.getElementById("bahnen");
     if (isBahnenInputValid(input.value)) {
+        input.blur();
         const zahlen = input.value.split(",").map(s => parseInt(s.trim(), 10));
         console.log("Gültige Bahnnummern:", zahlen);
         verwaltete_bahnen = zahlen;
@@ -425,19 +426,20 @@ function addSwipeHandler(div) {
             return;             // bricht die weitere Verarbeitung ab, wenn touchstart wg. Fading schon unterbunden wurde
         }
         delete div.dataset.swiping;
-        div.style.transition = 'transform 0.2s ease'; //Springt zurück
-        if (swipedleft) {
+       if (swipedleft) {
+            swipedleft = false;
             removeSchwimmerDiv(div);
         } else if (swipedright) {
             // Schiebe das Element ans Ende der Liste
-            div.dataset.prio = 0;
             schwimmer.forEach(s => { if (s.nummer === parseInt(div.dataset.nummer)) s.prio = 0; });
             // zurücksetzen
+            swipedright = false;
             div.style.transform = 'translateX(0)';
             div.style.backgroundColor = '';
             div.style.zIndex = '';
             render();
         } else {
+            div.style.transition = 'transform 0.2s ease'; //Springt zurück
             // zurücksetzen
             div.style.transform = 'translateX(0)';
             div.style.backgroundColor = '';
