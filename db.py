@@ -71,6 +71,7 @@ class Database:
             logging.debug(f"execute - query: {query}, params: {params}")
             self.conn = None
             self.cursor = None  # Setze den Cursor auf None, damit bei der nächsten Abfrage ein Fehler festgestellt wird
+        return None
 
     def fetchall(self, query, params=None):
         """
@@ -315,7 +316,7 @@ def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke
     """
     query = """
         INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """
     params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
     return db.execute(query, params)
@@ -331,7 +332,8 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
     
     if schwimmer is None or len(schwimmer) == 0 :
         # Schwimmer existiert nicht → neu anlegen
-        erstelle_schwimmer(
+        logging.info(f"Schwimmer {nummer} wird neu angelegt")
+        if (not erstelle_schwimmer(
             nummer=nummer,
             erstellt_von_client_id=client_id,
             name=f"Schwimmer {nummer}",
@@ -339,7 +341,8 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
             strecke=0,
             auf_bahn=bahnnr,
             aktiv=1
-        )
+        )):
+            raise AttributeError('Schwimmer konnte nicht erstellt werden')
     else:
         # Schwimmer existiert → Bahnanzahl ändern
         neue_bahnanzahl = (schwimmer["bahnanzahl"] or 0) + anzahl
