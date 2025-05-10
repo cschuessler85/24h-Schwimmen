@@ -452,6 +452,7 @@ function addSwipeHandler(div) {
 function removeSchwimmerDiv(div) {
     // Abgleich der Daten in alleSchwimmer mit den Daten des Schwimmers der entfernt wird.
     // entferne das Element (du hast das bereits implementiert)
+    div.style.opacity = 0;
     const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
     let entfernterSchwimmer = schwimmer[index];
     if (index !== -1) {
@@ -476,7 +477,7 @@ function render() {
         existingDivs.set(Number(div.dataset.nummer), div);
     });
 
-    const sortedSchwimmer = [...schwimmer].sort((a, b) => b.prio - a.prio);
+    const sortedSchwimmer = [...schwimmer].sort((a, b) => a.prio - b.prio); //umgekehrt sortiert
     const aktuelleSNummern = new Set(sortedSchwimmer.map(s=>s.nummer));
 
     // Divs ausblenden, die nicht mehr in aktuelle Nummern vorhanden sind
@@ -498,7 +499,7 @@ function render() {
             div = document.createElement("div");
             div.className = "schwimmer";
             div.dataset.nummer = s.nummer;
-            container.appendChild(div);
+            container.appendChild(div); //Notwendig, da sonst der Swipe-Handler nicht gesetzt werden kann
             addSwipeHandler(div);
         }
 
@@ -515,7 +516,8 @@ function render() {
             }
         }
 
-        container.appendChild(div); // wird ans Ende gesetzt (neu sortiert)
+        //container.appendChild(div); // wird ans Ende gesetzt (neu sortiert)
+        container.insertBefore(div, container.firstChild); //Umgekehrte Sortierung um Sprung beim Entfernen von DIVS zu vermeiden
     });
 
     // 3. Nach dem Umordnen: neue Positionen messen (Last) + bewegung dorthin Animate
