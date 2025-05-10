@@ -390,7 +390,8 @@ document.addEventListener("contextmenu", function (e) {
 function addSwipeHandler(div) {
     let startX = 0;
     let currentX = 0;
-    let swiped = false;
+    let swipedleft = false;
+    let swipedright = false;
 
     const threshold = div.offsetWidth / 4; // Funktioniert nur, wenn das div schon gerendert ist
     //const threshold = div.getBoundingClientRect().width; //Alternative
@@ -398,47 +399,84 @@ function addSwipeHandler(div) {
     const maxmovedist = 1.5*threshold;
 
     div.addEventListener('touchstart', e => {
+        if (fadeControllers.has(div.dataset.nummer)) {
+            return;             // bricht die weitere Verarbeitung ab, wenn das Objekt gerade fadet
+        }
+    
         //e.preventDefault(); /* dann geht kein Klicken mehr */
         div.dataset.swiping = "true";
         startX = e.touches[0].clientX;
+        div.style.zIndex = '1000';
         div.style.transition = 'none'; // Bewegung ohne Übergang - folgt dem Finger sofort
     }, { passive: false });
 
     div.addEventListener('touchmove', e => {
         e.preventDefault();
+        if (div.dataset.swiping != "true") {
+            return;             // bricht die weitere Verarbeitung ab wenn touchstart schon abgebrochen wurde
+        }
+    
         currentX = e.touches[0].clientX;
         const deltaX = Math.max(-maxmovedist,Math.min(maxmovedist, currentX - startX));
 
         div.style.transform = `translateX(${deltaX}px)`;
 
         // Wenn mehr als die Hälfte verschoben → Farbe ändern
-        if (Math.abs(deltaX) > threshold) {
+        if (deltaX > threshold) {
+            div.style.backgroundColor = 'lightgreen';
+            div.style.transform = `translate(${deltaX}px,${3* (deltaX-threshold)}px)`;
+            swipedright = true;
+        } else if (deltaX < -threshold) {
             div.style.backgroundColor = 'red';
-            swiped = true;
+            div.style.transform = `translateX(${2*deltaX+threshold}px) scale(${(deltaX+1.2*maxmovedist)/(1.2*maxmovedist-threshold)})`;
+            swipedleft = true;
         } else {
             div.style.backgroundColor = '';
-            swiped = false;
+            swipedleft = false;
+            swipedright = false;
         }
     }, { passive: false }); // wichtig ?!
 
     div.addEventListener('touchend', () => {
-        delete div.dataset.swiping;
+        if (div.dataset.swiping != "true") {
+            return;             // bricht die weitere Verarbeitung ab, wenn touchstart wg. Fading schon unterbunden wurde
+        }
+            delete div.dataset.swiping;
         div.style.transition = 'transform 0.2s ease'; //Springt zurück
-        if (swiped) {
-            // entferne das Element (du hast das bereits implementiert)
-            const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
-            if (index !== -1) {
-                schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
-            }
-            div.remove();
+        if (swipedleft) {
+            removeSchwimmerDiv(div);
+        } else if (swipedright) {
+            // Schiebe das Element ans Ende der Liste
+            div.dataset.prio = 0;
+            schwimmer.forEach(s => {if (s.nummer === parseInt(div.dataset.nummer)) s.prio = 0;});
+            // zurücksetzen
+            div.style.transform = 'translateX(0)';
+            div.style.backgroundColor = '';
+            div.style.zIndex = '';
+            render();
         } else {
             // zurücksetzen
             div.style.transform = 'translateX(0)';
             div.style.backgroundColor = '';
+            div.style.zIndex = '';
         }
     });
 }
 
+function removeSchwimmerDiv(div) {
+    // Abgleich der Daten in alleSchwimmer mit den Daten des Schwimmers der entfernt wird.
+      // entferne das Element (du hast das bereits implementiert)
+      const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
+      let entfernterSchwimmer = schwimmer[index];
+      if (index !== -1) {
+          schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
+      }
+      // Aktualisiere die Daten in alleSchwimmer - Bahnen reicht
+      console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
+      console.log(entfernterSchwimmer);
+      alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = entfernterSchwimmer.bahnen;
+      div.remove();
+    }
 
 function render() {
     const container = document.getElementById("container");
@@ -479,7 +517,7 @@ function render() {
                 div.style.removeProperty("background-color");
             }
         } else {
-            console.log("Hier wird gefadet", s.nummer);
+            // console.log("Hier wird gefadet", s.nummer);
         }
 
         // Div richtig platzieren
@@ -676,7 +714,7 @@ document.getElementById("deleteSwimmer").addEventListener("click", function () {
             if (index !== -1) {
                 schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
             }
-            clickedDiv.remove();
+            removeSchwimmerDiv(clickedDiv);
         }
     }
     clickedDiv = null;
@@ -690,7 +728,7 @@ document.getElementById("nurEigene").addEventListener("click", function () {
         schwimmer.splice(index, 1); //lösche diesen Eintrag
         //lösche das DIV
         const div = document.querySelector(`div[data-nummer="${nummer}"]`);
-        div.remove();
+        removeSchwimmerDiv(div);
         index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
     }
     contextMenu.style.display = "none";
