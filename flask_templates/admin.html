@@ -67,86 +67,98 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
     <button onclick="showSwimmerTable()">Schwimmer</button>
     <button onclick="showActionsTable()">Aktionen</button>
   </nav>
-<main>
-  <section id="user" class="admin-section">
-    <h2>Benutzertabelle</h2>
-    <table id="userTable">
-      <!-- Die Tabelle wird hier dynamisch gefüllt -->
-    </table>
-    <body>
-      <h1>Benutzer löschen</h1>
-      <form action="/admin" method="post">
+  <main>
+    <section id="user" class="admin-section">
+      <h2>Benutzertabelle</h2>
+      <table id="userTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+
+      <body>
+        <h1>Benutzer löschen</h1>
+        <form action="/admin" method="post">
           <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
           <input type="hidden" name="action" value="delete_user">
-          
+
           <label for="benutzername">Benutzername:</label>
           <input type="text" id="benutzername" name="benutzername" required>
-  
+
           <button type="submit">Benutzer löschen</button>
+        </form>
+        <h1>Neues Passwort</h1>
+        <form action="/admin" method="post">
+          <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
+          <input type="hidden" name="action" value="new_passwort">
+
+          <label for="benutzername">Benutzername:</label>
+          <input type="text" id="benutzername" name="benutzername" required>
+
+          <label for="passwort">Neues Passwort:</label>
+          <input type="text" id="new_pass" name="new_pass" required>
+
+
+          <button type="submit">Neues Passwort festlegen</button>
+        </form>
+      </body>
+
+    </section>
+
+    <section id="client" class="admin-section">
+      <h2>Clients</h2>
+      <table id="clientTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+    </section>
+
+    <section id="swimmer" class="admin-section" style="display: none">
+      <h2>Schwimmer</h2>
+      <table id="swimmerTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+      <hr>
+      <input type="file" id="csvInput">
+      <div id="csvPreview"></div>
+      <button id="csvSend">Importieren</button>
+
+      <script type="module">
+        import { initCSVImport } from './csvImport.js';
+        initCSVImport('#csvInput', '#csvPreview', '#csvSend', { url: '/import_schwimmer' });
+      </script>
+
+    </section>
+
+    <section id="actions" class="admin-section" style="display: none">
+      <h2>Aktionen</h2>
+      <table id="actionsTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+    </section>
+
+    <section id="adduser" class="admin-section">
+      <h2>Benutzer anlegen</h2>
+      <form onsubmit="createUser(event)">
+        <div class="form-group">
+          <label for="realname">Name:</label>
+          <input type="text" id="realname" required />
+        </div>
+        <div class="form-group">
+          <label for="username">Benutzername:</label>
+          <input type="text" id="username" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Passwort:</label>
+          <input type="password" id="password" required />
+        </div>
+        <div class="form-group">
+          <input type="checkbox" id="admin" />
+          <label for="admin"> Administrator </label>
+        </div>
+
+        <button type="submit">Erstellen</button>
       </form>
-    <h1>Neues Passwort</h1>
-    <form action="/admin" method="post">
-        <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
-        <input type="hidden" name="action" value="new_passwort">
-        
-        <label for="benutzername">Benutzername:</label>
-        <input type="text" id="benutzername" name="benutzername" required>
+    </section>
 
-        <label for="passwort">Neues Passwort:</label>
-        <input type="text" id="new_pass" name="new_pass" required>
-
-
-        <button type="submit">Neues Passwort festlegen</button>
-    </form>
-</body>
-
-  </section>
-
-  <section id="client" class="admin-section">
-    <h2>Clients</h2>
-    <table id="clientTable">
-      <!-- Die Tabelle wird hier dynamisch gefüllt -->
-    </table>
-  </section>
-
-  <section id="swimmer" class="admin-section" style="display: none">
-    <h2>Schwimmer</h2>
-    <table id="swimmerTable">
-      <!-- Die Tabelle wird hier dynamisch gefüllt -->
-    </table>
-  </section>
-
-  <section id="actions" class="admin-section" style="display: none">
-    <h2>Aktionen</h2>
-    <table id="actionsTable">
-      <!-- Die Tabelle wird hier dynamisch gefüllt -->
-    </table>  </section>
-
-  <section id="adduser" class="admin-section">
-    <h2>Benutzer anlegen</h2>
-    <form onsubmit="createUser(event)">
-      <div class="form-group">
-        <label for="realname">Name:</label>
-        <input type="text" id="realname" required />
-      </div>
-      <div class="form-group">
-        <label for="username">Benutzername:</label>
-        <input type="text" id="username" required />
-      </div>
-      <div class="form-group">
-        <label for="password">Passwort:</label>
-        <input type="password" id="password" required />
-      </div>
-      <div class="form-group">
-        <input type="checkbox" id="admin" />
-        <label for="admin"> Administrator </label>
-      </div>
-
-      <button type="submit">Erstellen</button>
-    </form>
-  </section>
-
-</main>
+  </main>
   <!-- Kontextmenü für Admin-Aktionen -->
   <div id="adminMenu"
     style="display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 100">
@@ -154,6 +166,7 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
       <li onclick="showSection('adduser')">Benutzer anlegen</li>
       <li onclick="showSection('swimmer')">Schwimmer verwalten</li>
       <li onclick="showSection('actions')">Aktionen ansehen</li>
+      <li onclick="importSchwimmer()">Schwimmer importieren</li>
     </ul>
   </div>
 
