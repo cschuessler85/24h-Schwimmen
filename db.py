@@ -179,15 +179,14 @@ def init_db():
 
     query_schwimmer = '''
         CREATE TABLE IF NOT EXISTS schwimmer (
-            nummer INTEGER NOT NULL,
+            nummer INTEGER NOT NULL PRIMARY KEY,
             erstellt_von_client_id INTEGER,
             name TEXT,
             bahnanzahl INTEGER,
             strecke INTEGER,
             auf_bahn INTEGER,
             aktiv BOOLEAN,
-            FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id),
-            CONSTRAINT unique_schwimmer UNIQUE (nummer, erstellt_von_client_id)
+            FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id)
         )
     '''
     db.execute(query_schwimmer)

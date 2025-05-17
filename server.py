@@ -152,8 +152,33 @@ def admin():
         elif action == 'get_table_actions':
             logging.info("Tabelle actions wird abgerufen")
             #print(db.liste_tabelle('schwimmer'))
-            return jsonify(db.liste_tabelle('actions'))
-        # usw.
+            return jsonify(db.liste_tabelle('actions')), 200
+        elif action == 'import_schwimmer':
+            schwimmer_liste = data.get("data", [])
+            logging.info(f"Schwimmer werden importiert - Daten enthalten {len(schwimmer_liste)} Schwimmer")
+            if not isinstance(schwimmer_liste, list):
+                return jsonify({"error": "Datenformat ungültig"}), 400
+
+            # Beispiel: Daten durchgehen und validieren
+            validierte = []
+            for s in schwimmer_liste:
+                nummer = s.get("nummer")
+                name = s.get("name")
+                geschlecht = s.get("geschlecht", "")
+                if not nummer or not name:
+                    continue  # überspringen wenn Pflichtfelder fehlen
+                validierte.append({
+                    "nummer": nummer,
+                    "name": name,
+                    "geschlecht": geschlecht,
+                    # ggf. weitere Felder übernehmen
+                })
+                db.erstelle_schwimmer(nummer, session['clientID'], name,0,0,0,1)
+
+            # TODO: Validierte Daten speichern
+            logging.info(f"Importiert wurden {len(validierte)} Schwimmer")
+
+            return jsonify({"status": "ok", "importiert": len(validierte)}), 200
 
     params = {
         'user_role': session.get('user_role',""),
@@ -221,7 +246,7 @@ def action():
                     logging.info(f"Fehler bei GETB-Parametern: {e}")
                     results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
             elif kommando == "GET":
-                logging.info(f"Tabelle swimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
+                logging.info(f"Tabelle schwimmer wird von Nutzer:{user} und Client-ID: {clientid} abgerufen")
                 #print(db.liste_tabelle('schwimmer'))
                 if parameter == []:
                     updates = db.liste_tabelle('schwimmer')

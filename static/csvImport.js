@@ -22,46 +22,85 @@ export function initCSVImport(fileInputSelector, previewContainerSelector, sendB
 
     sendButton.addEventListener('click', async () => {
         if (parsedData.length === 0) return;
-        const url = options.url || '/import_schwimmer';
+        const url = options.url || '/admin';
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(parsedData)
+            body: JSON.stringify({
+                action: 'import_schwimmer', 
+                data: parsedData})
         });
         const result = await response.json();
         alert(result.message || 'Import abgeschlossen.');
     });
 }
 
-function renderPreview(headers, rows, container) {
-    container.innerHTML = '';
-    const table = document.createElement('table');
-    table.style.borderCollapse = 'collapse';
+let currentPage = 0;
+let csvHeaders = [];
+let csvData = [];
 
-    const thead = document.createElement('thead');
-    const headRow = document.createElement('tr');
-    headers.forEach(h => {
-        const th = document.createElement('th');
-        th.textContent = h;
-        th.style.border = '1px solid #ccc';
-        th.style.padding = '4px';
-        headRow.appendChild(th);
-    });
-    thead.appendChild(headRow);
-    table.appendChild(thead);
+function renderPreview(headers, data, container) {
+  // Bei erstem Aufruf: Initialisiere Daten und baue Steuerelemente
+  if (headers && data) {
+    csvHeaders = headers;
+    csvData = data;
+    currentPage = 0;
 
-    const tbody = document.createElement('tbody');
-    rows.forEach(row => {
-        const tr = document.createElement('tr');
-        headers.forEach(h => {
-            const td = document.createElement('td');
-            td.textContent = row[h] ?? '';
-            td.style.border = '1px solid #ccc';
-            td.style.padding = '4px';
-            tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
+    container.innerHTML = `
+      <div>
+        Zeige 
+        <input type="number" id="previewSize" value="20" min="1" style="width: 4ch;"> Einträge pro Seite
+      </div>
+      <div id="csvTableContainer"></div>
+      <div>
+        <button id="prevPage">Zurück</button>
+        <span id="pageInfo"></span>
+        <button id="nextPage">Weiter</button>
+      </div>
+    `;
+
+    document.getElementById("previewSize").addEventListener("input", () => {
+      currentPage = 0;
+      renderPreview(); // Nur Tabelle neu
     });
-    table.appendChild(tbody);
-    container.appendChild(table);
+
+    document.getElementById("prevPage").addEventListener("click", () => {
+      if (currentPage > 0) {
+        currentPage--;
+        renderPreview();
+      }
+    });
+
+    document.getElementById("nextPage").addEventListener("click", () => {
+      const previewSize = parseInt(document.getElementById("previewSize").value, 10) || 20;
+      if ((currentPage + 1) * previewSize < csvData.length) {
+        currentPage++;
+        renderPreview();
+      }
+    });
+  }
+
+  // Tabelle neu rendern
+  const tableContainer = document.getElementById("csvTableContainer");
+  const previewSize = parseInt(document.getElementById("previewSize").value, 10) || 20;
+  const start = currentPage * previewSize;
+  const end = start + previewSize;
+  const pageRows = csvData.slice(start, end);
+
+  const table = document.createElement("table");
+  table.innerHTML = `<thead><tr>${csvHeaders.map(h => `<th>${h}</th>`).join("")}</tr></thead>`;
+
+  const tbody = document.createElement("tbody");
+  for (const row of pageRows) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = csvHeaders.map(h => `<td>${row[h] ?? ""}</td>`).join("");
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  tableContainer.innerHTML = "";
+  tableContainer.appendChild(table);
+
+  // Seiteninfo aktualisieren
+  const totalPages = Math.ceil(csvData.length / previewSize);
+  document.getElementById("pageInfo").textContent = `Seite ${currentPage + 1} / ${totalPages}`;
 }

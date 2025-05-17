@@ -117,12 +117,14 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
       </table>
       <hr>
       <input type="file" id="csvInput">
-      <div id="csvPreview"></div>
+ 
+      <div id="csvPreviewContainer"></div>
+      
       <button id="csvSend">Importieren</button>
 
       <script type="module">
         import { initCSVImport } from './csvImport.js';
-        initCSVImport('#csvInput', '#csvPreview', '#csvSend', { url: '/import_schwimmer' });
+        initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
       </script>
 
     </section>
