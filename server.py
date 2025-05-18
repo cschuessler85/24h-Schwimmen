@@ -167,15 +167,15 @@ def admin():
                 geschlecht = s.get("geschlecht", "")
                 if not nummer or not name:
                     continue  # überspringen wenn Pflichtfelder fehlen
-                validierte.append({
-                    "nummer": nummer,
-                    "name": name,
-                    "geschlecht": geschlecht,
-                    # ggf. weitere Felder übernehmen
-                })
-                db.erstelle_schwimmer(nummer, session['clientID'], name,0,0,0,1)
+                # TODO Existierende Schwimmer sollten aktualisiert werden
+                if (db.insertOrUpdateSchwimmer(nummer, erstellt_von_client_id = session['clientID'], name = name)):
+                    validierte.append({
+                        "nummer": nummer,
+                        "name": name,
+                        "geschlecht": geschlecht,
+                        # ggf. weitere Felder übernehmen
+                    })
 
-            # TODO: Validierte Daten speichern
             logging.info(f"Importiert wurden {len(validierte)} Schwimmer")
 
             return jsonify({"status": "ok", "importiert": len(validierte)}), 200
