@@ -1,3 +1,5 @@
+import { showStatusMessage } from "./mymodals.js";
+
 export function initCSVImport(fileInputSelector, previewContainerSelector, sendButtonSelector, options = {}) {
     const fileInput = document.querySelector(fileInputSelector);
     const previewContainer = document.querySelector(previewContainerSelector);
@@ -33,11 +35,9 @@ export function initCSVImport(fileInputSelector, previewContainerSelector, sendB
                 })
             });
             const result = await response.json();
-            //TODO Antwort auswerten bzw. anzahl der Importierten Schwimmer anzeigen
-            alert(result.message || 'Import abgeschlossen.');
+            showStatusMessage(`Es wurden ${result['importiert']} Schwimmer importiert bzw. aktualisiert`);
         } catch (error) {
-            //TODO - muss hier ggf auch ein Verbindungsverlust geprüft werden?
-            alert(`Fehler beim Senden: ${error.message}`);
+            showStatusMessage(`Fehler beim Import der Schwimmer`);
         }
     });
 }

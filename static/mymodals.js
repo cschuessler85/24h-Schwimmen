@@ -1,3 +1,19 @@
+export function initStatusMessage() {
+    // erst die CSS-Styles
+    const style = document.createElement('style');
+    style.textContent = ``;
+    // document.head.appendChild(style);
+
+    // dann die HTML-Zeilen
+    const modalHTML = `
+    <div id="statusMessage" style="display:none; position:fixed; top:0px; left:50%; transform:translateX(-50%);
+padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:1000;"></div>
+    `;
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = modalHTML;
+    document.body.insertBefore(wrapper.firstElementChild, document.body.firstChild);
+}
+
 
 export function initMyModal() {
     // erst die CSS-Styles
@@ -41,6 +57,19 @@ export function initMyModal() {
     wrapper.innerHTML = modalHTML;
     document.body.insertBefore(wrapper.firstElementChild, document.body.firstChild);
 }
+
+export function showStatusMessage(text, isSuccess = true, duration = 3000) {
+    const msg = document.getElementById("statusMessage");
+    msg.zIndex = '1000';
+    msg.textContent = text;
+    msg.style.backgroundColor = isSuccess ? "#4CAF50" : "#f44336";
+    msg.style.display = "block";
+
+    setTimeout(() => {
+        msg.style.display = "none";
+    }, duration);
+}
+
 
 // Funktion um das Modal anzuzeigen und die Nummer zu erfragen
 export function schwimmerNummerErfragen() {
@@ -118,3 +147,4 @@ function clearNummer() {
 }
 
 initMyModal();
+initStatusMessage();

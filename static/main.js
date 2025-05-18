@@ -1,4 +1,4 @@
-import { schwimmerNummerErfragen } from './mymodals.js'
+import { schwimmerNummerErfragen, showStatusMessage } from './mymodals.js'
 
 let formIsDirty = false; // Flag, das anzeigt, ob Daten geändert wurden
 // Beim Verlassen der Seite warnen, falls Änderungen vorhanden sind
@@ -121,19 +121,6 @@ function fillSchwimmerAusMeinenBahnen() {
         }
     });
 }
-
-function showStatusMessage(text, isSuccess = true, duration = 3000) {
-    const msg = document.getElementById("statusMessage");
-    msg.zIndex = '1000';
-    msg.textContent = text;
-    msg.style.backgroundColor = isSuccess ? "#4CAF50" : "#f44336";
-    msg.style.display = "block";
-
-    setTimeout(() => {
-        msg.style.display = "none";
-    }, duration);
-}
-
 
 function toggleInfoBar() {
     // Das Info-Bar-Element auswählen
