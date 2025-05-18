@@ -52,7 +52,7 @@ class Database:
             
             if self.conn is None:
                 logging.error("Datenbankverbindung konnte nicht wiederhergestellt werden.")
-                return
+                return None
         
         try:
             if params is None:
@@ -179,15 +179,14 @@ def init_db():
 
     query_schwimmer = '''
         CREATE TABLE IF NOT EXISTS schwimmer (
-            nummer INTEGER NOT NULL,
+            nummer INTEGER NOT NULL PRIMARY KEY,
             erstellt_von_client_id INTEGER,
             name TEXT,
             bahnanzahl INTEGER,
             strecke INTEGER,
             auf_bahn INTEGER,
             aktiv BOOLEAN,
-            FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id),
-            CONSTRAINT unique_schwimmer UNIQUE (nummer, erstellt_von_client_id)
+            FOREIGN KEY (erstellt_von_client_id) REFERENCES clients(id)
         )
     '''
     db.execute(query_schwimmer)
@@ -291,6 +290,24 @@ def lies_schwimmer_vonBahn(bahnnr):
         print(f"Fehler beim Zugriff auf Tabelle schwimmer (auf Bahn {bahnnr}): {e}")
         return []
 
+# Aktualisiert die Felder eines Schwimmers anhand der ID oder legt diesen an
+# Die zu aktualisierenden Felder werden dynamisch übergeben, z. B.:
+# update_schwimmer(1, bahnanzahl=5, aktiv=0)
+# Das funktioniert durch **kwargs, womit beliebige Schlüssel-Wert-Paare übergeben werden können.
+def insertOrUpdateSchwimmer(nummer, **kwargs):
+    cursor = update_schwimmer(nummer, **kwargs)
+    if ( not cursor) :
+        #Schwimmer muss neu angelegt werden
+        erstellt_von_client_id = kwargs.get('erstellt_von_client_id', 0)
+        name = kwargs.get('name', f"Schwimmer {nummer}")
+        bahnanzahl = kwargs.get('bahnanzahl',0)
+        strecke = kwargs.get('strecke',0)
+        auf_bahn = kwargs.get('auf_bahn', 0)
+        aktiv = kwargs.get('aktiv',1) 
+
+        return erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
+    return cursor
+    
 
 # Aktualisiert Felder eines Schwimmers anhand der ID
 # Die zu aktualisierenden Felder werden dynamisch übergeben, z. B.:
@@ -307,7 +324,7 @@ def update_schwimmer(schwimmer_id, **kwargs):
     keys = ', '.join([f"{k}=?" for k in kwargs])
     values = list(kwargs.values()) + [schwimmer_id]
     query = f"UPDATE schwimmer SET {keys} WHERE nummer = ?"
-    db.execute(query, values)
+    return db.execute(query, values)
 
 # Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück
 def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv):

@@ -24,9 +24,6 @@
 </head>
 
 <body>
-  <div id="statusMessage" style="display:none; position:fixed; top:0px; left:50%; transform:translateX(-50%);
-padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:1000;"></div>
-
   <header>
     <div id="infoBar">
       <span style="display: inline-block; text-align: left">
@@ -61,99 +58,106 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
     </div>
   </header>
 
-  <nav style="text-align: center; margin-bottom: 20px">
-    <button onclick="showUserTable()">Benutzer</button>
-    <button onclick="showClientTable()">Clients</button>
-    <button onclick="showSwimmerTable()">Schwimmer</button>
-    <button onclick="showActionsTable()">Aktionen</button>
-  </nav>
-<main>
-  <section id="user" class="admin-section">
-    <h2>Benutzertabelle</h2>
-    <table id="userTable">
-      <!-- Die Tabelle wird hier dynamisch gefüllt -->
-    </table>
-    <body>
-      <h1>Benutzer löschen</h1>
-      <form action="/admin" method="post">
+  <nav id="navbar" style="text-align: center; margin-bottom: 20px"></nav>
+
+  <main>
+    <section id="user" class="admin-section">
+      <h2>Benutzertabelle</h2>
+      <table id="userTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+
+      <body>
+        <h2>Benutzer löschen</h2>
+        <form action="/admin" method="post">
           <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
           <input type="hidden" name="action" value="delete_user">
-          
+
           <label for="benutzername">Benutzername:</label>
           <input type="text" id="benutzername" name="benutzername" required>
-  
+
           <button type="submit">Benutzer löschen</button>
+        </form>
+        <h2>Neues Passwort</h2>
+        <form action="/admin" method="post">
+          <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
+          <input type="hidden" name="action" value="new_passwort">
+
+          <label for="benutzername">Benutzername:</label>
+          <input type="text" id="benutzername" name="benutzername" required>
+
+          <label for="passwort">Neues Passwort:</label>
+          <input type="text" id="new_pass" name="new_pass" required>
+
+
+          <button type="submit">Neues Passwort festlegen</button>
+        </form>
+      </body>
+
+    </section>
+
+    <section id="client" class="admin-section">
+      <h2>Clients</h2>
+      <table id="clientTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+    </section>
+
+    <section id="swimmer" class="admin-section" style="display: none">
+      <h2>Schwimmer</h2>
+      <table id="swimmerTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+      <hr>
+      <input type="file" id="csvInput">
+ 
+      <div id="csvPreviewContainer"></div>
+      
+      <button id="csvSend">Importieren</button>
+
+      <script type="module">
+        import { initCSVImport } from './csvImport.js';
+        initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
+      </script>
+
+    </section>
+
+    <section id="actions" class="admin-section" style="display: none">
+      <h2>Aktionen</h2>
+      <table id="actionsTable">
+        <!-- Die Tabelle wird hier dynamisch gefüllt -->
+      </table>
+    </section>
+
+    <section id="adduser" class="admin-section">
+      <h2>Benutzer anlegen</h2>
+      <form onsubmit="createUser(event)">
+        <div class="form-group">
+          <label for="realname">Name:</label>
+          <input type="text" id="realname" required />
+        </div>
+        <div class="form-group">
+          <label for="username">Benutzername:</label>
+          <input type="text" id="username" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Passwort:</label>
+          <input type="password" id="password" required />
+        </div>
+        <div class="form-group">
+          <input type="checkbox" id="admin" />
+          <label for="admin"> Administrator </label>
+        </div>
+
+        <button type="submit">Erstellen</button>
       </form>
-    <h1>Neues Passwort</h1>
-    <form action="/admin" method="post">
-        <!-- Wenn du die Aktion per verstecktem Feld steuerst -->
-        <input type="hidden" name="action" value="new_passwort">
-        
-        <label for="benutzername">Benutzername:</label>
-        <input type="text" id="benutzername" name="benutzername" required>
+    </section>
 
-        <label for="passwort">Neues Passwort:</label>
-        <input type="text" id="new_pass" name="new_pass" required>
-
-
-        <button type="submit">Neues Passwort festlegen</button>
-    </form>
-</body>
-
-  </section>
-
-  <section id="client" class="admin-section">
-    <h2>Clients</h2>
-    <table id="clientTable">
-      <!-- Die Tabelle wird hier dynamisch gefüllt -->
-    </table>
-  </section>
-
-  <section id="swimmer" class="admin-section" style="display: none">
-    <h2>Schwimmer</h2>
-    <table id="swimmerTable">
-      <!-- Die Tabelle wird hier dynamisch gefüllt -->
-    </table>
-  </section>
-
-  <section id="actions" class="admin-section" style="display: none">
-    <h2>Aktionen</h2>
-    <table id="actionsTable">
-      <!-- Die Tabelle wird hier dynamisch gefüllt -->
-    </table>  </section>
-
-  <section id="adduser" class="admin-section">
-    <h2>Benutzer anlegen</h2>
-    <form onsubmit="createUser(event)">
-      <div class="form-group">
-        <label for="realname">Name:</label>
-        <input type="text" id="realname" required />
-      </div>
-      <div class="form-group">
-        <label for="username">Benutzername:</label>
-        <input type="text" id="username" required />
-      </div>
-      <div class="form-group">
-        <label for="password">Passwort:</label>
-        <input type="password" id="password" required />
-      </div>
-      <div class="form-group">
-        <input type="checkbox" id="admin" />
-        <label for="admin"> Administrator </label>
-      </div>
-
-      <button type="submit">Erstellen</button>
-    </form>
-  </section>
-
-</main>
+  </main>
   <!-- Kontextmenü für Admin-Aktionen -->
   <div id="adminMenu"
     style="display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 100">
     <ul style="list-style: none; padding: 10px; margin: 0">
-      <li onclick="showSection('adduser')">Benutzer anlegen</li>
-      <li onclick="showSection('swimmer')">Schwimmer verwalten</li>
-      <li onclick="showSection('actions')">Aktionen ansehen</li>
     </ul>
   </div>
 
@@ -171,7 +175,7 @@ padding: 0em 0.5em 0.2em; color:white; border-radius:5px; opacity: 0.9; z-index:
     </form>
   </footer>
 
-  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='admin.js') }}"></script>
 </body>
 
 </html>

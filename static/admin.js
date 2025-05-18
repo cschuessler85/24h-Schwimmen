@@ -1,3 +1,4 @@
+import { showStatusMessage } from './mymodals.js'
 
 const adminButton = document.getElementById("adminAktionen");
 const adminMenu = document.getElementById("adminMenu");
@@ -29,6 +30,43 @@ document
                 URL.revokeObjectURL(url);
             });
     });
+
+function initNav() {
+    //initialisiert die Naviagtionsleiste
+    const navbar = document.getElementById('navbar');
+    let button = document.createElement('button');
+    button.innerText = "Benutzer";
+    button.addEventListener('click', (e) => showUserTable());
+    navbar.appendChild(button);
+    button = document.createElement('button');
+    button.innerText = "Clients";
+    button.addEventListener('click', (e) => showClientTable());
+    navbar.appendChild(button);
+    button = document.createElement('button');
+    button.innerText = "Schwimmer";
+    button.addEventListener('click', (e) => showSwimmerTable());
+    navbar.appendChild(button);
+    button = document.createElement('button');
+    button.innerText = "Aktionen";
+    button.addEventListener('click', (e) => showActionsTable());
+    navbar.appendChild(button);
+}
+
+function initAdminMenu() {
+    const adminMenuUL = document.getElementById('adminMenu').querySelector('ul');
+    let li = document.createElement('li');
+    li.innerText = "Benutzer anlegen";
+    li.addEventListener('click', (e) => showSection('adduser'));
+    adminMenuUL.appendChild(li);
+    li = document.createElement('li');
+    li.innerText = "Schwimmer verwalten";
+    li.addEventListener('click', (e) => showSection('swimmer'));
+    adminMenuUL.appendChild(li);
+    li = document.createElement('li');
+    li.innerText = "Aktionen ansehen";
+    li.addEventListener('click', (e) => showSection('actions'));
+    adminMenuUL.appendChild(li);
+}
 
 function showSection(id) {
     document
@@ -131,5 +169,11 @@ function createUser(event) {
         .then((res) => res.text())
         .then((msg) => alert(msg));
 }
+
+//Navigationsleiste initialisieren
+initNav();
+// Admin-Menü (hambuger-Menü-links) initialisieren
+initAdminMenu();
+
 
 document.addEventListener("DOMContentLoaded", () => showSection("adduser"));
