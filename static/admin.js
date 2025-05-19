@@ -174,6 +174,7 @@ function createUser(event) {
 initNav();
 // Admin-Menü (hambuger-Menü-links) initialisieren
 initAdminMenu();
-
+// Create User bekannt machen
+window.createUser = createUser; 
 
 document.addEventListener("DOMContentLoaded", () => showSection("adduser"));
