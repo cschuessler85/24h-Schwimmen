@@ -351,18 +351,32 @@ document.addEventListener("contextmenu", function (e) {
     }
 });
 
-function showSchwimmerContextMenu(x,y) {
-    contextMenu.style.top = y + "px";
-    contextMenu.style.left = x + "px";
-    contextMenu.style.display = "block";
-    // Option nur Schwimmer auf eigenen Bahnen
+function showSchwimmerContextMenu(x, y) {
+    // Optionalanzeige "Fremdbahnen entfernen" nur einblenden, wenn Fremdschwimmer da sind
+    const nurEigene = document.getElementById("nurEigene");
     if (schwimmer.some(s => !verwaltete_bahnen.includes(s.aufBahn))) {
-        //Option anzeigen
-        document.getElementById("nurEigene").style.display = "block";
+        nurEigene.style.display = "block";
     } else {
-        //Option ausblenden
-        document.getElementById("nurEigene").style.display = "none";
+        nurEigene.style.display = "none";
     }
+    // Erst anzeigen, damit offsetWidth/Height korrekt bestimmt werden können
+    // dann so platzieren das das Menü nicht über den Rand hinaus ragt.
+    contextMenu.style.display = "block";
+    contextMenu.style.top = "0px";
+    contextMenu.style.left = "0px"; // Temporär platzieren
+
+    const menuWidth = contextMenu.offsetWidth;
+    const menuHeight = contextMenu.offsetHeight;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Berechnete Position korrigieren, falls über den Rand
+    const posX = (x + menuWidth > viewportWidth) ? viewportWidth - menuWidth - 5 : x;
+    const posY = (y + menuHeight > viewportHeight) ? viewportHeight - menuHeight - 5 : y;
+
+    contextMenu.style.left = `${Math.max(posX, 0)}px`;
+    contextMenu.style.top = `${Math.max(posY, 0)}px`;
+
 }
 
 function addSwipeHandler(div) {
