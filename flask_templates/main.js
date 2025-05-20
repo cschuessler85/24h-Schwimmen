@@ -753,7 +753,7 @@ function parseUpdates(resp) {
     if (resp["updates"] && Array.isArray(resp["updates"])) {
         resp["updates"].forEach((eintrag) => {
             alleSchwimmer[eintrag["nummer"]] = eintrag;
-            console.log(`Schwimmer Nummer ${eintrag["nummer"]} aktualisiert`);
+            debugLog(`Schwimmer Nummer ${eintrag["nummer"]} aktualisiert`);
         });
     }
 }
@@ -768,12 +768,26 @@ function debugLog(...args) {
 
 // Option: Runde abziehen - aus dem Kontextmenü des Schwimmers
 document.getElementById("rundeAbziehenOption").addEventListener("click", function () {
-    //TODO: auf DIV umschreiben
-    if (clickedRow) {
-        const bahnenCell = clickedRow.querySelector(".bahnen");
-        let current = parseInt(bahnenCell.textContent);
-        bahnenCell.textContent = Math.max(0, current - 1);
+    if (clickedDiv) {
+        const nummer = parseInt(clickedDiv.dataset.nummer);
+        if (confirm(`Eine Bahn bei Schwimmer ${nummer} abziehen?`)) {
+            const s_data = schwimmer.find(s => s.nummer == nummer);
+            console.log("s_data", s_data);
+            if (s_data) {
+                console.log("Schwimmer: Bahn abziehen", s_data);
+                s_data.bahnen -= 1;
+                render();
+                actions.push({
+                    kommando: "ADD",
+                    parameter: [nummer, -1],
+                    timestamp: new Date().toISOString(),
+                    transmitted: false
+                });
+                updateFormIsDirty(true);
+            }
+        }
     }
+    clickedDiv = null;
     contextMenu.style.display = "none";
 });
 
