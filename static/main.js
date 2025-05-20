@@ -35,6 +35,8 @@ let schwimmer = [
 let actions = [];
 let alleSchwimmer = {}; // Beinhaltet die Schwimmer in der Datenbank in einem Dictionary mit nummer als Key
 
+let longPressTimer; // Variable für den Timer um einen Longpress von einem Touchmove zu unterscheiden
+
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', promptSchwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
 
@@ -331,17 +333,7 @@ container.addEventListener('contextmenu', function (event) {
     clickedDiv = clicked_schwimmer;
 
     // Menü an Mausposition anzeigen
-    contextMenu.style.top = event.pageY + "px";
-    contextMenu.style.left = event.pageX + "px";
-    contextMenu.style.display = "block";
-    // Option nur Schwimmer auf eigenen Bahnen
-    if (schwimmer.some(s => !verwaltete_bahnen.includes(s.aufBahn))) {
-        //Option anzeigen
-        document.getElementById("nurEigene").style.display = "block";
-    } else {
-        //Option ausblenden
-        document.getElementById("nurEigene").style.display = "none";
-    }
+    showSchwimmerContextMenu(event.pageX,event.pageY);
 });
 
 // Kontextmenü ausblenden bei Klick außerhalb
@@ -359,6 +351,34 @@ document.addEventListener("contextmenu", function (e) {
     }
 });
 
+function showSchwimmerContextMenu(x, y) {
+    // Optionalanzeige "Fremdbahnen entfernen" nur einblenden, wenn Fremdschwimmer da sind
+    const nurEigene = document.getElementById("nurEigene");
+    if (schwimmer.some(s => !verwaltete_bahnen.includes(s.aufBahn))) {
+        nurEigene.style.display = "block";
+    } else {
+        nurEigene.style.display = "none";
+    }
+    // Erst anzeigen, damit offsetWidth/Height korrekt bestimmt werden können
+    // dann so platzieren das das Menü nicht über den Rand hinaus ragt.
+    contextMenu.style.display = "block";
+    contextMenu.style.top = "0px";
+    contextMenu.style.left = "0px"; // Temporär platzieren
+
+    const menuWidth = contextMenu.offsetWidth;
+    const menuHeight = contextMenu.offsetHeight;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Berechnete Position korrigieren, falls über den Rand
+    const posX = (x + menuWidth > viewportWidth) ? viewportWidth - menuWidth - 5 : x;
+    const posY = (y + menuHeight > viewportHeight) ? viewportHeight - menuHeight - 5 : y;
+
+    contextMenu.style.left = `${Math.max(posX, 0)}px`;
+    contextMenu.style.top = `${Math.max(posY, 0)}px`;
+
+}
+
 function addSwipeHandler(div) {
     let startX = 0;
     let currentX = 0;
@@ -371,6 +391,9 @@ function addSwipeHandler(div) {
     const maxmovedist = 1.5 * threshold;
 
     div.addEventListener('touchstart', e => {
+        longPressTimer = setTimeout(() => {
+            showSchwimmerContextMenu(e.touches[0].clientX, e.touches[0].clientY);
+        }, 600); // Dauer in mx
         if (fadeControllers.has(div.dataset.nummer)) {
             return;             // bricht die weitere Verarbeitung ab, wenn das Objekt gerade fadet
         }
@@ -383,6 +406,7 @@ function addSwipeHandler(div) {
     }, { passive: false });
 
     div.addEventListener('touchmove', e => {
+        clearTimeout(longPressTimer);
         e.preventDefault();
         if (div.dataset.swiping != "true") {
             return;             // bricht die weitere Verarbeitung ab wenn touchstart schon abgebrochen wurde
@@ -410,6 +434,7 @@ function addSwipeHandler(div) {
     }, { passive: false }); // wichtig ?!
 
     div.addEventListener('touchend', () => {
+        clearTimeout(longPressTimer);
         if (div.dataset.swiping != "true") {
             return;             // bricht die weitere Verarbeitung ab, wenn touchstart wg. Fading schon unterbunden wurde
         }
