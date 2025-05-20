@@ -106,6 +106,7 @@ def admin():
         else:
             data = request.form
         action = data.get('action')
+        logging.info(f"admin-POST-request mit Daten: {data}")
 
         if action == 'create_user':
             # Benutzer erstellen
@@ -138,7 +139,15 @@ def admin():
                 db.loesche_benutzername(benutzername)
             else:
                 return "Kein Benutzername angegeben", 400
-
+        elif action == 'delete_swimmer':
+            logging.info("Action delete_swimmer")
+            nummer = data.get('nummer')
+            if nummer:
+                if (not db.loesche_schwimmer(nummer)):
+                    return "DB - Fehler", 400
+                return "Erfolg", 200
+            else:
+                return "Keine Schwimmernummer angegeben", 400
         elif action == 'get_table_benutzer':
             return jsonify(db.liste_tabelle('benutzer'))
         elif action == 'get_table_clients':
@@ -178,6 +187,8 @@ def admin():
             logging.info(f"Importiert wurden {len(validierte)} Schwimmer")
 
             return jsonify({"status": "ok", "importiert": len(validierte)}), 200
+        elif action:
+            return f"Unknown Action {action}", 400
 
     params = {
         'user_role': session.get('user_role',""),
