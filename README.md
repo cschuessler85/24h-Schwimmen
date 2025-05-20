@@ -117,6 +117,7 @@ Hier ist eine Übersicht über die Verzeichnisstruktur des Projektes:
 │ └── mymodals.js       Javascript um Modals einzublenden
 ├── db.py               Alles was mit Datenbankzugriffen zu tun hat
 ├── logging_config.py   Konfiguration des Loggings
+├── config.json         Konfigurationsdatei
 ├── server.py           Die Hauptdatei mit der Serverfunktionalität
 ├── utils.py            Kleine Funktionen (Hilfsfunktionen)
 ├── data.sqlite         Datenbank des Servers
