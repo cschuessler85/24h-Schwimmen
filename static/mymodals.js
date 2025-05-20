@@ -1,3 +1,5 @@
+let regexp = /^\d\d\d$/; // regular Expression um die SchwimmerNummern zu prüfen
+
 export function initStatusMessage() {
     // erst die CSS-Styles
     const style = document.createElement('style');
@@ -72,11 +74,17 @@ export function showStatusMessage(text, isSuccess = true, duration = 3000) {
 
 
 // Funktion um das Modal anzuzeigen und die Nummer zu erfragen
-export function schwimmerNummerErfragen() {
+export function schwimmerNummerErfragen(length = 3) {
+    if (length<=0) {
+        regexp = new RegExp('^\\d+$');
+    } else {
+        regexp = new RegExp('^' + '\\d'.repeat(length) + '$');
+    }
+    console.log("Regexp", regexp);
     return new Promise(resolve => {
         const innerHTML = `
             <h2 style="color: black;">Schwimmer Nummer:</h2>
-            <input type="number" id="nummer" name="nummer" placeholder="xxx" maxlength="3"
+            <input type="number" id="nummer" name="nummer" placeholder="${'x'.repeat(length>=0?length:0)}" maxlength="3"
                    style="font-size: 3em; text-align: center; width: 100%;">
             <br>
             <button id="closeBtn">Schließen</button>
@@ -119,7 +127,8 @@ function closeModal() {
     document.getElementById('myModal').style.display = 'none';
 }
 
-function isNummerInputValid(value, regexp = /^\d\d\d$/) {
+function isNummerInputValid(value) {
+    console.log("Regexp in isNummerInputValid", regexp, "test", value.trim(), "is", regexp.test(value.trim()));
     // Prüft, ob der Eingabewert aus drei aufeinander folgenden Ziffern besteht
     // Regulärer Ausdruck:
     // ^         → Anfang des Strings

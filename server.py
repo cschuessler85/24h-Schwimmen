@@ -200,6 +200,13 @@ def index():
     }
     return render_template("index.html", **params)
 
+@app.route("/main.js")
+def send_mainjs():
+    params = {
+        'schwimmerNrLen': config["laenge_schwimmerNr"]
+    }
+    return render_template("main.js", **params), 200, {'Content-Type': 'application/javascript'}
+
 @app.route("/<path:filename>")
 def static_files(filename):
     return send_from_directory("static", filename)

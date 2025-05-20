@@ -1,5 +1,8 @@
 import { schwimmerNummerErfragen, showStatusMessage } from './mymodals.js'
 
+const schwimmerNrLength = parseInt("{{schwimmerNrLen}}");
+const DEBUG = true;
+
 let formIsDirty = false; // Flag, das anzeigt, ob Daten geändert wurden
 // Beim Verlassen der Seite warnen, falls Änderungen vorhanden sind
 window.addEventListener('beforeunload', function (event) {
@@ -42,7 +45,7 @@ document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSO
 
 async function promptSchwimmerHinzufuegen() {
     // var nummer = prompt("Nummer:");
-    var nummer = await schwimmerNummerErfragen();
+    var nummer = await schwimmerNummerErfragen(schwimmerNrLength);
     console.log("Erfrage Nummer:", nummer);
 
     if (nummer == null) {
@@ -523,9 +526,11 @@ function render() {
 
         div.dataset.prio = s.prio ?? 0;
         if (!fadeControllers.has(div.dataset.nummer) && div.dataset.swiping !== "true") {
+            const snummer = schwimmerNrLength>0 ? String(s.nummer).padStart(schwimmerNrLength, '0') : s.nummer;
+
             div.innerHTML = `
-                <div class="nummer">${s.nummer} <span class="bahnen">(${s.bahnen})</span></div>
-                <div class="name">${s.name}  <span class="prio">Prio: ${s.prio}</span></div>
+                <div class="nummer">${snummer} <span class="bahnen">(${s.bahnen})</span></div>
+                <div class="name">${s.name}  ${DEBUG?`<span class="prio">Prio: ${s.prio}</span>`:""}</div>
             `;
             if (!verwaltete_bahnen.includes(s.aufBahn)) {
                 div.style.backgroundColor = "lightgreen";
@@ -744,6 +749,10 @@ function parseUpdates(resp) {
 //  ENDE DATENAUSTAUSCH mit dem Server
 // ----------------------------------------------------------
 
+function debugLog(...args) {
+    if (DEBUG) console.log(...args);
+}
+
 // Option: Runde abziehen - aus dem Kontextmenü des Schwimmers
 document.getElementById("rundeAbziehenOption").addEventListener("click", function () {
     //TODO: auf DIV umschreiben
@@ -797,7 +806,7 @@ document.getElementById("bahnen").addEventListener("keydown", (event) => {
 
 
 
-console.log("Initial commands - Grundlagen einrichten");
+debugLog("Initial commands - Grundlagen einrichten");
 //alle Zehn Sekunden die Daten zum Server schicken
 setInterval(transmitActions, 10000);
 
