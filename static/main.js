@@ -35,6 +35,8 @@ let schwimmer = [
 let actions = [];
 let alleSchwimmer = {}; // Beinhaltet die Schwimmer in der Datenbank in einem Dictionary mit nummer als Key
 
+let longPressTimer; // Variable für den Timer um einen Longpress von einem Touchmove zu unterscheiden
+
 document.getElementById('schwimmerHinzufuegen').addEventListener('click', promptSchwimmerHinzufuegen);
 document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
 
@@ -331,17 +333,7 @@ container.addEventListener('contextmenu', function (event) {
     clickedDiv = clicked_schwimmer;
 
     // Menü an Mausposition anzeigen
-    contextMenu.style.top = event.pageY + "px";
-    contextMenu.style.left = event.pageX + "px";
-    contextMenu.style.display = "block";
-    // Option nur Schwimmer auf eigenen Bahnen
-    if (schwimmer.some(s => !verwaltete_bahnen.includes(s.aufBahn))) {
-        //Option anzeigen
-        document.getElementById("nurEigene").style.display = "block";
-    } else {
-        //Option ausblenden
-        document.getElementById("nurEigene").style.display = "none";
-    }
+    showSchwimmerContextMenu(event.pageX,event.pageY);
 });
 
 // Kontextmenü ausblenden bei Klick außerhalb
@@ -359,6 +351,20 @@ document.addEventListener("contextmenu", function (e) {
     }
 });
 
+function showSchwimmerContextMenu(x,y) {
+    contextMenu.style.top = y + "px";
+    contextMenu.style.left = x + "px";
+    contextMenu.style.display = "block";
+    // Option nur Schwimmer auf eigenen Bahnen
+    if (schwimmer.some(s => !verwaltete_bahnen.includes(s.aufBahn))) {
+        //Option anzeigen
+        document.getElementById("nurEigene").style.display = "block";
+    } else {
+        //Option ausblenden
+        document.getElementById("nurEigene").style.display = "none";
+    }
+}
+
 function addSwipeHandler(div) {
     let startX = 0;
     let currentX = 0;
@@ -371,6 +377,9 @@ function addSwipeHandler(div) {
     const maxmovedist = 1.5 * threshold;
 
     div.addEventListener('touchstart', e => {
+        longPressTimer = setTimeout(() => {
+            showSchwimmerContextMenu(e.touches[0].clientX, e.touches[0].clientY);
+        }, 600); // Dauer in mx
         if (fadeControllers.has(div.dataset.nummer)) {
             return;             // bricht die weitere Verarbeitung ab, wenn das Objekt gerade fadet
         }
@@ -383,6 +392,7 @@ function addSwipeHandler(div) {
     }, { passive: false });
 
     div.addEventListener('touchmove', e => {
+        clearTimeout(longPressTimer);
         e.preventDefault();
         if (div.dataset.swiping != "true") {
             return;             // bricht die weitere Verarbeitung ab wenn touchstart schon abgebrochen wurde
@@ -410,6 +420,7 @@ function addSwipeHandler(div) {
     }, { passive: false }); // wichtig ?!
 
     div.addEventListener('touchend', () => {
+        clearTimeout(longPressTimer);
         if (div.dataset.swiping != "true") {
             return;             // bricht die weitere Verarbeitung ab, wenn touchstart wg. Fading schon unterbunden wurde
         }
