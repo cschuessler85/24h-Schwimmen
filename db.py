@@ -259,6 +259,7 @@ Funktionen zur Verwaltung von Schwimmern:
 - Schwimmer suchen
 - Schwimmer aktualisieren
 - Schwimmer Bahnanzahl ändern
+- Schwimmer löschen
 """
 
 # Sucht einen Schwimmer anhand seines Namens
@@ -374,7 +375,26 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
             neue_bahnanzahl = 0
         update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)
 
-
+def loesche_schwimmer(schwimmerID):
+    """
+    Löscht einen Schwimmer anhand des Schwimmernr aus der Datenbank.
+    gibt die Anzahl der betroffenen Zeilen (in der Regel 1 oder 0) zurück oder
+    None im Fehlerfall.
+    """
+    logging.info(f"Schwimmer löschen: {schwimmerID}")
+    query = '''
+        DELETE FROM schwimmer
+        WHERE nummer = ?
+    '''
+    params = (int(schwimmerID),)
+    cursor =  db.execute(query, params)
+    if (cursor):
+        rows_affected = cursor.rowcount
+        if rows_affected == 0:
+            return None
+        if rows_affected > 0:
+            return rows_affected
+    return cursor
 
 #========================
 #    Abschnitt: Clients
