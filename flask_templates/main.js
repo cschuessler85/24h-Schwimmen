@@ -92,6 +92,12 @@ function schwimmerHinzufuegen(nummer) {
             }
             console.log("SchwimmerKopie", scopy);
             schwimmer.push(scopy);
+            actions.push({
+                kommando: "ACT",
+                parameter: [nummer, 1],
+                timestamp: new Date().toISOString(),
+                transmitted: false
+            });
         } else { //Ansonsten wird er in der Liste Schwimmer neu erzeugt
             console.debug("Schwimmer war nicht bekannt");
             const neuer = {
@@ -99,7 +105,7 @@ function schwimmerHinzufuegen(nummer) {
                 name: `Schwimmer ${nummer}`,
                 bahnen: 0,
                 aufBahn: verwaltete_bahnen[0],
-                aktiv: true,
+                aktiv: 1,
                 prio: maxPrio + 1
             };
             schwimmer.push(neuer);
@@ -108,13 +114,11 @@ function schwimmerHinzufuegen(nummer) {
 }
 
 function fillSchwimmerAusMeinenBahnen() {
-    console.log("AlleSchwimmer", alleSchwimmer);
-    console.log("verwaltete_bahnen", verwaltete_bahnen);
     const alleSchwimmerValues = Object.keys(alleSchwimmer).map(function (key) {
         return alleSchwimmer[key];
     });
-    const meineSchwimmer = alleSchwimmerValues.filter(s => verwaltete_bahnen.includes(s.auf_bahn));
-    console.log(meineSchwimmer);
+    console.log("Alle Schwimmer Values", alleSchwimmerValues);
+    const meineSchwimmer = alleSchwimmerValues.filter(s => verwaltete_bahnen.includes(s.auf_bahn) && s.aktiv == 1);
     // Alle Schwimmer die davon noch nicht in schwimmer sind einfügen
     meineSchwimmer.forEach(s_neu => {
         console.log("Prüfe: ", s_neu);
@@ -470,7 +474,7 @@ function addSwipeHandler(div) {
     });
 }
 
-function removeSchwimmerDiv(div) {
+function removeSchwimmerDiv(div, setinactive = true) {
     // Abgleich der Daten in alleSchwimmer mit den Daten des Schwimmers der entfernt wird.
     // entferne das Element (du hast das bereits implementiert)
     div.style.opacity = 0;
@@ -481,13 +485,15 @@ function removeSchwimmerDiv(div) {
         // Aktualisiere die Daten in alleSchwimmer - Bahnen reicht
         console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
         alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = entfernterSchwimmer.bahnen;
-        alleSchwimmer[entfernterSchwimmer.nummer].aktiv = 0;
-        actions.push({
-            kommando: "ACT",
-            parameter: [entfernterSchwimmer.nummer, 0],
-            timestamp: new Date().toISOString(),
-            transmitted: false
-        });
+        if (setinactive) {
+            alleSchwimmer[entfernterSchwimmer.nummer].aktiv = 0;
+            actions.push({
+                kommando: "ACT",
+                parameter: [entfernterSchwimmer.nummer, 0],
+                timestamp: new Date().toISOString(),
+                transmitted: false
+            });
+        }
     }
     //div.remove();
     render();
@@ -787,7 +793,7 @@ document.getElementById("nurEigene").addEventListener("click", function () {
     while (index !== -1) {
         //lösche das DIV
         const div = document.querySelector(`div[data-nummer="${schwimmer[index].nummer}"]`);
-        removeSchwimmerDiv(div);
+        removeSchwimmerDiv(div, false);
         index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
     }
     contextMenu.style.display = "none";
