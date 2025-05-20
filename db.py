@@ -71,6 +71,11 @@ class Database:
             logging.debug(f"execute - query: {query}, params: {params}")
             self.conn = None
             self.cursor = None  # Setze den Cursor auf None, damit bei der nächsten Abfrage ein Fehler festgestellt wird
+        except Exception as e:
+            logging.error(f"Fehler beim query {e}")
+            return None
+        
+        logging.debug("db.execute gibt None zurück")
         return None
 
     def fetchall(self, query, params=None):
@@ -295,9 +300,11 @@ def lies_schwimmer_vonBahn(bahnnr):
 # update_schwimmer(1, bahnanzahl=5, aktiv=0)
 # Das funktioniert durch **kwargs, womit beliebige Schlüssel-Wert-Paare übergeben werden können.
 def insertOrUpdateSchwimmer(nummer, **kwargs):
+    logging.info(f"Schwimmer Nr {nummer} wird aktualisiert")
     cursor = update_schwimmer(nummer, **kwargs)
     if ( not cursor) :
         #Schwimmer muss neu angelegt werden
+        logging.info("  ... muss neu angelegt werden")
         erstellt_von_client_id = kwargs.get('erstellt_von_client_id', 0)
         name = kwargs.get('name', f"Schwimmer {nummer}")
         bahnanzahl = kwargs.get('bahnanzahl',0)

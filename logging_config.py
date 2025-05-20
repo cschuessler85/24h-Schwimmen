@@ -16,7 +16,7 @@ def configure_logging():
         log_format = '%(asctime)s - %(levelname)s - %(message)s'
 
         # Handler für das Loggen in eine Datei
-        file_handler = logging.FileHandler('data/serverlog.log', mode='a')  # Log-Datei
+        file_handler = logging.FileHandler('data/serverlog.log', mode='a', encoding='utf-8')  # Log-Datei
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(logging.Formatter(log_format))
 
