@@ -474,7 +474,7 @@ function addSwipeHandler(div) {
     });
 }
 
-function removeSchwimmerDiv(div, setinactive = true) {
+function removeSchwimmerDiv(div, setinactive = true, render = true) {
     // Abgleich der Daten in alleSchwimmer mit den Daten des Schwimmers der entfernt wird.
     // entferne das Element (du hast das bereits implementiert)
     div.style.opacity = 0;
@@ -483,7 +483,7 @@ function removeSchwimmerDiv(div, setinactive = true) {
         let entfernterSchwimmer = schwimmer[index];
         schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
         // Aktualisiere die Daten in alleSchwimmer - Bahnen reicht
-        console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
+        // console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
         alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = entfernterSchwimmer.bahnen;
         if (setinactive) {
             alleSchwimmer[entfernterSchwimmer.nummer].aktiv = 0;
@@ -496,7 +496,7 @@ function removeSchwimmerDiv(div, setinactive = true) {
         }
     }
     //div.remove();
-    render();
+    if (render) render();
 }
 
 function render() {
@@ -802,14 +802,16 @@ document.getElementById("deleteSwimmer").addEventListener("click", function () {
     contextMenu.style.display = "none";
 });
 
+// Event Listener für Fremdbahnen entfernen
 document.getElementById("nurEigene").addEventListener("click", function () {
     let index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
     while (index !== -1) {
         //lösche das DIV
         const div = document.querySelector(`div[data-nummer="${schwimmer[index].nummer}"]`);
-        removeSchwimmerDiv(div, false);
+        removeSchwimmerDiv(div, false, false); // auf Inaktiv sezten - false, render - false - erst wenn alle weg sind 
         index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
     }
+    render(); //hier wird gerendert.
     contextMenu.style.display = "none";
 });
 

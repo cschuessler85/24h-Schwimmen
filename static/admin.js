@@ -84,7 +84,46 @@ function showClientTable() {
 }
 
 function showSwimmerTable() {
-    fetchAndFillTable('swimmer', 'swimmerTable', 'get_table_swimmer', 'Schwimmer');
+    showSection('swimmer');
+    fetch('/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: 'get_table_swimmer' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(`Schwimmer-Table füllen - mit ${data.length} Datensätzen`);
+
+        const sectionTitle = document.querySelector(`#swimmer h2`);
+        sectionTitle.textContent = `Schwimmer (${data.length})`;
+
+        const table = document.getElementById('swimmerTable');
+        table.innerHTML = ''; // Erst mal löschen
+
+        if (data.length > 0) {
+            const headerRow = document.createElement('tr');
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            data.forEach(entry => {
+                const row = document.createElement('tr');
+                Object.values(entry).forEach(value => {
+                    const td = document.createElement('td');
+                    td.classList.add('truncated');
+                    td.textContent = value;
+                    row.appendChild(td);
+                });
+                table.appendChild(row);
+            });
+        }
+    })
+    .catch(error => {
+        console.error(`Fehler beim Abrufen der Schwimmer-Daten:`, error);
+    });
 }
 
 function showActionsTable() {

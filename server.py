@@ -167,7 +167,6 @@ def admin():
                 geschlecht = s.get("geschlecht", "")
                 if not nummer or not name:
                     continue  # überspringen wenn Pflichtfelder fehlen
-                # TODO Existierende Schwimmer sollten aktualisiert werden
                 if (db.insertOrUpdateSchwimmer(nummer, erstellt_von_client_id = session['clientID'], name = name)):
                     validierte.append({
                         "nummer": nummer,
