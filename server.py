@@ -260,6 +260,18 @@ def action():
                 else:
                     nummer = int(parameter[0])
                     updates = [db.lies_schwimmer(nummer)]
+            elif kommando == "ACT":
+                try:
+                    nummer = int(parameter[0])
+                    value = int(parameter[1])
+                    logging.info(f"ACT ausgeführt: Schwimmer {nummer} wird {value}")
+                    if (db.update_schwimmer(nummer,aktiv = value)):
+                        results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "value": value})
+                    else: 
+                        results.append({"kommando": kommando, "status": "FEHLER", "nummer": nummer, "value": value})
+                except (ValueError, IndexError) as e:
+                    logging.info(f"Fehler bei ACT-Parametern: {e}")
+                    results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
             else:
                 logging.debug(f"Unbekanntes Kommando: {kommando}")
                 print(f"Unbekanntes Kommando: {kommando}")

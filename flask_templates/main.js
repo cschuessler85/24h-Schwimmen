@@ -92,6 +92,12 @@ function schwimmerHinzufuegen(nummer) {
             }
             console.log("SchwimmerKopie", scopy);
             schwimmer.push(scopy);
+            actions.push({
+                kommando: "ACT",
+                parameter: [nummer, 1],
+                timestamp: new Date().toISOString(),
+                transmitted: false
+            });
         } else { //Ansonsten wird er in der Liste Schwimmer neu erzeugt
             console.debug("Schwimmer war nicht bekannt");
             const neuer = {
@@ -99,7 +105,7 @@ function schwimmerHinzufuegen(nummer) {
                 name: `Schwimmer ${nummer}`,
                 bahnen: 0,
                 aufBahn: verwaltete_bahnen[0],
-                aktiv: true,
+                aktiv: 1,
                 prio: maxPrio + 1
             };
             schwimmer.push(neuer);
@@ -108,13 +114,11 @@ function schwimmerHinzufuegen(nummer) {
 }
 
 function fillSchwimmerAusMeinenBahnen() {
-    console.log("AlleSchwimmer", alleSchwimmer);
-    console.log("verwaltete_bahnen", verwaltete_bahnen);
     const alleSchwimmerValues = Object.keys(alleSchwimmer).map(function (key) {
         return alleSchwimmer[key];
     });
-    const meineSchwimmer = alleSchwimmerValues.filter(s => verwaltete_bahnen.includes(s.auf_bahn));
-    console.log(meineSchwimmer);
+    console.log("Alle Schwimmer Values", alleSchwimmerValues);
+    const meineSchwimmer = alleSchwimmerValues.filter(s => verwaltete_bahnen.includes(s.auf_bahn) && s.aktiv == 1);
     // Alle Schwimmer die davon noch nicht in schwimmer sind einfügen
     meineSchwimmer.forEach(s_neu => {
         console.log("Prüfe: ", s_neu);
@@ -312,7 +316,7 @@ container.addEventListener('click', async (event) => {
                 s_data.bahnen += 1;
                 //das Div löschen - wird beim rendern wieder hinten angehangen
                 //clicked_schwimmer.remove();
-                clicked_schwimmer.style.opacity='';
+                clicked_schwimmer.style.opacity = '';
                 render();
                 actions.push({
                     kommando: "ADD",
@@ -342,7 +346,7 @@ container.addEventListener('contextmenu', function (event) {
     clickedDiv = clicked_schwimmer;
 
     // Menü an Mausposition anzeigen
-    showSchwimmerContextMenu(event.pageX,event.pageY);
+    showSchwimmerContextMenu(event.pageX, event.pageY);
 });
 
 // Kontextmenü ausblenden bei Klick außerhalb
@@ -448,7 +452,7 @@ function addSwipeHandler(div) {
             return;             // bricht die weitere Verarbeitung ab, wenn touchstart wg. Fading schon unterbunden wurde
         }
         delete div.dataset.swiping;
-       if (swipedleft) {
+        if (swipedleft) {
             swipedleft = false;
             removeSchwimmerDiv(div);
         } else if (swipedright) {
@@ -470,17 +474,26 @@ function addSwipeHandler(div) {
     });
 }
 
-function removeSchwimmerDiv(div) {
+function removeSchwimmerDiv(div, setinactive = true) {
     // Abgleich der Daten in alleSchwimmer mit den Daten des Schwimmers der entfernt wird.
     // entferne das Element (du hast das bereits implementiert)
     div.style.opacity = 0;
-    const index = schwimmer.findIndex(s => s.nummer === parseInt(div.dataset.nummer));
-    let entfernterSchwimmer = schwimmer[index];
+    const index = schwimmer.findIndex(s => parseInt(s.nummer) == parseInt(div.dataset.nummer));
     if (index !== -1) {
+        let entfernterSchwimmer = schwimmer[index];
         schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
         // Aktualisiere die Daten in alleSchwimmer - Bahnen reicht
         console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
         alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = entfernterSchwimmer.bahnen;
+        if (setinactive) {
+            alleSchwimmer[entfernterSchwimmer.nummer].aktiv = 0;
+            actions.push({
+                kommando: "ACT",
+                parameter: [entfernterSchwimmer.nummer, 0],
+                timestamp: new Date().toISOString(),
+                transmitted: false
+            });
+        }
     }
     //div.remove();
     render();
@@ -499,7 +512,7 @@ function render() {
     });
 
     const sortedSchwimmer = [...schwimmer].sort((a, b) => a.prio - b.prio); //umgekehrt sortiert
-    const aktuelleSNummern = new Set(sortedSchwimmer.map(s=>s.nummer));
+    const aktuelleSNummern = new Set(sortedSchwimmer.map(s => s.nummer));
 
     // Divs ausblenden, die nicht mehr in aktuelle Nummern vorhanden sind
     existingDivs.forEach((div, nummer) => {
@@ -526,11 +539,11 @@ function render() {
 
         div.dataset.prio = s.prio ?? 0;
         if (!fadeControllers.has(div.dataset.nummer) && div.dataset.swiping !== "true") {
-            const snummer = schwimmerNrLength>0 ? String(s.nummer).padStart(schwimmerNrLength, '0') : s.nummer;
+            const snummer = schwimmerNrLength > 0 ? String(s.nummer).padStart(schwimmerNrLength, '0') : s.nummer;
 
             div.innerHTML = `
                 <div class="nummer">${snummer} <span class="bahnen">(${s.bahnen})</span></div>
-                <div class="name">${s.name}  ${DEBUG?`<span class="prio">Prio: ${s.prio}</span>`:""}</div>
+                <div class="name">${s.name}  ${DEBUG ? `<span class="prio">Prio: ${s.prio}</span>` : ""}</div>
             `;
             if (!verwaltete_bahnen.includes(s.aufBahn)) {
                 div.style.backgroundColor = "lightgreen";
@@ -633,7 +646,7 @@ function redrawStatusBar() {
             <span style="height: 10px; width: 10px; background-color: ${formIsDirty ? 'yellow' : 'green'}; border-radius: 50%; display: inline-block; margin-right: 5px">
             </span> Verbunden
             `;
-        
+
     } else {
         statusspan.innerHTML = `
             <span style="height: 10px; width: 10px; background-color: red; border-radius: 50%; display: inline-block; margin-right: 5px">
@@ -768,12 +781,6 @@ document.getElementById("deleteSwimmer").addEventListener("click", function () {
     if (clickedDiv) {
         const nummer = parseInt(clickedDiv.dataset.nummer);
         if (confirm(`Soll die Nummer ${nummer} entfernt werden?`)) {
-            //schwimmer = schwimmer.filter(s => s.nummer !== nummer);
-            //in Place löschen
-            const index = schwimmer.findIndex(s => s.nummer === nummer);
-            if (index !== -1) {
-                schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
-            }
             removeSchwimmerDiv(clickedDiv);
         }
     }
@@ -784,11 +791,9 @@ document.getElementById("deleteSwimmer").addEventListener("click", function () {
 document.getElementById("nurEigene").addEventListener("click", function () {
     let index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
     while (index !== -1) {
-        const nummer = schwimmer[index].nummer;
-        schwimmer.splice(index, 1); //lösche diesen Eintrag
         //lösche das DIV
-        const div = document.querySelector(`div[data-nummer="${nummer}"]`);
-        removeSchwimmerDiv(div);
+        const div = document.querySelector(`div[data-nummer="${schwimmer[index].nummer}"]`);
+        removeSchwimmerDiv(div, false);
         index = schwimmer.findIndex(s => !verwaltete_bahnen.includes(s.aufBahn));
     }
     contextMenu.style.display = "none";

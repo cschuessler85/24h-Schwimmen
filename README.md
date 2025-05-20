@@ -86,6 +86,7 @@ mögliche Kommandos
     SUB - parameter: <schwimmerNr> <Anzahl> <bahnnr>
     GET - parameter: <schwimmerNr>
     GETB - parameter: <bahnnummer> <bahnnummer> ...
+    ACT - parameter: <schwimmerNr> <0/1>
 ```
 
 mit Beispielen
@@ -96,6 +97,7 @@ mit Beispielen
     GET [123]
     GET [-1] - holt alle Schwimmer
     GETB [2,3] - holt die Schwimmer der Bahnen 2,3
+    ACT [123, 0] - setzt den Schwimmer Nr. 123 auf inaktiv
 ```
 
 ## Projektverzeichnisstruktur
