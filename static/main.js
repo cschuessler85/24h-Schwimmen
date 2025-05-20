@@ -45,6 +45,11 @@ async function promptSchwimmerHinzufuegen() {
     var nummer = await schwimmerNummerErfragen();
     console.log("Erfrage Nummer:", nummer);
 
+    if (nummer == null) {
+        // Modal wurde geschlossen
+        return
+    }
+
     if (!(nummer !== null && nummer.trim() !== "" && !isNaN(nummer))) {
         showStatusMessage("Ungültige Schwimmernummer", false);
         return;
@@ -54,7 +59,7 @@ async function promptSchwimmerHinzufuegen() {
 }
 
 function schwimmerHinzufuegen(nummer) {
-    console.log("Schwimmer Nr. ", nummer, "wird gesucht...");
+    console.debug("Schwimmer Nr. ", nummer, "wird gesucht...");
 
     // Der gesuchte Schwimmer soll auf jeden Fall oben in die Liste
     const maxPrio = Math.max(...schwimmer.map(s => s.prio));
@@ -62,14 +67,14 @@ function schwimmerHinzufuegen(nummer) {
     //Wenn der schwimmer schon in der Liste schwimmer ist, wird seine Priorität auf das aktuelle Maximum gesetzt
     const aktiver = schwimmer.find(s => s.nummer == nummer);
     if (aktiver) {
-        console.log("... aktiver Schwimmer");
+        console.debug("... aktiver Schwimmer");
         // prio auf max
         aktiver.prio = maxPrio + 1;
     } else { //Wenn der schwimmer in der Liste alleSchwimmer ist, wird er in die Liste schwimmer übernommen ...
         fetchSchwimmer(nummer);
-        const bekannter = alleSchwimmer[nummer] ?? null;
+        const bekannter = alleSchwimmer[parseInt(nummer)] ?? null;
         if (bekannter) {
-            console.log(`Schwimmer ${nummer} Nummer war schon vorhanden`);
+            console.debug(`Schwimmer ${nummer} Nummer war schon vorhanden`);
             const scopy = {
                 nummer: parseInt(nummer),
                 name: bekannter.name,
@@ -85,6 +90,7 @@ function schwimmerHinzufuegen(nummer) {
             console.log("SchwimmerKopie", scopy);
             schwimmer.push(scopy);
         } else { //Ansonsten wird er in der Liste Schwimmer neu erzeugt
+            console.debug("Schwimmer war nicht bekannt");
             const neuer = {
                 nummer: parseInt(nummer),
                 name: `Schwimmer ${nummer}`,
