@@ -45,6 +45,11 @@ async function promptSchwimmerHinzufuegen() {
     var nummer = await schwimmerNummerErfragen();
     console.log("Erfrage Nummer:", nummer);
 
+    if (nummer == null) {
+        // Modal wurde geschlossen
+        return
+    }
+
     if (!(nummer !== null && nummer.trim() !== "" && !isNaN(nummer))) {
         showStatusMessage("Ungültige Schwimmernummer", false);
         return;
