@@ -154,3 +154,21 @@ git push -u origin feature/kurze-beschreibung
 
 Nach dem Push kann auf GitHub ein Pull Request zum Merge in main erstellt werden.
 Dazu im Repository auf **"Pull requests" → "New pull request"** klicken, den eigenen Branch als *compare* und "main" als *base* auswählen, Titel & Beschreibung angeben und mit **"Create pull request"** bestätigen.
+
+## Erzeugung von Releases
+
+``requirements.txt`` erstellen/aktualisieren mit
+
+```
+pip install pipreqs
+pipreqs /path/to/project
+```
+
+Exe-Datei für Windows erzeugen
+
+```
+pip install pyinstaller
+pyinstaller --onefile --noconsole gui.py
+```
+
+Auf github als Release veröffentlichen
