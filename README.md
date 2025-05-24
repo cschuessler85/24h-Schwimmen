@@ -10,6 +10,16 @@ Die Erfassung soll auf möglichst vielen verschiedenen Endgeräten möglich sein
 
 ## Quick-Start
 
+### Windows
+
+* Release als ZIP-Datei auf einem Windows-System herunterladen, entpacken und die Exe-Datei ausführen
+* Im Gui-Menu die Admin-Webseite starten (einloggen mit ``admin`` und ``swim24``)
+* Auf der Schwimmer-Seite einige Schwimmer aus dem Ordner testfiles importieren
+* Benutzer anlegen
+* Zur *normalen* Webseite wechseln und ausprobieren
+
+### Linux bzw. Source
+
 * Repository clonen.
 * Dann mit ``pip install -r requirements.txt`` die benötigten Pakete installieren und
 * die Datei ``server.py`` ausführen.
