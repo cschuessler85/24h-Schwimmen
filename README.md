@@ -173,5 +173,4 @@ pyinstaller --onefile gui.py
 
 bzw. noch besser, die Datei ``make_release.py`` anpassen (release-name) und ausführen. Dadurch wird eine ZIP-Datei erstellt, die hochgeladen werden kann.
 
-
 Auf github als Release veröffentlichen

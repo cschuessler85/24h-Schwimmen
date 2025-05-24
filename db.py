@@ -332,7 +332,9 @@ def update_schwimmer(schwimmer_id, **kwargs):
     keys = ', '.join([f"{k}=?" for k in kwargs])
     values = list(kwargs.values()) + [schwimmer_id]
     query = f"UPDATE schwimmer SET {keys} WHERE nummer = ?"
-    return db.execute(query, values)
+    cursor = db.execute(query, values)
+    if (cursor and cursor.rowcount == 0): return None
+    return cursor
 
 # Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück
 def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv):

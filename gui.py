@@ -4,54 +4,29 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QPlainTextEdit, QMenuBar,
     QMenu, QFileDialog, QMessageBox
 )
-from PyQt6.QtGui import QTextCharFormat, QSyntaxHighlighter, QColor, QFont, QDesktopServices, QAction
-from PyQt6.QtCore import QUrl, Qt, QRegularExpression
+from PyQt6.QtGui import QTextCharFormat, QSyntaxHighlighter, QColor, QFont, QDesktopServices, QAction, QTextCursor
+from PyQt6.QtCore import QUrl, Qt, QRegularExpression, QTimer
 import server  # server.py muss im selben Verzeichnis liegen
-
-
-class Tee:
-    def __init__(self, *targets):
-        self.targets = targets
-
-    def write(self, msg):
-        for t in self.targets:
-            t.write(msg)
-            t.flush()
-
-    def flush(self):
-        for t in self.targets:
-            t.flush()
-
-
-class AnsiHighlighter(QSyntaxHighlighter):
-    def highlightBlock(self, text):
-        ansi_format = QTextCharFormat()
-        ansi_format.setForeground(QColor("green"))
-        if "\x1b[" in text:  # ANSI-Escape erkannt
-            ansi_format.setFontWeight(QFont.Weight.Bold)
-            self.setFormat(0, len(text), ansi_format)
-
-class StreamWriter:
-    def __init__(self, write_func):
-        self.write_func = write_func
-    def write(self, msg):
-        self.write_func(msg)
-    def flush(self):
-        pass
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Flask GUI Server")
-        self.stdout_stream = StreamWriter(self.write_stdout)
-        self.stderr_stream = StreamWriter(self.write_stderr)
 
         # Textkonsole
         self.console = QPlainTextEdit(self)
         self.console.setReadOnly(True)
         self.console.setStyleSheet("background-color: black; color: white; font-family: monospace;")
-        AnsiHighlighter(self.console.document())
         self.setCentralWidget(self.console)
+
+        # Log-Datei-Pfad
+        self.log_path = "data/serverlog.log"
+        self.last_position = 0
+
+        # Timer starten
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.read_log)
+        self.timer.start(1000)  # alle 1 Sekunde
 
         # Menü
         menubar = QMenuBar()
@@ -84,13 +59,24 @@ class MainWindow(QMainWindow):
         # Starte den Server in einem Thread
         self.start_server_thread()
 
+    def read_log(self):
+        try:
+            with open(self.log_path, "r", encoding="utf-8", errors="replace") as f:
+                f.seek(self.last_position)
+                new_data = f.read()
+                if new_data:
+                    self.console.moveCursor(QTextCursor.MoveOperation.End)
+                    self.console.insertPlainText(new_data)
+                    self.console.moveCursor(QTextCursor.MoveOperation.End)
+                self.last_position = f.tell()
+        except FileNotFoundError:
+            pass
+
     def start_server_thread(self):
         def run():
-            sys.stdout = Tee(sys.__stdout__, self.stdout_stream)
-            sys.stderr = Tee(sys.__stderr__, self.stderr_stream)
             server.run_server()
 
-        t = threading.Thread(target=run) #, daemon=True)
+        t = threading.Thread(target=run, daemon=True)
         t.start()
 
     def write_stdout(self, text):

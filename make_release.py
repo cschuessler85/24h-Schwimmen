@@ -26,6 +26,7 @@ shutil.copytree(os.path.join("dist","gui"), release_path, dirs_exist_ok=True)
 #shutil.copy("server.py", release_path)
 shutil.copy("config.json", release_path)
 # ggf. weitere Dateien ...
+shutil.copytree("testfiles", os.path.join(release_path,"testfiles"))
 
 # ZIP erstellen
 shutil.make_archive(base_name=os.path.splitext(zip_path)[0], format='zip', root_dir=release_path)
