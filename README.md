@@ -121,12 +121,13 @@ Hier ist eine Übersicht über die Verzeichnisstruktur des Projektes:
 │ └── admin.html        Administrationsseite
 │ └── index.html        Standardseite
 │ └── login.html        Anmeldeseite 
+│ └── main.js           Javascript der Webseite
 ├── static/             Dateien, die statisch ausgeliefert werden sollen
 │ └── admin.js          Javascript für die Administrationsseite 
 │ └── favicon.ico        
 │ └── main.css          Standard-Style
-│ └── main.js           Javascript der Webseite
 │ └── mymodals.js       Javascript um Modals einzublenden
+├── testfiles           Unterordner mit Testdaten 
 ├── db.py               Alles was mit Datenbankzugriffen zu tun hat
 ├── logging_config.py   Konfiguration des Loggings
 ├── config.json         Konfigurationsdatei
