@@ -159,16 +159,18 @@ Dazu im Repository auf **"Pull requests" → "New pull request"** klicken, den e
 
 ``requirements.txt`` erstellen/aktualisieren mit
 
-```
+```bash
 pip install pipreqs
 pipreqs /path/to/project
 ```
 
 Exe-Datei für Windows erzeugen
 
-```
+```bash
 pip install pyinstaller
-pyinstaller --onefile --noconsole gui.py
+pyinstaller --onefile gui.py
 ```
+
+bzw. noch besser, die Datei ``make_release.py`` anpassen (release-name) und ausführen. Dadurch wird eine ZIP-Datei erstellt, die hochgeladen werden kann.
 
 Auf github als Release veröffentlichen
