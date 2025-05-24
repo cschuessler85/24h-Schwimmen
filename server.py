@@ -17,8 +17,14 @@ configure_logging()
 logger = logging.getLogger()
 
 # Konfiguration laden
+if getattr(sys, 'frozen', False):  # Ausgeführt als .exe (gefrorener Zustand)
+    base_path = os.path.dirname(sys.executable)
+else:   # Ausgeführt als .py
+    base_path = os.path.dirname(os.path.abspath(__file__))
+
+config_path = os.path.join(base_path, 'config.json')
 try:
-    with open("config.json", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         config =json.load(f)
         logger.info("Konfiguration geladen")
 except json.JSONDecodeError as e:
@@ -292,6 +298,10 @@ def action():
         print(f"Fehler beim Verarbeiten der Actions: {e}")
         return "Fehler", 400
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, threaded=False)
+def run_server(reloader = False):
+    app.run(host="0.0.0.0", port=8080, threaded=False, use_reloader=reloader)
     #app.run(ssl_context=('cert.pem', 'key.pem'), debug=True)
+
+if __name__ == "__main__":
+    run_server(True) #Reloader aktivieren - lädt Flask bei Dateiänderungen neu - super für Testmodus
+    
