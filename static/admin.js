@@ -22,8 +22,7 @@ document.addEventListener("click", (e) => {
     }
 });
 
-document
-    .getElementById("downloadBackupBtn")
+document.getElementById("downloadBackupBtn")
     .addEventListener("click", () => {
         fetch("/admin/backup")
             .then((res) => res.blob())
@@ -36,6 +35,24 @@ document
                 URL.revokeObjectURL(url);
             });
     });
+
+document.getElementById("new_password_form").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    fetch("/admin", {
+        method: "POST",
+        body: formData
+    })
+        .then(response => {
+            return response.text().then(text => {
+                showStatusMessage(text, response.ok);
+            });
+        })
+        .catch(err => {
+            showStatusMessage("NETZWERKFEHLER: " + err.message, false);
+        });
+});
 
 function initNav() {
     //initialisiert die Naviagtionsleiste
@@ -101,7 +118,7 @@ function showSwimmerTable() {
         .then(response => response.json())
         .then(data => {
             swimmerData = data;
-            console.log("Schwimmerdaten gelesen",data);
+            console.log("Schwimmerdaten gelesen", data);
             const section = document.querySelector('#swimmer');
             section.innerHTML = '';
             const heading = document.createElement('h2');
@@ -122,7 +139,7 @@ function showSwimmerTable() {
             div.id = 'csvPreviewContainer';
             section.appendChild(div);
             const button = document.createElement('button');
-            button.id="csvSend";
+            button.id = "csvSend";
             button.innerText = 'Importieren';
             section.appendChild(button);
             initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
@@ -172,7 +189,7 @@ function renderSwimmerTable() {
         // Name, Bahnanzahl, auf_bahn, aktiv
         ['name', 'bahnanzahl', 'auf_bahn', 'aktiv'].forEach(key => {
             const td = document.createElement('td');
-            td.textContent = (entry[key]?entry[key]:(entry[key]==0?'0':''));
+            td.textContent = (entry[key] ? entry[key] : (entry[key] == 0 ? '0' : ''));
             td.style.whiteSpace = 'nowrap';
             row.appendChild(td);
         });
@@ -248,7 +265,7 @@ function deleteSwimmer(nummer) {
         })
             .then(response => response.text().then(text => {
                 if (response.ok) {
-                    showStatusMessage(`Benutzer ${nummer} gelöscht`,true);
+                    showStatusMessage(`Benutzer ${nummer} gelöscht`, true);
                     showSwimmerTable();
                 } else {
                     showStatusMessage(`Fehler beim Löschen:\n${text}`, false);
