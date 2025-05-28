@@ -8,6 +8,47 @@ from PyQt6.QtGui import QTextCharFormat, QSyntaxHighlighter, QColor, QFont, QDes
 from PyQt6.QtCore import QUrl, Qt, QRegularExpression, QTimer
 import server  # server.py muss im selben Verzeichnis liegen
 
+from PyQt6.QtWidgets import (
+    QDialog, QVBoxLayout, QLabel, QLineEdit,
+    QPushButton, QHBoxLayout
+)
+
+class PasswordDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Admin-Passwort setzen")
+
+        layout = QVBoxLayout(self)
+
+        layout.addWidget(QLabel("Neues Passwort:"))
+        self.password_input = QLineEdit()
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        layout.addWidget(self.password_input)
+
+        toggle_layout = QHBoxLayout()
+        self.toggle_button = QPushButton("Anzeigen")
+        self.toggle_button.setCheckable(True)
+        self.toggle_button.toggled.connect(self.toggle_password_visibility)
+        toggle_layout.addStretch()
+        toggle_layout.addWidget(self.toggle_button)
+        layout.addLayout(toggle_layout)
+
+        self.ok_button = QPushButton("OK")
+        self.ok_button.clicked.connect(self.accept)
+        layout.addWidget(self.ok_button)
+
+    def toggle_password_visibility(self, checked):
+        if checked:
+            self.password_input.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.toggle_button.setText("Verbergen")
+        else:
+            self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+            self.toggle_button.setText("Anzeigen")
+
+    def get_password(self):
+        return self.password_input.text()
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -52,9 +93,9 @@ class MainWindow(QMainWindow):
 
         settings_menu = QMenu("Einstellungen", self)
         menubar.addMenu(settings_menu)
-        dummy_action = QAction("Admin-Passwort...", self)
-        dummy_action.triggered.connect(self.set_password)
-        settings_menu.addAction(dummy_action)
+        adminpw_action = QAction("Admin-Passwort...", self)
+        adminpw_action.triggered.connect(self.set_password)
+        settings_menu.addAction(adminpw_action)
 
         # Starte den Server in einem Thread
         self.start_server_thread()
@@ -87,7 +128,14 @@ class MainWindow(QMainWindow):
         self.console.appendPlainText(f"{text}")
 
     def set_password(self):
-        QMessageBox.information(self, "Einstellungen", "Passwort-Dialog folgt.")
+        dialog = PasswordDialog(self)
+        if dialog.exec():
+            neues_passwort = dialog.get_password()
+            # Hier: Passwort speichern/prüfen/weiterverarbeiten
+            if (server.db.passwort_aendern("admin",neues_passwort)):
+                QMessageBox.information(self, "Passwort", "Passwort wurde gesetzt.")
+            else: 
+                QMessageBox.information(self, "Passwort", "Passwort konnte nicht gesetzt werden.")
 
 
 if __name__ == '__main__':

@@ -137,7 +137,9 @@ def admin():
         elif action == 'new_passwort':
             benutzername = request.form.get('benutzername')
             new_pass = request.form.get('new_pass')
-            db.passwort_ändern(benutzername, new_pass)
+            if (db.passwort_aendern(benutzername, new_pass)):
+                return "Passwort, erfolgreich geändert", 200
+            return "Fehler bei der Passwortänderung", 400
         elif action == 'delete_user':
             benutzername = request.form.get('benutzername')
             benutzername = benutzername.lower()
