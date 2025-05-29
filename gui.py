@@ -1,3 +1,4 @@
+import signal
 import sys
 import threading
 import signal
@@ -137,6 +138,8 @@ class MainWindow(QMainWindow):
                 QMessageBox.information(self, "Passwort", "Passwort wurde gesetzt.")
             else: 
                 QMessageBox.information(self, "Passwort", "Passwort konnte nicht gesetzt werden.")
+
+
 
 
 if __name__ == '__main__':
