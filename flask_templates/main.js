@@ -793,6 +793,7 @@ document.getElementById("rundeAbziehenOption").addEventListener("click", functio
 
 document.getElementById("deleteSwimmer").addEventListener("click", function () {
     if (clickedDiv) {
+        contextMenu.style.display = "none";
         const nummer = parseInt(clickedDiv.dataset.nummer);
         if (confirm(`Soll die Nummer ${nummer} entfernt werden?`)) {
             removeSchwimmerDiv(clickedDiv);
