@@ -89,6 +89,10 @@ function initAdminMenu() {
     li.innerText = "Aktionen ansehen";
     li.addEventListener('click', (e) => showSection('actions'));
     adminMenuUL.appendChild(li);
+    li = document.createElement('li');
+    li.innerText = "QR - Code";
+    li.addEventListener('click', (e) => window.open('/show_qr', '_blank'));
+    adminMenuUL.appendChild(li);
 }
 
 function showSection(id) {

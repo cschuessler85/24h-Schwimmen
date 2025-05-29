@@ -6,7 +6,7 @@ from datetime import datetime
 import logging
 from flask import Flask, request, jsonify, send_from_directory, redirect, url_for, session, render_template_string, render_template
 from logging_config import configure_logging
-from utils import generiere_passwort
+from utils import generiere_passwort, get_all_ips
 from werkzeug.security import check_password_hash
 
 
@@ -206,6 +206,10 @@ def admin():
     }
     return render_template('admin.html',**params)
 
+#-------------------------------
+#  ENDE Admin-Angelegenheiten
+#-------------------------------
+
 
 @app.route("/")
 def index():
@@ -228,6 +232,18 @@ def send_mainjs():
 @app.route("/<path:filename>")
 def static_files(filename):
     return send_from_directory("static", filename)
+
+@app.route("/show_qr")
+def show_qr():
+    '''Erzeugt eine Webseite mit dem QR-Code zu einer IP
+    Zum Beispiel mit <button onclick="window.open('/show_qr?ip=' + encodeURIComponent('http://192.168.0.10:8080'), '_blank')">
+                QR-Code anzeigen
+        </button>
+    '''
+    myip = get_all_ips()[0]
+    ip_url = request.args.get("ip", f"http://{myip}:8080")
+    return render_template("qr.html", ip_url=ip_url)
+
 
 @app.route("/action", methods=["POST"])
 def action():
