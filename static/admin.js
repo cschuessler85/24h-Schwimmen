@@ -23,18 +23,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.getElementById("downloadBackupBtn")
-    .addEventListener("click", () => {
-        fetch("/admin/backup")
-            .then((res) => res.blob())
-            .then((blob) => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "backup.json";
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-    });
+    .addEventListener("click", () => window.open('/backupsql'));
 
 document.getElementById("new_password_form").addEventListener("submit", function (e) {
     e.preventDefault();

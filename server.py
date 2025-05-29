@@ -4,7 +4,7 @@ import json
 import db
 from datetime import datetime
 import logging
-from flask import Flask, request, jsonify, send_from_directory, redirect, url_for, session, render_template_string, render_template
+from flask import Flask, Response, request, jsonify, send_from_directory, redirect, url_for, session, render_template_string, render_template
 from logging_config import configure_logging
 from utils import generiere_passwort, get_all_ips
 from werkzeug.security import check_password_hash
@@ -101,6 +101,15 @@ def logout():
 #****************************
 #  Admin-Angelegenheiten
 #****************************
+
+@app.route('/backupsql', methods=['GET', 'POST'])
+def backupsql():
+    if session.get('user_role') != 'admin':
+        return "Zugriff verweigert", 403
+    return Response(db.dump(), mimetype="text/plain", headers={"Content-Disposition": "attachment;filename=backup.sql"
+                                                                       })
+ 
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if session.get('user_role') != 'admin':

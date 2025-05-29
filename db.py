@@ -248,6 +248,13 @@ def liste_tabelle(table_name):
         return []
 
 
+def dump():
+    """
+    gibt einen Dump der Datenbank zurück, der per Flask zum Download angeboten werden kann
+    """
+    dump = "\n".join(db.conn.iterdump())
+    db.conn.commit()
+    return dump;
 
 
 # =======================================
