@@ -1,5 +1,6 @@
 import sys
 import threading
+import signal
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QPlainTextEdit, QMenuBar,
     QMenu, QFileDialog, QMessageBox
@@ -139,6 +140,11 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
+    def handle_sigint(sig, frame):
+        print("GUI wird beendet...")
+        QApplication.quit()
+        
+    signal.signal(signal.SIGINT, handle_sigint)    
     app = QApplication(sys.argv)
     window = MainWindow()
     window.resize(800, 600)
