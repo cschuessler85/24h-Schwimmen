@@ -787,7 +787,7 @@ document.getElementById("rundeAbziehenOption").addEventListener("click", functio
                 render();
                 actions.push({
                     kommando: "ADD",
-                    parameter: [nummer, -1],
+                    parameter: [nummer, -1, s_data.aufBahn],
                     timestamp: new Date().toISOString(),
                     transmitted: false
                 });
