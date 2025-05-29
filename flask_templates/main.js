@@ -65,7 +65,7 @@ function schwimmerHinzufuegen(nummer) {
     console.debug("Schwimmer Nr. ", nummer, "wird gesucht...");
 
     // Der gesuchte Schwimmer soll auf jeden Fall oben in die Liste
-    const maxPrio = Math.max(...schwimmer.map(s => s.prio));
+    const maxPrio = Math.max(Math.max(...schwimmer.map(s => s.prio)),0);
 
     //Wenn der schwimmer schon in der Liste schwimmer ist, wird seine Priorität auf das aktuelle Maximum gesetzt
     const aktiver = schwimmer.find(s => s.nummer == nummer);
@@ -482,7 +482,7 @@ function addSwipeHandler(div) {
     });
 }
 
-function removeSchwimmerDiv(div, setinactive = true, render = true) {
+function removeSchwimmerDiv(div, setinactive = true, dorender = true) {
     // Abgleich der Daten in alleSchwimmer mit den Daten des Schwimmers der entfernt wird.
     // entferne das Element (du hast das bereits implementiert)
     div.style.opacity = 0;
@@ -504,7 +504,7 @@ function removeSchwimmerDiv(div, setinactive = true, render = true) {
         }
     }
     //div.remove();
-    if (render) render();
+    if (dorender) render();
 }
 
 function render() {
