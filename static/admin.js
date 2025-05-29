@@ -23,18 +23,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.getElementById("downloadBackupBtn")
-    .addEventListener("click", () => {
-        fetch("/admin/backup")
-            .then((res) => res.blob())
-            .then((blob) => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "backup.json";
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-    });
+    .addEventListener("click", () => window.open('/backupsql'));
 
 document.getElementById("new_password_form").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -127,13 +116,23 @@ function showSwimmerTable() {
             section.innerHTML = '';
             const heading = document.createElement('h2');
             heading.textContent = `Schwimmer (${data.length})`;
+            heading.style.display = "inline-block";
             section.appendChild(heading);
+            // Button um CSV herunterzuladen
+            const csvbutton = document.createElement('Button');
+            csvbutton.textContent = "CSV";
+            csvbutton.style.margin = "0px 20px";
+            csvbutton.addEventListener("click", () => downloadCSV(swimmerData, ["nummer","name","bahnanzahl"]));
+            section.appendChild(csvbutton);
+            // Seitendarstellungskontrolle
             const controls = document.createElement('div');
             controls.id = 'paginationControls';
             section.appendChild(controls);
+            // Tabelle für die Daten
             const stable = document.createElement('table');
             stable.id = 'swimmerTable';
             section.appendChild(stable);
+            // Bereich für den Datenimport
             section.appendChild(document.createElement('hr'));
             const input = document.createElement('input');
             input.type = 'file';
@@ -288,8 +287,6 @@ function showActionsTable() {
     fetchAndFillTable('actions', 'actionsTable', 'get_table_actions', 'Actions');
 }
 
-
-
 function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
     showSection(sectionId);
     fetch('/admin', {
@@ -331,6 +328,29 @@ function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
         .catch(error => {
             console.error(`Fehler beim Abrufen der ${titleName}-Daten:`, error);
         });
+}
+
+function downloadCSV(data, customHeaders = null) {
+    if (!data.length) return;
+
+    const headers = customHeaders || Object.keys(data[0]);
+    const csvRows = [
+        headers.join(','), // Kopfzeile
+        ...data.map(obj =>
+            headers.map(header => `"${(obj[header] ?? '').toString().replace(/"/g, '""')}"`).join(',')
+        )
+    ];
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "schwimmerdaten.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 
