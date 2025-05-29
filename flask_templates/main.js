@@ -372,6 +372,14 @@ function showSchwimmerContextMenu(x, y) {
     } else {
         nurEigene.style.display = "none";
     }
+    // Bahn abziehen nur Anzeigen, wenn Anzahl größer 0
+    const s_data = schwimmer.find(s => s.nummer == parseInt(clickedDiv.dataset.nummer));
+    const bahnAbziehen = document.getElementById("rundeAbziehenOption");
+    if (!s_data || s_data.bahnen <=0) {
+        bahnAbziehen.style.display = "none";
+    } else {
+        bahnAbziehen.style.display = "block";
+    }
     // Erst anzeigen, damit offsetWidth/Height korrekt bestimmt werden können
     // dann so platzieren das das Menü nicht über den Rand hinaus ragt.
     contextMenu.style.display = "block";
