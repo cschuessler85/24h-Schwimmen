@@ -460,7 +460,7 @@ def erstelle_benutzer(name, benutzername, passwort, admin=False):
     '''
     params = (name, benutzername, generate_password_hash(passwort), int(admin))
     return db.execute(query, params)
-from werkzeug.security import generate_password_hash
+
 
 def passwort_aendern(benutzername, neues_passwort):
     """
@@ -473,6 +473,27 @@ def passwort_aendern(benutzername, neues_passwort):
         rows_affected = cursor.rowcount
         if rows_affected == 0:
             return None
+    return cursor
+
+def loesche_userID(userID):
+    """
+    Löscht einen Benutzer anhand der BenutzerID aus der Datenbank.
+    gibt die Anzahl der betroffenen Zeilen (in der Regel 1 oder 0) zurück oder
+    None im Fehlerfall.
+    """
+    logging.info(f"Benutzer löschen: {userID}")
+    query = '''
+        DELETE FROM benutzer
+        WHERE id = ?
+    '''
+    params = (int(userID),)
+    cursor =  db.execute(query, params)
+    if (cursor):
+        rows_affected = cursor.rowcount
+        if rows_affected == 0:
+            return None
+        if rows_affected > 0:
+            return rows_affected
     return cursor
 
 
