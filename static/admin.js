@@ -63,6 +63,10 @@ function initNav() {
     button.innerText = "Aktionen";
     button.addEventListener('click', (e) => showActionsTable());
     navbar.appendChild(button);
+    button = document.createElement('button');
+    button.innerText = "Checks";
+    button.addEventListener('click', (e) => showChecksSection());
+    navbar.appendChild(button);
 }
 
 function initAdminMenu() {
@@ -141,7 +145,7 @@ function showUserTable() {
             button.innerText = 'Importieren';
             section.appendChild(button);
             initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
-            renderTable(userData,'userTable',['Id','Name','Benutzername','Admin'],{'Del':delUser, 'Edit': editUser});
+            renderTable(userData, 'userTable', ['Id', 'Name', 'Benutzername', 'Admin'], { 'Del': delUser, 'Edit': editUser });
         })
         .catch(error => {
             console.error('Fehler beim Abrufen der Schwimmer-Daten:', error);
@@ -158,7 +162,7 @@ function delUser(nummer) {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                action: "delete_user", 
+                action: "delete_user",
                 nummer: nummer
             }),
         })
@@ -233,14 +237,14 @@ function showSwimmerTable() {
             button.innerText = 'Importieren';
             section.appendChild(button);
             initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
-            renderTable(swimmerData,'swimmerTable', ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], {'Del':deleteSwimmer, 'Edit':editSwimmer});
+            renderTable(swimmerData, 'swimmerTable', ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], { 'Del': deleteSwimmer, 'Edit': editSwimmer });
         })
         .catch(error => {
             console.error('Fehler beim Abrufen der Schwimmer-Daten:', error);
         });
 }
 
-function renderTable(data, table_id, header = ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], aktionen={}) {
+function renderTable(data, table_id, header = ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], aktionen = {}) {
     const table = document.getElementById(table_id);
     table.innerHTML = ''; // Erst mal löschen
     table.style.margin = '5px auto';
@@ -278,7 +282,7 @@ function renderTable(data, table_id, header = ['Nummer', 'Name', 'Bahnanzahl', '
 
         // Aktionen
         if (Object.keys(aktionen).length > 0) {
-            console.log ("Creating Aktion TD");
+            console.log("Creating Aktion TD");
             const actionTd = document.createElement('td');
             actionTd.style.whiteSpace = 'nowrap';
             for (const [key, value] of Object.entries(aktionen)) {
@@ -373,8 +377,25 @@ function showActionsTable() {
     fetchAndFillTable('actions', 'actionsTable', 'get_table_actions', 'Actions');
 }
 
+function showChecksSection() {
+    showSection('checks');
+    const checkSection = document.getElementById('checks');
+    checkSection.innerHTML = ''; // erst leeren 
+    let button = document.createElement('button');
+    button.innerText = "Anzahlen Prüfen";
+    button.addEventListener('click', (e) => fetchAndFillTable(null, 'checkAnzahlenTable', 'get_checkAnzahlTable', 'Anzahlen'));
+    checkSection.appendChild(button);
+    const info = document.createElement('span');
+    info.innerText = "Gibt Schwimmer aus, bei denen die Anzahlen in Actions nicht denen in der Tabelle entspricht"
+    checkSection.appendChild(info);
+    let table = document.createElement('table');
+    table.id = "checkAnzahlenTable";
+    checkSection.appendChild(table);
+
+}
+
 function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
-    showSection(sectionId);
+    if (sectionId) showSection(sectionId);
     fetch('/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -384,9 +405,10 @@ function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
         .then(data => {
             console.log(`${titleName}-Table füllen, data.length`, data.length);
 
-            const sectionTitle = document.querySelector(`#${sectionId} h2`);
-            sectionTitle.textContent = `${titleName} (${data.length})`;
-
+            if (sectionId) {
+                const sectionTitle = document.querySelector(`#${sectionId} h2`);
+                sectionTitle.textContent = `${titleName} (${data.length})`;
+            }
             const table = document.getElementById(tableId);
             table.innerHTML = '';
 
@@ -409,6 +431,12 @@ function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
                     });
                     table.appendChild(row);
                 });
+            } else { //Data length == 0 - leere Rückgabe
+                const headerRow = document.createElement('tr');
+                const th = document.createElement('th');
+                th.textContent = "Leere Tabelle"
+                headerRow.appendChild(th);
+                table.appendChild(headerRow);
             }
         })
         .catch(error => {

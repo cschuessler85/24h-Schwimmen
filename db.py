@@ -576,8 +576,43 @@ def finde_actions_after_timestamp(timestamp):
 #    Testabschnitt
 #======================== 
 
+def checkBahnenAnzahlen():
+    """
+    Prüft ob die Bahnanzahlen in der Actionstabelle mit denen in der Schwimmer DB
+    übereinstimen und gibt die Unterschiede zurück
+    """
+    query = """select 
+    a.schwimmerID,
+    s.name,
+    s.bahnanzahl as Anz,
+    a.anzahl as ActionAnz,
+    a.kommando
+    FROM (
+    SELECT
+        kommando,
+        CAST(json_extract(parameter, '$[0]') AS INTEGER) AS schwimmerID, 
+        count(json_extract(parameter, '$[1]')) AS anzahl 
+    FROM actions 
+    WHERE kommando = "ADD" 
+    GROUP BY schwimmerID 
+    ) a
+    JOIN schwimmer s ON s.nummer = a.schwimmerID 
+    WHERE Anz <> ActionAnz
+    ORDER BY schwimmerID ASC;
+    """
+    try:
+        cursor = db.execute(query)
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        return [dict_from_row(row, columns) for row in rows]
+    except Exception as e:
+        print(f"Fehler beim Datenbank-CheckBahnenanzahl: {e}")
+        return []
+
 
 if __name__ == "__main__":
+    #print(checkBahnenAnzahlen())
+
     # Setze den DB-Namen auf eine Testdatenbank
     DB_NAME = "testdata.sqlite"
 
@@ -604,7 +639,7 @@ if __name__ == "__main__":
 
     # Beispiel: Schwimmer hinzufügen und abfragen
     print("\nHinzufügen eines neuen Schwimmers...")
-    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max Mustermann", 3, 400, 1, 0, True)
+    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max Mustermann", 3, 400, 1, True)
     aendere_bahnanzahl_um(123,1,7)
     schwimmer = liste_tabelle('schwimmer')
     print(f"Schwimmer in der Datenbank: {schwimmer}")

@@ -179,8 +179,10 @@ def admin():
             return jsonify(db.liste_tabelle('schwimmer'))
         elif action == 'get_table_actions':
             logging.info("Tabelle actions wird abgerufen")
-            #print(db.liste_tabelle('schwimmer'))
             return jsonify(db.liste_tabelle('actions')), 200
+        elif action == 'get_checkAnzahlTable':
+            logging.info("Tabelle checkAnzahlen wird abgerufen")
+            return jsonify(db.checkBahnenAnzahlen()), 200
         elif action == 'import_schwimmer':
             schwimmer_liste = data.get("data", [])
             logging.info(f"Schwimmer werden importiert - Daten enthalten {len(schwimmer_liste)} Schwimmer")
