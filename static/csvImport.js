@@ -1,5 +1,16 @@
 import { showStatusMessage } from "./mymodals.js";
 
+// const knownHeaders = ['', 'Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv', 'Aktionen'];
+
+/**
+ * Initialisiert den CSV-Import 
+ * 
+ * @param {String} fileInputSelector  // id des zu holenden Schwimmers -1 gleich alle
+ * @param {String} previewContainerSelector
+ * @param {String} sendButtonSelector
+ * @param {String} options // Dictionary z.B. {url: '/admin', knownHeaders: ['','Nummer']}
+ * @returns {void}
+ */
 export function initCSVImport(fileInputSelector, previewContainerSelector, sendButtonSelector, options = {}) {
     const fileInput = document.querySelector(fileInputSelector);
     const previewContainer = document.querySelector(previewContainerSelector);
@@ -12,14 +23,33 @@ export function initCSVImport(fileInputSelector, previewContainerSelector, sendB
         if (!file) return;
 
         const text = await file.text();
-        const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
-        const headers = lines[0].split(',').map(h => h.trim());
-        parsedData = lines.slice(1).map(line => {
-            const values = line.split(',').map(v => v.trim());
-            return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
-        });
+        // Welcher Separator ist häufiger
+        const sepCounts = { ',': (text.match(/,/g) || []).length, ';': (text.match(/;/g) || []).length };
+        const separator = sepCounts[','] > sepCounts[';'] ? ',' : ';';
 
-        renderPreview(headers, parsedData, previewContainer);
+        const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+        const headers = lines[0].split(separator).map(h => h.trim());
+        if (options.knownHeaders) {
+            showHeaderMappingModal(headers, mapping => {
+                parsedData = lines.slice(1).map(line => {
+                    const values = line.split(separator).map(v => v.trim());
+                    const entry = {};
+                    mapping.forEach((key, i) => {
+                        if (key) entry[key] = values[i];
+                    });
+                    return entry;
+                });
+                renderPreview(Object.values(mapping).filter(k => k), parsedData, previewContainer);
+            }, options.knownHeaders);
+        } else {
+
+            parsedData = lines.slice(1).map(line => {
+                const values = line.split(separator).map(v => v.trim());
+                return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
+            });
+
+            renderPreview(headers, parsedData, previewContainer);
+        }
     });
 
     sendButton.addEventListener('click', async () => {
@@ -110,4 +140,33 @@ function renderPreview(headers, data, container) {
     // Seiteninfo aktualisieren
     const totalPages = Math.ceil(csvData.length / previewSize);
     document.getElementById("pageInfo").textContent = `Seite ${currentPage + 1} / ${totalPages}`;
+}
+
+function showHeaderMappingModal(headers, onConfirm, knownHeaders) {
+    const modal = document.createElement('div');
+    console.log("in showHeaderMappingModal");
+    modal.innerHTML = `
+        <div class="modal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+        background: white; border: 1px solid #ccc; padding: 1em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000; width: 300px; max-width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h3 style="width: 100%;">Spalten zuordnen</h3>
+            <form id="headerMappingForm">
+                ${headers.map((h, i) => `
+                    <label style="display: block; margin-bottom: 0.5em;">${h}
+                        <select data-index="${i}" style="width: 100%;">
+                            ${knownHeaders.map(opt => `<option value="${opt}">${opt || 'Ignorieren'}</option>`).join('')}
+                        </select>
+                    </label>
+                `).join('')}
+                <button type="submit">Importieren</button>
+            </form>
+        </div>`;
+    document.body.appendChild(modal);
+
+    document.getElementById('headerMappingForm').onsubmit = e => {
+        e.preventDefault();
+        const mapping = Array.from(modal.querySelectorAll('select')).map(sel => sel.value);
+        modal.remove();
+        onConfirm(mapping);
+    };
 }

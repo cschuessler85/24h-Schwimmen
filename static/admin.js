@@ -236,7 +236,9 @@ function showSwimmerTable() {
             button.id = "csvSend";
             button.innerText = 'Importieren';
             section.appendChild(button);
-            initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
+            initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin',
+                knownHeaders: ['', 'Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv', 'Aktionen']
+             });
             renderTable(swimmerData, 'swimmerTable', ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], { 'Del': deleteSwimmer, 'Edit': editSwimmer });
         })
         .catch(error => {
