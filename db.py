@@ -376,13 +376,16 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
             auf_bahn=bahnnr,
             aktiv=1
         )):
+            logging.error(f"Schwimmer {nummer} konnte nicht erstellt werden")
             raise AttributeError('Schwimmer konnte nicht erstellt werden')
     else:
         # Schwimmer existiert → Bahnanzahl ändern
         neue_bahnanzahl = (schwimmer["bahnanzahl"] or 0) + anzahl
         if neue_bahnanzahl < 0:
             neue_bahnanzahl = 0
-        update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)
+        if (not update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)):
+            logging.error(f"Schwimmer {nummer} konnte nicht aktualisert werden - neue Bahnazahl {neue_bahnanzahl}")
+            raise AttributeError('Schwimmer konnte nicht aktualisiert werden')
 
 def loesche_schwimmer(schwimmerID):
     """
