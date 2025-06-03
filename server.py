@@ -150,12 +150,14 @@ def admin():
                 return "Passwort, erfolgreich geändert", 200
             return "Fehler bei der Passwortänderung", 400
         elif action == 'delete_user':
-            benutzername = request.form.get('benutzername')
-            benutzername = benutzername.lower()
-            if benutzername:
-                db.loesche_benutzername(benutzername)
+            logging.info("Action delete_user")
+            nummer = data.get('nummer')
+            if nummer:
+                if (not db.loesche_userID(nummer)):
+                    return "DB - Fehler", 400
+                return "Erfolg", 200
             else:
-                return "Kein Benutzername angegeben", 400
+                return "Keine Nutzernummer angegeben", 400
         elif action == 'delete_swimmer':
             logging.info("Action delete_swimmer")
             nummer = data.get('nummer')
@@ -177,8 +179,10 @@ def admin():
             return jsonify(db.liste_tabelle('schwimmer'))
         elif action == 'get_table_actions':
             logging.info("Tabelle actions wird abgerufen")
-            #print(db.liste_tabelle('schwimmer'))
             return jsonify(db.liste_tabelle('actions')), 200
+        elif action == 'get_checkAnzahlTable':
+            logging.info("Tabelle checkAnzahlen wird abgerufen")
+            return jsonify(db.checkBahnenAnzahlen()), 200
         elif action == 'import_schwimmer':
             schwimmer_liste = data.get("data", [])
             logging.info(f"Schwimmer werden importiert - Daten enthalten {len(schwimmer_liste)} Schwimmer")

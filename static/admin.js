@@ -1,10 +1,11 @@
 import { showStatusMessage } from './mymodals.js'
 import { initCSVImport } from './csvImport.js'
 
-// Globale Variablen für die Schwimmer Tabelle
+// Globale Variablen für die Schwimmer und User Tabelle
 let swimmerData = [];
-let swimmerCurrentPage = 1;
-let swimmerRowsPerPage = 10;
+let userData = [];
+let tableCurrentPage = 1;
+let tableRowsPerPage = 10;
 
 const adminButton = document.getElementById("adminAktionen");
 const adminMenu = document.getElementById("adminMenu");
@@ -62,6 +63,10 @@ function initNav() {
     button.innerText = "Aktionen";
     button.addEventListener('click', (e) => showActionsTable());
     navbar.appendChild(button);
+    button = document.createElement('button');
+    button.innerText = "Checks";
+    button.addEventListener('click', (e) => showChecksSection());
+    navbar.appendChild(button);
 }
 
 function initAdminMenu() {
@@ -91,10 +96,94 @@ function showSection(id) {
     document.getElementById(id).style.display = "block";
 }
 
+// ************ Render User Table *****************
 function showUserTable() {
-    fetchAndFillTable('user', 'userTable', 'get_table_benutzer', 'Benutzer');
+    showSection('user');
+    // Initiales Laden
+    fetch('/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: 'get_table_benutzer' })
+    })
+        .then(response => response.json())
+        .then(data => {
+            userData = data;
+            console.log("Userdaten gelesen", data);
+            const section = document.querySelector('#user');
+            section.innerHTML = '';
+            const heading = document.createElement('h2');
+            heading.textContent = `Benutzer (${data.length})`;
+            heading.style.display = "inline-block";
+            section.appendChild(heading);
+            // Button um CSV herunterzuladen
+            const csvbutton = document.createElement('Button');
+            csvbutton.textContent = "CSV";
+            csvbutton.style.margin = "0px 20px";
+            csvbutton.addEventListener("click", () => downloadCSV(userData));
+            section.appendChild(csvbutton);
+            // Seitendarstellungskontrolle
+            // Alle alten Divs paginationcontrol löschen - sollte maximal eins sein
+            document.querySelectorAll('div#paginationControls').forEach(el => el.remove());
+            const controls = document.createElement('div');
+            controls.id = 'paginationControls';
+            section.appendChild(controls);
+            // Tabelle für die Daten
+            const stable = document.createElement('table');
+            stable.id = 'userTable';
+            section.appendChild(stable);
+            // Bereich für den Datenimport
+            section.appendChild(document.createElement('hr'));
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.id = 'csvInput';
+            section.appendChild(input);
+            const div = document.createElement('div');
+            div.id = 'csvPreviewContainer';
+            section.appendChild(div);
+            const button = document.createElement('button');
+            button.id = "csvSend";
+            button.innerText = 'Importieren';
+            section.appendChild(button);
+            initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
+            renderTable(userData, 'userTable', ['Id', 'Name', 'Benutzername', 'Admin'], { 'Del': delUser, 'Edit': editUser });
+        })
+        .catch(error => {
+            console.error('Fehler beim Abrufen der Schwimmer-Daten:', error);
+        });
 }
 
+function editUser(nummer) { //TODO
+    alert(`Bearbeite Nutzer: ${nummer}`); // Placeholder
+}
+
+function delUser(nummer) {
+    if (confirm(`Benutzer ${nummer} wirklich löschen?`)) {
+        fetch('/admin', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "delete_user",
+                nummer: nummer
+            }),
+        })
+            .then(response => response.text().then(text => {
+                if (response.ok) {
+                    showStatusMessage(`Benutzer ${nummer} gelöscht`, true);
+                    showUserTable();
+                } else {
+                    showStatusMessage(`Fehler beim Löschen:\n${text}`, false);
+                }
+            }))
+            .catch(error => {
+                showStatusMessage(`Netzwerkfehler: ${error}`, false);
+                console.error('Netzwerkfehler:', error);
+            });
+    }
+}
+
+
+
+// ***************** Render Client Table ***************************
 function showClientTable() {
     fetchAndFillTable('client', 'clientTable', 'get_table_clients', 'Clients');
 }
@@ -122,9 +211,11 @@ function showSwimmerTable() {
             const csvbutton = document.createElement('Button');
             csvbutton.textContent = "CSV";
             csvbutton.style.margin = "0px 20px";
-            csvbutton.addEventListener("click", () => downloadCSV(swimmerData, ["nummer","name","bahnanzahl"]));
+            csvbutton.addEventListener("click", () => downloadCSV(swimmerData, ["nummer", "name", "bahnanzahl"]));
             section.appendChild(csvbutton);
             // Seitendarstellungskontrolle
+            // Alle alten Divs paginationcontrol löschen - sollte maximal eins sein
+            document.querySelectorAll('div#paginationControls').forEach(el => el.remove());
             const controls = document.createElement('div');
             controls.id = 'paginationControls';
             section.appendChild(controls);
@@ -145,22 +236,26 @@ function showSwimmerTable() {
             button.id = "csvSend";
             button.innerText = 'Importieren';
             section.appendChild(button);
-            initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
-            renderSwimmerTable();
+            initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin',
+                knownHeaders: ['', 'Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv', 'Aktionen']
+             });
+            renderTable(swimmerData, 'swimmerTable', ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], { 'Del': deleteSwimmer, 'Edit': editSwimmer });
         })
         .catch(error => {
             console.error('Fehler beim Abrufen der Schwimmer-Daten:', error);
         });
 }
 
-function renderSwimmerTable() {
-    const table = document.getElementById('swimmerTable');
+function renderTable(data, table_id, header = ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], aktionen = {}) {
+    const table = document.getElementById(table_id);
     table.innerHTML = ''; // Erst mal löschen
     table.style.margin = '5px auto';
 
+    console.log(`Aktionen: ${aktionen}`);
+
     // Tabellen-Header erzeugen
     const headerRow = document.createElement('tr');
-    ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv', 'Aktionen'].forEach(key => {
+    header.concat((Object.keys(aktionen).length > 0 ? ['Aktionen'] : [])).forEach(key => {
         const th = document.createElement('th');
         th.textContent = key;
         headerRow.appendChild(th);
@@ -168,63 +263,60 @@ function renderSwimmerTable() {
     table.appendChild(headerRow);
 
     // Daten sortieren
-    const sorted = [...swimmerData].sort((a, b) => parseInt(a.nummer) - parseInt(b.nummer));
+    const sorted = [...data].sort((a, b) => parseInt(a.nummer) - parseInt(b.nummer));
 
     // Seitenanzahl
-    const start = (swimmerCurrentPage - 1) * swimmerRowsPerPage;
-    const pageData = swimmerRowsPerPage === 0 ? sorted : sorted.slice(start, start + swimmerRowsPerPage);
+    const totalPages = tableRowsPerPage === 0 ? 1 : Math.ceil(data.length / tableRowsPerPage);
+    tableCurrentPage = Math.min(tableCurrentPage, totalPages)
+    const start = (tableCurrentPage - 1) * tableRowsPerPage;
+    const pageData = tableRowsPerPage === 0 ? sorted : sorted.slice(start, start + tableRowsPerPage);
 
     pageData.forEach(entry => {
         const row = document.createElement('tr');
-
-        // Nummer klickbar
-        const nummerCell = document.createElement('td');
-        const link = document.createElement('a');
-        link.href = '#';
-        link.textContent = entry.nummer;
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            editSwimmer(entry.nummer);
-        });
-        nummerCell.appendChild(link);
-        row.appendChild(nummerCell);
-
-        // Name, Bahnanzahl, auf_bahn, aktiv
-        ['name', 'bahnanzahl', 'auf_bahn', 'aktiv'].forEach(key => {
+        // Zellen erstellen
+        header.forEach(key => {
             const td = document.createElement('td');
-            td.textContent = (entry[key] ? entry[key] : (entry[key] == 0 ? '0' : ''));
+            const key_tl = key.toLowerCase();
+            td.textContent = (entry[key_tl] ? entry[key_tl] : (entry[key_tl] == 0 ? '0' : ''));
             td.style.whiteSpace = 'nowrap';
             row.appendChild(td);
         });
 
         // Aktionen
-        const actionTd = document.createElement('td');
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Löschen';
-        delBtn.onclick = () => deleteSwimmer(entry.nummer);
-        actionTd.appendChild(delBtn);
-        row.appendChild(actionTd);
+        if (Object.keys(aktionen).length > 0) {
+            console.log("Creating Aktion TD");
+            const actionTd = document.createElement('td');
+            actionTd.style.whiteSpace = 'nowrap';
+            for (const [key, value] of Object.entries(aktionen)) {
+                const delBtn = document.createElement('button');
+                delBtn.textContent = key;
+                delBtn.onclick = () => value(entry[header[0].toLowerCase()]);
+                actionTd.appendChild(delBtn);
+            }
+            row.appendChild(actionTd);
+        }
 
         table.appendChild(row);
     });
 
-    renderPaginationControls();
+    renderPaginationControls(data, table_id, header);
 }
 
-function renderPaginationControls() {
+
+function renderPaginationControls(data, table_id, header) {
     const controls = document.getElementById('paginationControls');
     controls.innerHTML = '';
-    const totalPages = swimmerRowsPerPage === 0 ? 1 : Math.ceil(swimmerData.length / swimmerRowsPerPage);
+    const totalPages = tableRowsPerPage === 0 ? 1 : Math.ceil(data.length / tableRowsPerPage);
 
     const back = document.createElement('button');
     back.textContent = 'Zurück';
-    back.disabled = swimmerCurrentPage === 1;
-    back.onclick = () => { swimmerCurrentPage--; renderSwimmerTable(); };
+    back.disabled = tableCurrentPage === 1;
+    back.onclick = () => { tableCurrentPage--; renderTable(data, table_id, header); };
 
     const next = document.createElement('button');
     next.textContent = 'Weiter';
-    next.disabled = swimmerCurrentPage === totalPages;
-    next.onclick = () => { swimmerCurrentPage++; renderSwimmerTable(); };
+    next.disabled = tableCurrentPage === totalPages;
+    next.onclick = () => { tableCurrentPage++; renderTable(data, table_id, header); };
 
     const label = document.createElement('span');
     label.innerText = 'Einträge pro Seite:';
@@ -236,13 +328,13 @@ function renderPaginationControls() {
         const option = document.createElement('option');
         option.value = size;
         option.textContent = size === 0 ? 'Alle' : size;
-        if (swimmerRowsPerPage === size) option.selected = true;
+        if (tableRowsPerPage === size) option.selected = true;
         select.appendChild(option);
     });
     select.onchange = (e) => {
-        swimmerRowsPerPage = parseInt(e.target.value);
-        swimmerCurrentPage = 1;
-        renderSwimmerTable();
+        tableRowsPerPage = parseInt(e.target.value);
+        tableCurrentPage = 1;
+        renderTable(data, table_id, header);
     };
 
 
@@ -252,7 +344,7 @@ function renderPaginationControls() {
     controls.appendChild(next);
 }
 
-function editSwimmer(nummer) {
+function editSwimmer(nummer) { //TODO
     alert(`Bearbeiten: ${nummer}`); // Placeholder
 }
 
@@ -287,8 +379,25 @@ function showActionsTable() {
     fetchAndFillTable('actions', 'actionsTable', 'get_table_actions', 'Actions');
 }
 
+function showChecksSection() {
+    showSection('checks');
+    const checkSection = document.getElementById('checks');
+    checkSection.innerHTML = ''; // erst leeren 
+    let button = document.createElement('button');
+    button.innerText = "Anzahlen Prüfen";
+    button.addEventListener('click', (e) => fetchAndFillTable(null, 'checkAnzahlenTable', 'get_checkAnzahlTable', 'Anzahlen'));
+    checkSection.appendChild(button);
+    const info = document.createElement('span');
+    info.innerText = "Gibt Schwimmer aus, bei denen die Anzahlen in Actions nicht denen in der Tabelle entspricht"
+    checkSection.appendChild(info);
+    let table = document.createElement('table');
+    table.id = "checkAnzahlenTable";
+    checkSection.appendChild(table);
+
+}
+
 function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
-    showSection(sectionId);
+    if (sectionId) showSection(sectionId);
     fetch('/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -298,9 +407,10 @@ function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
         .then(data => {
             console.log(`${titleName}-Table füllen, data.length`, data.length);
 
-            const sectionTitle = document.querySelector(`#${sectionId} h2`);
-            sectionTitle.textContent = `${titleName} (${data.length})`;
-
+            if (sectionId) {
+                const sectionTitle = document.querySelector(`#${sectionId} h2`);
+                sectionTitle.textContent = `${titleName} (${data.length})`;
+            }
             const table = document.getElementById(tableId);
             table.innerHTML = '';
 
@@ -323,6 +433,12 @@ function fetchAndFillTable(sectionId, tableId, actionName, titleName) {
                     });
                     table.appendChild(row);
                 });
+            } else { //Data length == 0 - leere Rückgabe
+                const headerRow = document.createElement('tr');
+                const th = document.createElement('th');
+                th.textContent = "Leere Tabelle"
+                headerRow.appendChild(th);
+                table.appendChild(headerRow);
             }
         })
         .catch(error => {

@@ -376,13 +376,16 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
             auf_bahn=bahnnr,
             aktiv=1
         )):
+            logging.error(f"Schwimmer {nummer} konnte nicht erstellt werden")
             raise AttributeError('Schwimmer konnte nicht erstellt werden')
     else:
         # Schwimmer existiert → Bahnanzahl ändern
         neue_bahnanzahl = (schwimmer["bahnanzahl"] or 0) + anzahl
         if neue_bahnanzahl < 0:
             neue_bahnanzahl = 0
-        update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)
+        if (not update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)):
+            logging.error(f"Schwimmer {nummer} konnte nicht aktualisert werden - neue Bahnazahl {neue_bahnanzahl}")
+            raise AttributeError('Schwimmer konnte nicht aktualisiert werden')
 
 def loesche_schwimmer(schwimmerID):
     """
@@ -460,7 +463,7 @@ def erstelle_benutzer(name, benutzername, passwort, admin=False):
     '''
     params = (name, benutzername, generate_password_hash(passwort), int(admin))
     return db.execute(query, params)
-from werkzeug.security import generate_password_hash
+
 
 def passwort_aendern(benutzername, neues_passwort):
     """
@@ -473,6 +476,27 @@ def passwort_aendern(benutzername, neues_passwort):
         rows_affected = cursor.rowcount
         if rows_affected == 0:
             return None
+    return cursor
+
+def loesche_userID(userID):
+    """
+    Löscht einen Benutzer anhand der BenutzerID aus der Datenbank.
+    gibt die Anzahl der betroffenen Zeilen (in der Regel 1 oder 0) zurück oder
+    None im Fehlerfall.
+    """
+    logging.info(f"Benutzer löschen: {userID}")
+    query = '''
+        DELETE FROM benutzer
+        WHERE id = ?
+    '''
+    params = (int(userID),)
+    cursor =  db.execute(query, params)
+    if (cursor):
+        rows_affected = cursor.rowcount
+        if rows_affected == 0:
+            return None
+        if rows_affected > 0:
+            return rows_affected
     return cursor
 
 
@@ -555,8 +579,43 @@ def finde_actions_after_timestamp(timestamp):
 #    Testabschnitt
 #======================== 
 
+def checkBahnenAnzahlen():
+    """
+    Prüft ob die Bahnanzahlen in der Actionstabelle mit denen in der Schwimmer DB
+    übereinstimen und gibt die Unterschiede zurück
+    """
+    query = """select 
+    a.schwimmerID,
+    s.name,
+    s.bahnanzahl as Anz,
+    a.anzahl as ActionAnz,
+    a.kommando
+    FROM (
+    SELECT
+        kommando,
+        CAST(json_extract(parameter, '$[0]') AS INTEGER) AS schwimmerID, 
+        count(json_extract(parameter, '$[1]')) AS anzahl 
+    FROM actions 
+    WHERE kommando = "ADD" 
+    GROUP BY schwimmerID 
+    ) a
+    JOIN schwimmer s ON s.nummer = a.schwimmerID 
+    WHERE Anz <> ActionAnz
+    ORDER BY schwimmerID ASC;
+    """
+    try:
+        cursor = db.execute(query)
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        return [dict_from_row(row, columns) for row in rows]
+    except Exception as e:
+        print(f"Fehler beim Datenbank-CheckBahnenanzahl: {e}")
+        return []
+
 
 if __name__ == "__main__":
+    #print(checkBahnenAnzahlen())
+
     # Setze den DB-Namen auf eine Testdatenbank
     DB_NAME = "testdata.sqlite"
 
@@ -583,7 +642,7 @@ if __name__ == "__main__":
 
     # Beispiel: Schwimmer hinzufügen und abfragen
     print("\nHinzufügen eines neuen Schwimmers...")
-    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max Mustermann", 3, 400, 1, 0, True)
+    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max Mustermann", 3, 400, 1, True)
     aendere_bahnanzahl_um(123,1,7)
     schwimmer = liste_tabelle('schwimmer')
     print(f"Schwimmer in der Datenbank: {schwimmer}")
