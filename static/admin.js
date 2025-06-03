@@ -145,7 +145,7 @@ function showUserTable() {
             button.innerText = 'Importieren';
             section.appendChild(button);
             initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin' });
-            renderTable(userData, 'userTable', ['Id', 'Name', 'Benutzername', 'Admin'], { 'Del': delUser, 'Edit': editUser });
+            renderTable(userData, 'userTable', ['id', 'name', 'benutzername', 'admin'], { 'Del': delUser, 'Edit': editUser });
         })
         .catch(error => {
             console.error('Fehler beim Abrufen der Schwimmer-Daten:', error);
@@ -211,7 +211,7 @@ function showSwimmerTable() {
             const csvbutton = document.createElement('Button');
             csvbutton.textContent = "CSV";
             csvbutton.style.margin = "0px 20px";
-            csvbutton.addEventListener("click", () => downloadCSV(swimmerData, ["nummer", "name", "bahnanzahl"]));
+            csvbutton.addEventListener("click", () => downloadCSV(swimmerData, ["nummer", "vorname", "nachname", "istKind", "gruppe", "bahnanzahl"]));
             section.appendChild(csvbutton);
             // Seitendarstellungskontrolle
             // Alle alten Divs paginationcontrol löschen - sollte maximal eins sein
@@ -237,16 +237,21 @@ function showSwimmerTable() {
             button.innerText = 'Importieren';
             section.appendChild(button);
             initCSVImport('#csvInput', '#csvPreviewContainer', '#csvSend', { url: '/admin',
-                knownHeaders: ['', 'Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv', 'Aktionen']
+                knownHeaders: ['', 'nummer', 'vorname', 'nachname', 'istKind', 'istErw', 'gruppe']
              });
-            renderTable(swimmerData, 'swimmerTable', ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], { 'Del': deleteSwimmer, 'Edit': editSwimmer });
+            renderTable(swimmerData, 'swimmerTable', ['nummer', 'vorname', 'nachname', 'istKind', 'gruppe', 'bahnanzahl', 'auf_bahn', 'aktiv'], { 'Del': deleteSwimmer, 'Edit': editSwimmer });
         })
         .catch(error => {
             console.error('Fehler beim Abrufen der Schwimmer-Daten:', error);
         });
 }
 
-function renderTable(data, table_id, header = ['Nummer', 'Name', 'Bahnanzahl', 'auf_bahn', 'aktiv'], aktionen = {}) {
+function capitalizeFirstLetter(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+
+function renderTable(data, table_id, header = ['nummer', 'name', 'bahnanzahl', 'auf_bahn', 'aktiv'], aktionen = {}) {
     const table = document.getElementById(table_id);
     table.innerHTML = ''; // Erst mal löschen
     table.style.margin = '5px auto';
@@ -257,7 +262,7 @@ function renderTable(data, table_id, header = ['Nummer', 'Name', 'Bahnanzahl', '
     const headerRow = document.createElement('tr');
     header.concat((Object.keys(aktionen).length > 0 ? ['Aktionen'] : [])).forEach(key => {
         const th = document.createElement('th');
-        th.textContent = key;
+        th.textContent = capitalizeFirstLetter(key);
         headerRow.appendChild(th);
     });
     table.appendChild(headerRow);
@@ -272,12 +277,13 @@ function renderTable(data, table_id, header = ['Nummer', 'Name', 'Bahnanzahl', '
     const pageData = tableRowsPerPage === 0 ? sorted : sorted.slice(start, start + tableRowsPerPage);
 
     pageData.forEach(entry => {
+        //console.log("Entry",entry);
         const row = document.createElement('tr');
         // Zellen erstellen
         header.forEach(key => {
             const td = document.createElement('td');
-            const key_tl = key.toLowerCase();
-            td.textContent = (entry[key_tl] ? entry[key_tl] : (entry[key_tl] == 0 ? '0' : ''));
+            //const key_tl = key.toLowerCase();
+            td.textContent = (entry[key] ? entry[key] : (entry[key] == 0 ? '0' : ''));
             td.style.whiteSpace = 'nowrap';
             row.appendChild(td);
         });
