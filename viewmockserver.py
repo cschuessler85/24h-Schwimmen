@@ -13,7 +13,7 @@ gruppen = ["A", "B", "C", "D"]
 def startseite():
     return send_from_directory(app.static_folder, "view.html")
 
-@app.route('/api/daten')
+@app.route('/action')
 def daten():
     swimmerMap = {
         i: {

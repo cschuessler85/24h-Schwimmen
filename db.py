@@ -361,16 +361,23 @@ def erstelle_schwimmer(nummer, erstellt_von_client_id, vorname, nachname, istKin
     params = (nummer, erstellt_von_client_id, vorname, nachname, istKind, gruppe, bahnanzahl, strecke, auf_bahn, aktiv)
     return db.execute(query, params)
 
+def get_bahnanzahl(nummer):
+    result=db.fetchone("SELECT bahnanzahl FROM schwimmer WHERE nummer = ?", (nummer,))
+    
+    if result is None:
+        return None  # Schwimmer existiert nicht
+    return result[0]  # Bahnanzahl
+
 def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
     """
     Ändert die Bahnanzahl eines Schwimmers. 
     Falls der Schwimmer nicht existiert, wird er mit Standardwerten angelegt.
     """
-    schwimmer = lies_schwimmer(int(nummer))
+    bahnanzahl = get_bahnanzahl(int(nummer))
     logging.info(f"Schwimmer Ändern mit Nummer {nummer}")
     #print(schwimmer if (schwimmer) else f"Schwimmer {nummer} Nicht gefunden")
     
-    if schwimmer is None or len(schwimmer) == 0 :
+    if bahnanzahl is None:
         # Schwimmer existiert nicht → neu anlegen
         logging.info(f"Schwimmer {nummer} wird neu angelegt")
         if (not erstelle_schwimmer(
@@ -389,10 +396,10 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
             raise AttributeError('Schwimmer konnte nicht erstellt werden')
     else:
         # Schwimmer existiert → Bahnanzahl ändern
-        neue_bahnanzahl = (schwimmer["bahnanzahl"] or 0) + anzahl
+        neue_bahnanzahl = bahnanzahl + anzahl
         if neue_bahnanzahl < 0:
             neue_bahnanzahl = 0
-        if (not update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)):
+        if (not update_schwimmer(int(nummer), bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)):
             logging.error(f"Schwimmer {nummer} konnte nicht aktualisert werden - neue Bahnazahl {neue_bahnanzahl}")
             raise AttributeError('Schwimmer konnte nicht aktualisiert werden')
 
@@ -546,6 +553,21 @@ def erstelle_action(benutzer_id, client_id, zeitstempel, kommando, parameter):
     '''
     params = (benutzer_id, client_id, zeitstempel, kommando, parameter)
     return db.execute(query, params)
+
+def erstelle_actions(actionliste):
+    """
+    Fügt eine neue Action zur Datenbank hinzu.
+    Gibt die ID der neuen Action zurück.
+    """
+    query = '''
+        INSERT INTO actions (benutzer_id, client_id, zeitstempel, kommando, parameter)
+        VALUES (?, ?, ?, ?, ?)
+    '''
+    db.cursor.executemany(query, actionliste)
+    db.conn.commit()
+    return db.cursor
+
+
 
 def finde_actions_by_benutzer_id(benutzer_id):
     """

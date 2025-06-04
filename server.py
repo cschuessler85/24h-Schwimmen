@@ -265,6 +265,10 @@ def send_mainjs():
 def static_files(filename):
     return send_from_directory("static", filename)
 
+@app.route("/view")
+def view():
+    return send_from_directory("static", "view.html")
+
 @app.route("/show_qr")
 def show_qr():
     '''Erzeugt eine Webseite mit dem QR-Code zu einer IP
@@ -287,6 +291,7 @@ def action():
 
         results = []
         updates = []
+        actionliste = []
 
         for action in actions:
             kommando = action.get("kommando")
@@ -296,15 +301,19 @@ def action():
             
             if kommando == "ADD":
                 # ADD - Action muss dokumentiert werden
-                db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
+                logging.info("Aktion eintragen....")
+                #db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
+                actionliste.append((user, clientid, str(timestamp), str(kommando), json.dumps(parameter)))
+                logging.info("Aktion ist eingetragen")
                 try:
                     nummer = int(parameter[0])
                     anzahl = int(parameter[1])
                     bahnnr = int(parameter[2]) if len(parameter) > 2 else 0
-                    logging.info(f"ADD ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
+                    logging.info(f"ADD wird ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
                     db.aendere_bahnanzahl_um(nummer,anzahl,clientid,bahnnr=bahnnr)
+                    logging.info("ADD ist ausgeführt")
                     results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
-                    updates.append(db.lies_schwimmer(nummer))
+                    #updates.append(db.lies_schwimmer(nummer))
                 except (ValueError, IndexError) as e:
                     logging.info(f"Fehler bei ADD-Parametern: {e}")
                     results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
@@ -326,6 +335,17 @@ def action():
                 else:
                     nummer = int(parameter[0])
                     updates = [db.lies_schwimmer(nummer)]
+            elif kommando == "VIEW": # Update des Viewbildschirms angefordert
+                if (len(parameter)>0): #nur begrenzter Zeitraum
+                    sinceTimestamp = parameter[0]
+                    data['actions'] = db.finde_actions_after_timestamp(sinceTimestamp)
+                    return jsonify(data), 200
+                else: #Volständige übermittlung
+                    data = {}
+                    data['swimmerMap'] = db.liste_tabelle('schwimmer')
+                    data['actions'] = db.liste_tabelle('actions')
+                    return jsonify(data), 200
+                pass
             elif kommando == "ACT": # Status Aktiv ändern
                 try:
                     nummer = int(parameter[0])
@@ -342,6 +362,8 @@ def action():
                 logging.debug(f"Unbekanntes Kommando: {kommando}")
                 print(f"Unbekanntes Kommando: {kommando}")
 
+        if (len(actionliste)> 0):
+            db.erstelle_actions(actionliste)
         return jsonify({"results": results, "updates": updates}), 200
 
     except Exception as e:
