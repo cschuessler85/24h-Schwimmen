@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>24h Schwimmen</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        height: 100vh;
+        margin: 0;
+      }
+      #root {
+        display: flex;
+        flex: 1;
+      }
+      .left,
+      .right {
+        padding: 1rem;
+        overflow-y: auto;
+      }
+      .left {
+        width: 70%;
+        border-right: 1px solid #ccc;
+        font-size: var(--font-size, 16px);
+        scroll-behavior: smooth;
+      }
+      .right {
+        width: 30%;
+        background: #f5f5f5;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        padding: 4px;
+        border-bottom: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel">
+      // Hooks werden aus dem React bjekt geholt
+      // useState: Speichert und verwaltet veränderliche Daten, die beim Rendern die UI beeinflussen
+      //           (z.B. Schwimmerdaten, Filterzustand).
+      // useEffect: Führt Nebenwirkungen aus, z.B. Daten laden, Timer starten, oder Scroll-Intervalle
+      //            einrichten – also Code, der nicht direkt beim Rendern passiert.
+      // useRef: Hält veränderliche Werte oder DOM-Referenzen, die sich ändern können, ohne ein
+      //         erneutes Rendern auszulösen (z.B. Scroll-Position oder Zugriff auf das linke Container-Element).
+
+      const { useState, useEffect, useRef } = React;
+
+      function App() {
+        const [swimmerMap, setSwimmerMap] = useState({});
+        const [lapLog, setLapLog] = useState([]);
+        const [filter, setFilter] = useState({ gruppe: null, nurKinder: false, sortierung: "bahnanzahl" });
+        const leftRef = useRef();
+        const scrollPosition = useRef(0);
+
+        function holeNeueDaten() {
+          fetch("/api/daten") // Pfad zum Server-Endpunkt
+            .then((res) => res.json())
+            .then((data) => {
+              //if (data.swimmerMap) setSwimmerMap(data.swimmerMap);
+              if (data.lapLog) setLapLog(data.lapLog);
+              if (data.filter) setFilter(data.filter);
+            })
+            .catch((err) => console.error("Fehler beim Laden:", err));
+        }
+        useEffect(() => {
+          const vornamen = ["Luca", "Emma", "Ben", "Mia", "Noah", "Lea", "Elias", "Lina"];
+          const nachnamen = ["Schmidt", "Müller", "Weber", "Schneider", "Fischer", "Meyer", "Wagner"];
+          const gruppen = ["A", "B", "C", "D"];
+
+          const initialSwimmers = {};
+          for (let i = 1; i <= 150; i++) {
+            initialSwimmers[i] = {
+              nummer: i,
+              vorname: vornamen[Math.floor(Math.random() * vornamen.length)],
+              nachname: nachnamen[Math.floor(Math.random() * nachnamen.length)],
+              gruppe: gruppen[Math.floor(Math.random() * gruppen.length)],
+              istKind: Math.random() < 0.3 ? 1 : 0,
+              bahnanzahl: Math.floor(Math.random() * 100),
+            };
+          }
+          setSwimmerMap(initialSwimmers);
+        }, []); // [] - sorgt dafür, dass dieser Effect (diese Funktion) nur ein einziges Mal ausgeführt wird
+
+        useEffect(() => {
+          const interval = setInterval(() => {
+            const ids = Object.keys(swimmerMap);
+            if (ids.length === 0) return;
+            const id = ids[Math.floor(Math.random() * ids.length)];
+            setSwimmerMap((prev) => {
+              const updated = { ...prev };
+              if (updated[id]) updated[id].bahnanzahl++;
+              return updated;
+            });
+            setLapLog((prev) => [{ schwimmer: id, zeit: new Date().toISOString() }, ...prev.slice(0, 19)]);
+          }, 3000);
+          return () => clearInterval(interval); //cleanup-Funktion, die vor erneuter Ausführung aufgerufen wird
+        }, [swimmerMap]); // [swimmerMap] sorgt dafür, dass dies nur nach Änderungen der swimmer-Map ausgeführt wird
+
+        // Der Timer für das holen neuer Daten
+        useEffect(() => {
+          const interval = setInterval(() => {
+            holeNeueDaten();
+          }, 10000); // alle 10 Sekunden
+
+          return () => clearInterval(interval); // Aufräumen bei Komponentendemontage
+        }, []);
+
+        // Der Timer wird in Use-Effect gepackt, damit er erst nach dem ersten Rendern ausgeführt wird
+        useEffect(() => {
+          const scrollInt = setInterval(() => {
+            const container = leftRef.current;
+            if (!container) return;
+            scrollPosition.current += 8;
+            if (scrollPosition.current >= container.scrollHeight - container.clientHeight) {
+              scrollPosition.current = 0;
+            }
+            container.scrollTop = scrollPosition.current;
+          }, 100);
+          return () => clearInterval(scrollInt);
+        }, []);
+
+        let gefiltert = Object.values(swimmerMap);
+        if (filter.gruppe) gefiltert = gefiltert.filter((s) => s.gruppe === filter.gruppe);
+        if (filter.nurKinder) gefiltert = gefiltert.filter((s) => s.istKind);
+        gefiltert.sort((a, b) => b.bahnanzahl - a.bahnanzahl);
+
+        return (
+          <div id="root">
+            <div className="left" ref={leftRef}>
+              <h2>Ranking</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Gruppe</th>
+                    <th>Bahnen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gefiltert.map((s, i) => (
+                    <tr key={s.nummer}>
+                      <td>{i + 1}</td>
+                      <td>
+                        ({s.nummer}) {s.vorname} {s.nachname}
+                      </td>
+                      <td>{s.gruppe}</td>
+                      <td>{s.bahnanzahl}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="right">
+              <h2>Letzte Bahnen</h2>
+              {lapLog.map((l, i) => (
+                <div key={i}>
+                  {l.zeit.split("T")[1].split(".")[0]} – {swimmerMap[l.schwimmer].vorname} ({l.schwimmer}) hat angeschlagen: {swimmerMap[l.schwimmer].bahnanzahl} Bahnen
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
