@@ -1,7 +1,7 @@
 import { schwimmerNummerErfragen, showStatusMessage } from './mymodals.js'
 
 const schwimmerNrLength = parseInt("{{schwimmerNrLen}}");
-const DEBUG = true;
+const DEBUG = false;
 
 let formIsDirty = false; // Flag, das anzeigt, ob Daten geändert wurden
 // Beim Verlassen der Seite warnen, falls Änderungen vorhanden sind
@@ -80,7 +80,8 @@ function schwimmerHinzufuegen(nummer) {
             console.debug(`Schwimmer ${nummer} Nummer war schon vorhanden`);
             const scopy = {
                 nummer: parseInt(nummer),
-                name: bekannter.name,
+                vorname: bekannter.vorname,
+                nachname: bekannter.nachname,
                 bahnen: bekannter.bahnanzahl,
                 aktiv: true,
                 prio: maxPrio + 1
@@ -102,7 +103,8 @@ function schwimmerHinzufuegen(nummer) {
             console.debug("Schwimmer war nicht bekannt");
             const neuer = {
                 nummer: parseInt(nummer),
-                name: `Schwimmer ${nummer}`,
+                vorname: `Schwimmer ${nummer}`,
+                nachname: '',
                 bahnen: 0,
                 aufBahn: verwaltete_bahnen[0],
                 aktiv: 1,
@@ -125,7 +127,8 @@ function fillSchwimmerAusMeinenBahnen() {
         if (!schwimmer.some(s => s.nummer == s_neu.nummer)) {
             const scopy = {
                 nummer: parseInt(s_neu.nummer),
-                name: s_neu.name,
+                vorname: s_neu.vorname,
+                nachname: s_neu.nachname,
                 bahnen: s_neu.bahnanzahl,
                 aktiv: true,
                 aufBahn: s_neu.auf_bahn,
@@ -551,7 +554,7 @@ function render() {
 
             div.innerHTML = `
                 <div class="nummer">${snummer} <span class="bahnen">(${s.bahnen})</span></div>
-                <div class="name">${s.name}  ${DEBUG ? `<span class="prio">Prio: ${s.prio}</span>` : ""}</div>
+                <div class="name">${s.vorname}  ${DEBUG ? `<span class="prio">Prio: ${s.prio}</span>` : ""}</div>
             `;
             if (!verwaltete_bahnen.includes(s.aufBahn)) {
                 div.style.backgroundColor = "lightgreen";

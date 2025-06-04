@@ -193,19 +193,38 @@ def admin():
             validierte = []
             for s in schwimmer_liste:
                 nummer = s.get("nummer")
-                name = s.get("name")
-                geschlecht = s.get("geschlecht", "")
-                if not nummer or not name:
+                vorname = s.get("vorname")
+                if (vorname == 0 or vorname == '0'): vorname = None
+                nachname = s.get("nachname", None)
+                istKind = s.get("istKind")
+                istErw = s.get("istErw")
+                if (istKind and (istKind not in [0, '0'])):
+                    istKind = 1
+                if (istErw and istKind != 1 and (istErw==0 or istErw == '0')):
+                    istKind = 1
+                gruppe = s.get("gruppe",None)
+                if (gruppe == 0 or gruppe == '0'): gruppe = None
+                geschlecht = s.get("geschlecht", None)
+                if not nummer or not vorname:
                     continue  # überspringen wenn Pflichtfelder fehlen
-                if (db.insertOrUpdateSchwimmer(nummer, erstellt_von_client_id = session['clientID'], name = name)):
-                    validierte.append({
-                        "nummer": nummer,
-                        "name": name,
-                        "geschlecht": geschlecht,
-                        # ggf. weitere Felder übernehmen
-                    })
+                args = {
+                    "nummer": nummer,
+                    "erstellt_von_client_id": session['clientID'],
+                    "vorname": vorname,
+                    "nachname": nachname,
+                    "istKind": istKind,
+                    "gruppe": gruppe
+                }
+
+                # Entferne alle mit None
+                filtered_args = {k: v for k, v in args.items() if v is not None}
+
+                if (db.insertOrUpdateSchwimmer(**filtered_args)):
+                    validierte.append(filtered_args)
 
             logging.info(f"Importiert wurden {len(validierte)} Schwimmer")
+
+            print("Validierte", validierte)
 
             return jsonify({"status": "ok", "importiert": len(validierte)}), 200
         elif action:
@@ -307,7 +326,7 @@ def action():
                 else:
                     nummer = int(parameter[0])
                     updates = [db.lies_schwimmer(nummer)]
-            elif kommando == "ACT":
+            elif kommando == "ACT": # Status Aktiv ändern
                 try:
                     nummer = int(parameter[0])
                     value = int(parameter[1])

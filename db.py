@@ -186,7 +186,10 @@ def init_db():
         CREATE TABLE IF NOT EXISTS schwimmer (
             nummer INTEGER NOT NULL PRIMARY KEY,
             erstellt_von_client_id INTEGER,
-            name TEXT,
+            vorname TEXT,
+            nachname TEXT,
+            istKind INTEGER,
+            gruppe TEXT,
             bahnanzahl INTEGER,
             strecke INTEGER,
             auf_bahn INTEGER,
@@ -221,7 +224,7 @@ def dict_from_table_row(row, table_name):
     elif table_name == 'clients':
         columns = ['id', 'ip', 'benutzer_id', 'zeitpunkt_letzte_aktion']
     elif table_name == 'schwimmer':
-        columns = ['nummer', 'erstellt_von_client_id', 'name', 'bahnanzahl', 'strecke', 'auf_bahn', 'aktiv']
+        columns = ['nummer', 'erstellt_von_client_id', 'vorname', 'nachname', 'istKind', 'gruppe', 'bahnanzahl', 'strecke', 'auf_bahn', 'aktiv']
     elif table_name == 'actions':
         columns = ['id', 'benutzer_id', 'client_id', 'zeitstempel', 'kommando', 'parameter']
     else:
@@ -308,19 +311,22 @@ def lies_schwimmer_vonBahn(bahnnr):
 # update_schwimmer(1, bahnanzahl=5, aktiv=0)
 # Das funktioniert durch **kwargs, womit beliebige Schlüssel-Wert-Paare übergeben werden können.
 def insertOrUpdateSchwimmer(nummer, **kwargs):
-    logging.info(f"Schwimmer Nr {nummer} wird aktualisiert")
+    logging.info(f"Schwimmer Nr {nummer} wird aktualisiert: {kwargs}")
     cursor = update_schwimmer(nummer, **kwargs)
     if ( not cursor) :
         #Schwimmer muss neu angelegt werden
         logging.info("  ... muss neu angelegt werden")
         erstellt_von_client_id = kwargs.get('erstellt_von_client_id', 0)
-        name = kwargs.get('name', f"Schwimmer {nummer}")
+        vorname = kwargs.get('vorname', f"Schwimmer {nummer}")
+        nachname = kwargs.get('nachname',"-")
+        istKind = kwargs.get('istKind',0)
+        gruppe = kwargs.get('gruppe','')
         bahnanzahl = kwargs.get('bahnanzahl',0)
         strecke = kwargs.get('strecke',0)
         auf_bahn = kwargs.get('auf_bahn', 0)
         aktiv = kwargs.get('aktiv',1) 
 
-        return erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
+        return erstelle_schwimmer(nummer, erstellt_von_client_id, vorname, nachname, istKind, gruppe, bahnanzahl, strecke, auf_bahn, aktiv)
     return cursor
     
 
@@ -344,15 +350,15 @@ def update_schwimmer(schwimmer_id, **kwargs):
     return cursor
 
 # Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück
-def erstelle_schwimmer(nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv):
+def erstelle_schwimmer(nummer, erstellt_von_client_id, vorname, nachname, istKind, gruppe, bahnanzahl, strecke, auf_bahn, aktiv):
     """
     Legt einen neuen Schwimmer in der Datenbank an und gibt die neue ID zurück.
     """
     query = """
-        INSERT INTO schwimmer (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO schwimmer (nummer, erstellt_von_client_id, vorname, nachname, istKind, gruppe, bahnanzahl, strecke, auf_bahn, aktiv)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
-    params = (nummer, erstellt_von_client_id, name, bahnanzahl, strecke, auf_bahn, aktiv)
+    params = (nummer, erstellt_von_client_id, vorname, nachname, istKind, gruppe, bahnanzahl, strecke, auf_bahn, aktiv)
     return db.execute(query, params)
 
 def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
@@ -370,7 +376,10 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
         if (not erstelle_schwimmer(
             nummer=nummer,
             erstellt_von_client_id=client_id,
-            name=f"Schwimmer {nummer}",
+            vorname=f"Schwimmer {nummer}",
+            nachname="-",
+            istKind = 0,
+            gruppe = '',
             bahnanzahl=max(anzahl, 0),
             strecke=0,
             auf_bahn=bahnnr,
@@ -642,8 +651,10 @@ if __name__ == "__main__":
 
     # Beispiel: Schwimmer hinzufügen und abfragen
     print("\nHinzufügen eines neuen Schwimmers...")
-    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max Mustermann", 3, 400, 1, True)
+    erstelle_schwimmer(random.randint(50,800), random.randint(0,4), "Max", "Mustermann", 0, "DLRG", 3, 400, 1, True)
     aendere_bahnanzahl_um(123,1,7)
+    update_schwimmer(123, vorname="Maxi")
+    insertOrUpdateSchwimmer(random.randint(50,800), vorname="Hans", gruppe="THW")
     schwimmer = liste_tabelle('schwimmer')
     print(f"Schwimmer in der Datenbank: {schwimmer}")
     
