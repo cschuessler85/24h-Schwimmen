@@ -291,7 +291,8 @@ def action():
 
         results = []
         updates = []
-        actionliste = []
+
+        db.db.setBegin(True)
 
         for action in actions:
             kommando = action.get("kommando")
@@ -302,8 +303,7 @@ def action():
             if kommando == "ADD":
                 # ADD - Action muss dokumentiert werden
                 logging.info("Aktion eintragen....")
-                #db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
-                actionliste.append((user, clientid, str(timestamp), str(kommando), json.dumps(parameter)))
+                db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
                 logging.info("Aktion ist eingetragen")
                 try:
                     nummer = int(parameter[0])
@@ -362,8 +362,7 @@ def action():
                 logging.debug(f"Unbekanntes Kommando: {kommando}")
                 print(f"Unbekanntes Kommando: {kommando}")
 
-        if (len(actionliste)> 0):
-            db.erstelle_actions(actionliste)
+        db.db.setBegin(False)
         return jsonify({"results": results, "updates": updates}), 200
 
     except Exception as e:

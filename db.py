@@ -21,10 +21,19 @@ class Database:
         Initialisiert die Datenbankverbindung. 
         Wird einmalig beim Start der Anwendung aufgerufen.
         """
+        self.begin = False
         self.db_name = db_name
         self.conn = None
         self.cursor = None
         self.connect()  # Verbindung herstellen
+
+    def setBegin(self, value = True):
+        if (self.begin != value):
+            self.begin = value
+            if (value):
+                self.conn.execute("BEGIN")
+            else:
+                self.conn.commit()
 
     def connect(self):
         """
@@ -35,6 +44,7 @@ class Database:
             self.conn = sqlite3.connect(self.db_name, check_same_thread=False)
             self.conn.row_factory = sqlite3.Row  # Für dict-ähnliche Zeilen
             self.cursor = self.conn.cursor()
+            self.begin = False
             logging.info("Database.connect - Datenbankverbindung hergestellt.")
         except sqlite3.DatabaseError as e:
             logging.error(f"Database.connect - Fehler beim Verbinden zur Datenbank: {e}")
@@ -58,7 +68,7 @@ class Database:
             if params is None:
                 params = []
             self.cursor.execute(query, params)
-            self.conn.commit()
+            if (not self.begin): self.conn.commit()
             return self.cursor
         except sqlite3.OperationalError as e:
             logging.error(f"OperationalError: {e}")
@@ -564,7 +574,7 @@ def erstelle_actions(actionliste):
         VALUES (?, ?, ?, ?, ?)
     '''
     db.cursor.executemany(query, actionliste)
-    db.conn.commit()
+    if (not db.begin): db.conn.commit()
     return db.cursor
 
 
