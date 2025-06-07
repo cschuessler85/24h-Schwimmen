@@ -8,6 +8,7 @@
         font-family: sans-serif;
         display: flex;
         height: 100vh;
+        background-color: #f8f8fd;
         margin: 0;
       }
       #root {
@@ -36,8 +37,36 @@
       td,
       th {
         padding: 4px;
-        border-bottom: 1px solid #ddd;
+        border-bottom: 1px solid #dddddd;
+        border: 1px solid #e6eaff;
       }
+      tbody tr:nth-child(odd) {
+        background-color: #c7cafa;
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: #dde4ff;
+      }
+      select {
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        background-color: white;
+        font-size: 1rem;
+        appearance: none;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+
+      select:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+      }
+
     </style>
   </head>
   <body>
@@ -60,6 +89,8 @@
       function App() {
         const [swimmerMap, setSwimmerMap] = useState({});
         // Referenz zum Zwischenspeichern des jeweils aktuellen swimmerMap-States
+        const [filterAuswahl, setFilterAuswahl] = useState("");
+        const [shiftLockAktiv, setShiftLockAktiv] = useState(false);
         const swimmerMapRef = useRef(swimmerMap);
         const [lapLog, setLapLog] = useState([]);
         const [filter, setFilter] = useState({ gruppe: null, nurKinder: false, sortierung: "bahnanzahl" });
@@ -120,6 +151,17 @@
         }, [swimmerMap]);
 
         useEffect(() => {
+          function handleKeyDown(e) {
+            if (e.shiftKey && e.key === "L") {
+              setShiftLockAktiv((prev) => !prev);
+            }
+          }
+          window.addEventListener("keydown", handleKeyDown);
+          return () => window.removeEventListener("keydown", handleKeyDown);
+        }, []);
+
+
+        useEffect(() => {
           const vornamen = ["Luca", "Emma", "Ben", "Mia", "Noah", "Lea", "Elias", "Lina"];
           const nachnamen = ["Schmidt", "Müller", "Weber", "Schneider", "Fischer", "Meyer", "Wagner"];
           const gruppen = ["A", "B", "C", "D"];
@@ -159,6 +201,8 @@
 
         // Der Timer wird in Use-Effect gepackt, damit er erst nach dem ersten Rendern ausgeführt wird
         useEffect(() => {
+          if (!shiftLockAktiv) return; // Nur aktivieren wenn Shift Lock aktiv
+
           const scrollInt = setInterval(() => {
             const container = leftRef.current;
             if (!container) return;
@@ -168,18 +212,32 @@
             }
             container.scrollTop = scrollPosition.current;
           }, 100);
-          return () => clearInterval(scrollInt);
-        }, []);
+
+          return () => clearInterval(scrollInt); // Aufräumen
+        }, [shiftLockAktiv]); // Neu starten bei Änderung von shiftLockAktiv
+
 
         let gefiltert = Object.values(swimmerMap);
-        if (filter.gruppe) gefiltert = gefiltert.filter((s) => s.gruppe === filter.gruppe);
-        if (filter.nurKinder) gefiltert = gefiltert.filter((s) => s.istKind);
+        if (filterAuswahl === "nurKinder") {
+          gefiltert = gefiltert.filter((s) => s.istKind);
+        } else if (filterAuswahl.startsWith("gruppe-")) {
+          const gruppe = filterAuswahl.split("-")[1];
+          gefiltert = gefiltert.filter((s) => s.gruppe === gruppe);
+        }
         gefiltert.sort((a, b) => b.bahnanzahl - a.bahnanzahl);
 
         return (
           <div id="root">
             <div className="left" ref={leftRef}>
               <h2>Ranking</h2>
+              <select value={filterAuswahl} onChange={(e) => setFilterAuswahl(e.target.value)}>
+                <option value="">Alle anzeigen</option>
+                <option value="nurKinder">Nur Kinder</option>
+                <option value="gruppe-A">Gruppe A</option>
+                <option value="gruppe-B">Gruppe B</option>
+                <option value="gruppe-C">Gruppe C</option>
+                <option value="gruppe-D">Gruppe D</option>
+              </select>
               <table>
                 <thead>
                   <tr>
