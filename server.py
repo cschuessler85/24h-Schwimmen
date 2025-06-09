@@ -302,21 +302,24 @@ def action():
             
             if kommando == "ADD":
                 # ADD - Action muss dokumentiert werden
-                logging.info("Aktion eintragen....")
-                db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
-                logging.info("Aktion ist eingetragen")
-                try:
-                    nummer = int(parameter[0])
-                    anzahl = int(parameter[1])
-                    bahnnr = int(parameter[2]) if len(parameter) > 2 else 0
-                    logging.info(f"ADD wird ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
-                    db.aendere_bahnanzahl_um(nummer,anzahl,clientid,bahnnr=bahnnr)
-                    logging.info("ADD ist ausgeführt")
-                    results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
-                    #updates.append(db.lies_schwimmer(nummer))
-                except (ValueError, IndexError) as e:
-                    logging.info(f"Fehler bei ADD-Parametern: {e}")
-                    results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
+                # Prrüfung, ob diese schon vorhanden war!!!
+                anz = db.erstelle_action(user, client_id=clientid, zeitstempel=str(timestamp), kommando=str(kommando), parameter=json.dumps(parameter))
+                logging.info(f"Aktion ist eingetragen: {"NEW" if anz>0 else "EXISTED"}")
+                if (anz>0):
+                    try:
+                        nummer = int(parameter[0])
+                        anzahl = int(parameter[1])
+                        bahnnr = int(parameter[2]) if len(parameter) > 2 else 0
+                        logging.info(f"ADD wird ausgeführt: Schwimmer {nummer}, Anzahl {anzahl}, BahnNr {bahnnr}")
+                        db.aendere_bahnanzahl_um(nummer,anzahl,clientid,bahnnr=bahnnr)
+                        logging.info("ADD ist ausgeführt")
+                        results.append({"kommando": kommando, "status": "erfolgreich", "nummer": nummer, "anzahl": anzahl})
+                        #updates.append(db.lies_schwimmer(nummer))
+                    except (ValueError, IndexError) as e:
+                        logging.info(f"Fehler bei ADD-Parametern: {e}")
+                        results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
+                else:
+                    results.append({"kommando": kommando, "status": "existierte bereits"})
             elif kommando == "GETB":
                 try:
                     logging.info(f"Schwimmer der Bahnen {parameter} werden von Nutzer:{user} und Client-ID: {clientid} abgerufen")

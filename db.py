@@ -554,15 +554,26 @@ def finde_benutzer_by_username(benutzername):
 
 def erstelle_action(benutzer_id, client_id, zeitstempel, kommando, parameter):
     """
-    Fügt eine neue Action zur Datenbank hinzu.
-    Gibt die ID der neuen Action zurück.
+    Fügt eine NEUE Action zur Datenbank hinzu.
+    Gibt die Anzahl der eingetragenen Zeilen zurück (also 0 oder 1) .
     """
+    #Prüfen ob der Eintrag schon existiert
+    query = '''
+    SELECT 1 FROM actions
+    WHERE client_id = ? AND zeitstempel = ? AND kommando = ? AND parameter = ?
+    LIMIT 1
+    '''
+    params = (client_id, zeitstempel, kommando, parameter)
+    cursor = db.execute(query, params)
+    exists = cursor.fetchone() is not None
+    if (exists): return 0 #Kein neuer Eintrag
     query = '''
         INSERT INTO actions (benutzer_id, client_id, zeitstempel, kommando, parameter)
         VALUES (?, ?, ?, ?, ?)
     '''
     params = (benutzer_id, client_id, zeitstempel, kommando, parameter)
-    return db.execute(query, params)
+    cursor = db.execute(query, params) 
+    return (cursor.rowcount if cursor else 0)
 
 def erstelle_actions(actionliste):
     """
