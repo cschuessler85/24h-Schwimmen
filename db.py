@@ -41,11 +41,11 @@ class Database:
         """
         try:
             #TODO: Darüber nachdenken, wie man same thread-Problematik dauerhaft löst
-            self.conn = sqlite3.connect(self.db_name, check_same_thread=False)
+            self.conn = sqlite3.connect(self.db_name, check_same_thread=True)
             self.conn.row_factory = sqlite3.Row  # Für dict-ähnliche Zeilen
             self.cursor = self.conn.cursor()
             self.begin = False
-            logging.info("Database.connect - Datenbankverbindung hergestellt.")
+            logging.debug("Database.connect - Datenbankverbindung hergestellt.")
         except sqlite3.DatabaseError as e:
             logging.error(f"Database.connect - Fehler beim Verbinden zur Datenbank: {e}")
             self.conn = None
@@ -143,13 +143,8 @@ class Database:
         """
         if self.conn:
             self.conn.close()
-            logging.info("Datenbankverbindung geschlossen.")
+            logging.debug("Datenbankverbindung geschlossen.")
 
-# Globale Instanz der Database-Klasse
-db = Database()
-
-# Automatisch beim Programmende die Verbindung schließen
-atexit.register(db.close)
 
 # ===================================================
 # DATENBANK-INITIALISIERUNG UND ALLGEMEINE METHODEN
@@ -222,8 +217,6 @@ def init_db():
         )
     '''
     db.execute(query_actions)
-
-init_db()
 
 def dict_from_table_row(row, table_name):
     """
@@ -666,6 +659,14 @@ def checkBahnenAnzahlen():
 
 
 if __name__ == "__main__":
+    # Globale Instanz der Database-Klasse
+    db = Database()
+
+    # Automatisch beim Programmende die Verbindung schließen
+    atexit.register(db.close)
+    
+    init_db()
+
     #print(checkBahnenAnzahlen())
 
     # Setze den DB-Namen auf eine Testdatenbank

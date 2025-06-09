@@ -711,7 +711,7 @@ async function fetchSchwimmer(id = -1) {
             const resp = await response.json();
             console.log(resp);
             if (resp["updates"]) parseUpdates(resp);
-            console.log(alleSchwimmer);
+            //console.log(alleSchwimmer);
             updateServerStatus(true);
         } else {
             updateServerStatus(false);

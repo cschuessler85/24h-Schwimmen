@@ -4,7 +4,7 @@ import json
 import db
 from datetime import datetime
 import logging
-from flask import Flask, Response, request, jsonify, send_from_directory, redirect, url_for, session, render_template_string, render_template
+from flask import g, Flask, Response, request, jsonify, send_from_directory, redirect, url_for, session, render_template_string, render_template
 from logging_config import configure_logging
 from utils import generiere_passwort, get_all_ips
 from werkzeug.security import check_password_hash
@@ -46,19 +46,33 @@ if not app.secret_key:
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['DEBUG'] = True
 
-# Benutzer admin prüfen
-if not db.finde_benutzer_by_username("admin"):
-    passwort = config["default_admin_pass"]
-    if not passwort:
-        passwort = generiere_passwort();
+def get_db():
+    if 'db' not in g:
+        g.db = db.Database()
+    return g.db
 
-    print(f"Benutzer 'admin' wird angelegt mit passwort: {passwort}")
-    db.erstelle_benutzer("Administrator", "admin", passwort, admin=True)
+# Benutzer admin prüfen
+with app.app_context():
+    db.db = get_db()
+    if not db.finde_benutzer_by_username("admin"):
+        passwort = config["default_admin_pass"]
+        if not passwort:
+            passwort = generiere_passwort()
+
+        print(f"Benutzer 'admin' wird angelegt mit passwort: {passwort}")
+        db.erstelle_benutzer("Administrator", "admin", passwort, admin=True)
 
 
 
 # Dateien sicherstellen
 os.makedirs("data", exist_ok=True)
+
+#Datenbankverbindung nach request schliessen
+@app.teardown_appcontext
+def close_db(exception):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
 # Immer prüfen, ob der Benutzer angemeldet ist
 # bzw. zur Login-Seite durchlassen
@@ -70,6 +84,7 @@ def before_request():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    db.db = get_db()
     if request.method == 'POST':
         benutzername = request.form.get('benutzername', '').lower()
         passwort = request.form['passwort']
@@ -104,6 +119,7 @@ def logout():
 
 @app.route('/backupsql', methods=['GET', 'POST'])
 def backupsql():
+    db.db = get_db()
     if session.get('user_role') != 'admin':
         return "Zugriff verweigert", 403
     return Response(db.dump(), mimetype="text/plain", headers={"Content-Disposition": "attachment;filename=backup.sql"
@@ -115,6 +131,7 @@ def admin():
     if session.get('user_role') != 'admin':
         return "Zugriff verweigert", 403
 
+    db.db = get_db()
     if request.method == 'POST':
         if request.is_json:
             data = request.get_json()
@@ -284,6 +301,7 @@ def show_qr():
 @app.route("/action", methods=["POST"])
 def action():
     try:
+        db.db = get_db()
         clientid = session.get("clientID",-1)
         user = session.get("user","unknown")
         actions = request.get_json()
