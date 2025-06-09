@@ -72,6 +72,62 @@ export function initCSVImport(fileInputSelector, previewContainerSelector, sendB
     });
 }
 
+/**
+ * Initialisiert den JSON-Import 
+ * 
+ * @param {String} fileInputSelector  
+ * @param {String} previewContainerSelector
+ * @param {String} sendButtonSelector
+ * @param {String} options // Dictionary z.B. {url: '/admin', knownHeaders: ['','Nummer']}
+ * @returns {void}
+ */
+export function initJSONImport(fileInputSelector, previewContainerSelector, sendButtonSelector, options = {}) {
+    const fileInput = document.querySelector(fileInputSelector);
+    const previewContainer = document.querySelector(previewContainerSelector);
+    const sendButton = document.querySelector(sendButtonSelector);
+
+    let parsedJSON = {};
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            parsedJSON = JSON.parse(text);
+
+            // Optionales Preview: Anzahl anzeigen
+            previewContainer.innerHTML = `
+                <div>Schwimmer: ${parsedJSON.schwimmer?.length || 0}</div>
+                <div>Alle Schwimmer: ${Object.keys(parsedJSON.alleSchwimmer || {}).length}</div>
+                <div>Actions: ${parsedJSON.actions?.length || 0}</div>
+            `;
+        } catch (err) {
+            previewContainer.innerHTML = '<div>Fehler beim Einlesen der JSON-Datei.</div>';
+            parsedJSON = {};
+        }
+    });
+
+    sendButton.addEventListener('click', async () => {
+        if (Object.keys(parsedJSON).length === 0) return;
+
+        try {
+            const url = options.url || '/admin';
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(parsedJSON.actions)
+            });
+            const result = await response.json();
+            showStatusMessage(`Import abgeschlossen: ${JSON.stringify(result)}`);
+        } catch (err) {
+            showStatusMessage('Fehler beim JSON-Import.',false);
+        }
+    });
+}
+
+
 let currentPage = 0;
 let csvHeaders = [];
 let csvData = [];

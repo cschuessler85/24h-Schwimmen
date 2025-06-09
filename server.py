@@ -319,7 +319,7 @@ def action():
                         logging.info(f"Fehler bei ADD-Parametern: {e}")
                         results.append({"kommando": kommando, "status": f"ungültige Parameter: {str(e)}"})
                 else:
-                    results.append({"kommando": kommando, "status": "existierte bereits"})
+                    results.append({"kommando": kommando, "parameter": parameter, "status": "existierte bereits"})
             elif kommando == "GETB":
                 try:
                     logging.info(f"Schwimmer der Bahnen {parameter} werden von Nutzer:{user} und Client-ID: {clientid} abgerufen")
