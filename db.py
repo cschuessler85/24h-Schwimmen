@@ -560,10 +560,10 @@ def erstelle_action(benutzer_id, client_id, zeitstempel, kommando, parameter):
     #Prüfen ob der Eintrag schon existiert
     query = '''
     SELECT 1 FROM actions
-    WHERE client_id = ? AND zeitstempel = ? AND kommando = ? AND parameter = ?
+    WHERE zeitstempel = ? AND kommando = ? AND parameter = ?
     LIMIT 1
     '''
-    params = (client_id, zeitstempel, kommando, parameter)
+    params = (zeitstempel, kommando, parameter)
     cursor = db.execute(query, params)
     exists = cursor.fetchone() is not None
     if (exists): return 0 #Kein neuer Eintrag
