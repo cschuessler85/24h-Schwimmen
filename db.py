@@ -631,7 +631,7 @@ def checkBahnenAnzahlen():
     """
     query = """select 
     a.schwimmerID,
-    s.name,
+    s.vorname,
     s.bahnanzahl as Anz,
     a.anzahl as ActionAnz,
     a.kommando

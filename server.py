@@ -359,6 +359,7 @@ def action():
             elif kommando == "VIEW": # Update des Viewbildschirms angefordert
                 if (len(parameter)>0): #nur begrenzter Zeitraum
                     sinceTimestamp = parameter[0]
+                    data = {}
                     data['actions'] = db.finde_actions_after_timestamp(sinceTimestamp)
                     return jsonify(data), 200
                 else: #Volständige übermittlung
