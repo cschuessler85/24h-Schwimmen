@@ -267,7 +267,8 @@ def index():
         'user_role': session.get('user_role',""),
         'userrealname': session.get('realname',"Unbekannt"),
         'username': session.get('user',"unknown"),
-        'clientID': session.get('clientID',"--")
+        'clientID': session.get('clientID',"--"),
+        'debugfunktion': request.args.get('dbgfkt') == 'true'
     }
     return render_template("index.html", **params)
 

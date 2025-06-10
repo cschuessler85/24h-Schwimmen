@@ -16,7 +16,8 @@
     <!-- Info-Zeile (togglebar) -->
     <div id="infoBar" style="display: flex">
       <span id="serverStatus" style="display: inline-block; text-align: left">
-        <span style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px">
+        <span
+          style="height: 10px; width: 10px; background-color: green; border-radius: 50%; display: inline-block; margin-right: 5px">
         </span>
         Verbunden
       </span>
@@ -34,10 +35,10 @@
       <!-- Zentrierter Titel -->
       <div
         style="display: flex;flex-direction: column;position: absolute; left: 50%; transform: translateX(-50%); font-size: 24px; color: white; text-align: center;">
-        <h1>24h&nbsp;Schwimmen</h1>
+        <h1 id="mainHeading">24h&nbsp;Schwimmen</h1>
         <div class="form-group">
           <label for="bahnen" style="font-size: 0.7em;">Bahn(en):</label>
-          <input type="text" value="1"  id="bahnen" style="width: 10ch;" /><br />
+          <input type="text" value="1" id="bahnen" style="width: 10ch;" /><br />
         </div>
       </div>
 
@@ -84,11 +85,50 @@
     <!-- Logout -->
     <form action="/logout" method="post" style="margin-left: auto">
       <button type="submit" title="Logout"
-        style="font-size: 30px; color: inherit; background: none; border: none; cursor: pointer"><i class="fa-solid fa-right-from-bracket"></i>
+        style="font-size: 30px; color: inherit; background: none; border: none; cursor: pointer"><i
+          class="fa-solid fa-right-from-bracket"></i>
       </button>
     </form>
   </footer>
   <script type="module" src="./main.js"></script>
+
+  {% if debugfunktion %}
+  <script>
+    let debugTimer = null;
+
+    function simulateRandomClick() {
+      const container = document.getElementById('container');
+      const children = container.querySelectorAll('div');
+      if (children.length === 0) return;
+      if (Math.random() < 0.33) {
+        const randomChild = children[Math.floor(Math.random() * children.length)];
+        randomChild.click();
+      }
+    }
+
+    function toggleDebugTimer() {
+      if (debugTimer) {
+        clearInterval(debugTimer);
+        debugTimer = null;
+        document.getElementById("mainHeading").style.color = "";
+        console.log('Debug timer stopped');
+      } else {
+        debugTimer = setInterval(simulateRandomClick, 1000); 
+        document.getElementById("mainHeading").style.color = "green";
+        console.log('Debug timer started');
+      }
+    }
+
+    document.getElementById("mainHeading").addEventListener("click", () => toggleDebugTimer());
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
+        toggleDebugTimer();
+      }
+    });
+  </script>
+  {% endif %}
 </body>
 
 </html>
