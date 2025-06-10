@@ -108,7 +108,7 @@
     }
 
     function App() {
-      let curSwimmerMap;
+      let curSwimmerMap = {};
       let curActions = [];
       const [swimmerMap, setSwimmerMap] = useState({});
       // Referenz zum Zwischenspeichern des jeweils aktuellen swimmerMap-States
@@ -120,13 +120,44 @@
       const leftRef = useRef();
       const scrollPosition = useRef(0);
 
+      function downloadCSV(headers = ["nummer","vorname","nachname","bahnanzahl"]) {
+        const maxID = Math.max(...Object.keys(curSwimmerMap).map(s => parseInt(s)));
+        console.log("Maximum:", maxID);
+        
+        let csvRows = [
+          "id,"+headers.join(',') // Kopfzeile
+        ];
+
+        for (let i = 0; i<maxID; i++) {
+          if (curSwimmerMap[i+1]) {
+          csvRows.push(`${i+1},`+
+            headers.map(header => `"${(curSwimmerMap[i+1][header] ?? '').toString().replace(/"/g, '""')}"`).join(',')
+          )
+          } else {
+           csvRows.push(`${i+1},`+
+            headers.map(header => `"0"`).join(',')
+          ) 
+          }
+        }
+
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "schwimmerdaten.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
       function updateBahnen(schwimmerID, anzahl = 1, zeit = new Date().toISOString()) {
-        const key = gibSchwimmerKey(schwimmerID, curSwimmerMap);
-        if (key) {
-          const s = {...curSwimmerMap[key]}
+        if (curSwimmerMap[schwimmerID]) {
+          const s = { ...curSwimmerMap[schwimmerID] }
           s.bahnanzahl += anzahl;
-          curSwimmerMap[key]=s;
-          setSwimmerMap({... curSwimmerMap});
+          curSwimmerMap[schwimmerID] = s;
+          setSwimmerMap({ ...curSwimmerMap });
           const newlapcount = s.bahnanzahl
           const lzeit = new Date((new Date(zeit)).getTime() + offsetInMillis);
           setLapLog((prev) => [{
@@ -139,16 +170,6 @@
         //setLapLog((prev) => [{ schwimmer: schwimmerID, zeit: zeit, laps: swimmerMapRef.current[schwimmerID].bahnanzahl }, ...prev.slice(0, 19)]);
       }
 
-      function gibSchwimmerKey(nummer, map = null) {
-        console.log("gibSchwimmerID", nummer);
-        const aktuelleMap = (map != null ? map : swimmerMapRef.current); // aktueller Stand trotz möglicher Closure
-        const key = Object.keys(aktuelleMap).find(
-          k => aktuelleMap[k].nummer === parseInt(nummer)
-        );
-        console.log("gibSchwimmer - key gefunden", key);
-        return key;
-      }
-
       function holeNeueDaten(since) {
         fetch('/action', {
           method: 'POST',
@@ -159,11 +180,14 @@
           .then((res) => res.json())
           .then((data) => {
             if (data.swimmerMap) {
-              curSwimmerMap = data.swimmerMap;
+              data.swimmerMap.forEach(s => {
+                //console.log("S",s);
+                s.bahnanzahl = 0;
+                curSwimmerMap[s.nummer] = s;
+              })
+              //console.log(`curSwimmerMap ist ein Array ${Array.isArray(curSwimmerMap)}`);
               //console.log("curSwimmerMap", JSON.stringify(curSwimmerMap));
-              for (const key in curSwimmerMap) { //Alle Anzahlen auf 0 sezten - werden aus Actions berechnet
-                curSwimmerMap[key].bahnanzahl = 0;
-              }
+
               setSwimmerMap({ ...curSwimmerMap })
             }
             if (data.lapLog) setLapLog(data.lapLog);
@@ -177,15 +201,14 @@
                 curActions.push(element);
                 // und Bahnazahl aktualisieren
                 const parameter = JSON.parse(element.parameter);
-                const schwimmerKey = gibSchwimmerKey(parameter[0], curSwimmerMap);
-                if (schwimmerKey) {
+                if (curSwimmerMap[parameter[0]]) {
                   if (lastupdate < element.zeitstempel) lastupdate = element.zeitstempel
-                  console.log(`Update ${parameter[0]} - ${parameter[1]}, ${element.zeitstempel}`);
+                  //console.log(`Update ${parameter[0]} - ${parameter[1]}, ${element.zeitstempel}`);
                   updateBahnen(parseInt(parameter[0]), parseInt(parameter[1]), element.zeitstempel);
                 } else {
                   console.log(`Schwimmer ${parameter[0]} gibt es noch nicht`);
                 }
-                
+
               });
             }
             if (data.filter) setFilter(data.filter);
@@ -202,6 +225,9 @@
         function handleKeyDown(e) {
           if (e.shiftKey && e.key === "L") {
             setShiftLockAktiv((prev) => !prev);
+          } else if (e.shiftKey && e.key === "D") {
+            console.log("Download gedrückt");
+            downloadCSV();
           }
         }
         window.addEventListener("keydown", handleKeyDown);
@@ -315,11 +341,11 @@
           <div className="right">
             <h2>Letzte Bahnen</h2>
             {lapLog.map((l, i) => {
-                return (
-                  <div key={i}>
-                    {l.zeit.split("T")[1].split(".")[0]} – {l.vorname} ({l.schwimmer}) hat angeschlagen: {l.laps} Bahnen
-                  </div>
-                );
+              return (
+                <div key={i}>
+                  {l.zeit.split("T")[1].split(".")[0]} – {l.vorname} ({l.schwimmer}) hat angeschlagen: {l.laps} Bahnen
+                </div>
+              );
             })}
           </div>
         </div>
