@@ -34,10 +34,28 @@ function App() {
     const [filter, setFilter] = useState({ gruppe: null, nurKinder: false, sortierung: "bahnanzahl" });
     const leftRef = useRef();
     const scrollPosition = useRef(0);
+    let spezialzeiten = [];
+
+    function initSpezialzeiten(date=new Date()) {
+        const tomorrow = (new Date(date))
+        tomorrow.setHours(date.getHours()+24);
+        spezialzeiten = [
+            {name: "Tag1", start: (new Date(date)).setHours(0,0,0), end: (new Date(date).setHours(23,59,59))},
+            {name: "Geisterstunde", start: (new Date(tomorrow)).setHours(0,0,0), end: (new Date(tomorrow).setHours(0,59,59))},
+            {name: "Gute Nacht", start: (new Date(tomorrow)).setHours(1,0,0), end: (new Date(tomorrow).setHours(4,59,59))},
+            {name: "Frühaufsteher", start: (new Date(tomorrow)).setHours(5,0,0), end: (new Date(tomorrow).setHours(5,59,59))},
+            {name: "Tag2", start: (new Date(tomorrow)).setHours(6,0,0), end: (new Date(tomorrow).setHours(23,59,59))}
+        ];
+        console.log("Spezialzeiten", spezialzeiten);
+    }
 
     function downloadCSV(headers = ["nummer", "vorname", "nachname", "bahnanzahl"]) {
         const maxID = Math.max(...Object.keys(curSwimmerMap).map(s => parseInt(s)));
         console.log("Maximum:", maxID);
+        headersspezial = spezialzeiten.map((szeit) => szeit.name);
+        console.log(`headersspezial: ${headersspezial}`);
+        headers = headers.concat(headersspezial);
+        console.log("curSwimmerMap", curSwimmerMap);
 
         let csvRows = [
             "id," + headers.join(',') // Kopfzeile
@@ -71,6 +89,13 @@ function App() {
         if (curSwimmerMap[schwimmerID]) {
             const s = { ...curSwimmerMap[schwimmerID] }
             s.bahnanzahl += anzahl;
+            zeitD = new Date(zeit);
+            spezialzeiten.forEach((t) => {
+                if (zeitD>t.start && zeitD < t.end) {
+                    console.log(`${t.name} bei Schwimmer ${schwimmerID} - Zeit: ${zeit}`);
+                    s[t.name] = (s[t.name] ? s[t.name]+anzahl : 1); // Mit 1 initialisieren - erste Bahn dieses Typs
+                }
+            })
             curSwimmerMap[schwimmerID] = s;
             setSwimmerMap({ ...curSwimmerMap });
             const newlapcount = s.bahnanzahl
@@ -95,6 +120,7 @@ function App() {
                 if (data.swimmerMap) {
                     data.swimmerMap.forEach(s => {
                         s.bahnanzahl = 0;
+                        spezialzeiten.forEach(szeit => s[szeit.name]=0);
                         curSwimmerMap[s.nummer] = s;
                     })
                     //console.log(`curSwimmerMap ist ein Array ${Array.isArray(curSwimmerMap)}`);
@@ -147,38 +173,8 @@ function App() {
 
     useEffect(() => {
         holeNeueDaten();
+        initSpezialzeiten(new Date("2025-06-09T00:00:00Z"));
     }, []); // [] - sorgt dafür, dass dieser Effect (diese Funktion) nur ein einziges Mal ausgeführt wird
-
-
-    /*useEffect(() => {
-      const vornamen = ["Luca", "Emma", "Ben", "Mia", "Noah", "Lea", "Elias", "Lina"];
-      const nachnamen = ["Schmidt", "Müller", "Weber", "Schneider", "Fischer", "Meyer", "Wagner"];
-      const gruppen = ["A", "B", "C", "D"];
-
-      const initialSwimmers = {};
-      for (let i = 1; i <= 10; i++) {
-        initialSwimmers[i] = {
-          nummer: i,
-          vorname: vornamen[Math.floor(Math.random() * vornamen.length)],
-          nachname: nachnamen[Math.floor(Math.random() * nachnamen.length)],
-          gruppe: gruppen[Math.floor(Math.random() * gruppen.length)],
-          istKind: Math.random() < 0.3 ? 1 : 0,
-          bahnanzahl: Math.floor(Math.random() * 100),
-        };
-      }
-      setSwimmerMap(initialSwimmers);
-    }, []); // [] - sorgt dafür, dass dieser Effect (diese Funktion) nur ein einziges Mal ausgeführt wird
-
-    useEffect(() => {
-      const interval = setInterval(() => {
-        console.log("3 Sekunden Timer");
-        const ids = Object.keys(swimmerMap);
-        if (ids.length === 0) return;
-        const id = ids[Math.floor(Math.random() * ids.length)];
-        updateBahnen(id);
-      }, 3000);
-      return () => clearInterval(interval); //cleanup-Funktion, die vor erneuter Ausführung aufgerufen wird
-    }, [swimmerMap]); */ // [swimmerMap] sorgt dafür, dass dies nur nach Änderungen der swimmer-Map ausgeführt wird
 
     // Der Timer für das holen neuer Daten
     useEffect(() => {
