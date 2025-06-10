@@ -80,11 +80,11 @@
 
 <body>
   <div id="root"></div>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script type="text/babel">
-    // Hooks werden aus dem React bjekt geholt
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <script>
+    // Hooks werden aus dem React Objekt geholt
     // useState: Speichert und verwaltet veränderliche Daten, die beim Rendern die UI beeinflussen
     //           (z.B. Schwimmerdaten, Filterzustand).
     // useEffect: Führt Nebenwirkungen aus, z.B. Daten laden, Timer starten, oder Scroll-Intervalle
@@ -93,8 +93,9 @@
     //         erneutes Rendern auszulösen (z.B. Scroll-Position oder Zugriff auf das linke Container-Element).
 
     const { useState, useEffect, useRef } = React;
+
     let lastupdate = new Date("2000-01-01T00:00:00Z").toISOString();
-    const offsetInMinutes = new Date().getTimezoneOffset(); // z.B. -120 für MESZ (UTC+2)
+    const offsetInMinutes = new Date().getTimezoneOffset();
     const offsetInMillis = -offsetInMinutes * 60 * 1000;
 
     function gibNeueEintraege(neueListe, vorhandeneListe) {
@@ -120,23 +121,23 @@
       const leftRef = useRef();
       const scrollPosition = useRef(0);
 
-      function downloadCSV(headers = ["nummer","vorname","nachname","bahnanzahl"]) {
+      function downloadCSV(headers = ["nummer", "vorname", "nachname", "bahnanzahl"]) {
         const maxID = Math.max(...Object.keys(curSwimmerMap).map(s => parseInt(s)));
         console.log("Maximum:", maxID);
-        
+
         let csvRows = [
-          "id,"+headers.join(',') // Kopfzeile
+          "id," + headers.join(',') // Kopfzeile
         ];
 
-        for (let i = 0; i<maxID; i++) {
-          if (curSwimmerMap[i+1]) {
-          csvRows.push(`${i+1},`+
-            headers.map(header => `"${(curSwimmerMap[i+1][header] ?? '').toString().replace(/"/g, '""')}"`).join(',')
-          )
+        for (let i = 0; i < maxID; i++) {
+          if (curSwimmerMap[i + 1]) {
+            csvRows.push(`${i + 1},` +
+              headers.map(header => `"${(curSwimmerMap[i + 1][header] ?? '').toString().replace(/"/g, '""')}"`).join(',')
+            );
           } else {
-           csvRows.push(`${i+1},`+
-            headers.map(header => `"0"`).join(',')
-          ) 
+            csvRows.push(`${i + 1},` +
+              headers.map(header => `"0"`).join(',')
+            );
           }
         }
 
@@ -167,7 +168,6 @@
             vorname: s.vorname
           }, ...prev.slice(0, 19)]);
         }
-        //setLapLog((prev) => [{ schwimmer: schwimmerID, zeit: zeit, laps: swimmerMapRef.current[schwimmerID].bahnanzahl }, ...prev.slice(0, 19)]);
       }
 
       function holeNeueDaten(since) {
@@ -176,12 +176,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify([{ 'kommando': "VIEW", 'parameter': (since ? [since] : []), 'timestamp': new Date().toISOString() }])
         })
-          //fetch("/api/daten") // Pfad zum Server-Endpunkt
           .then((res) => res.json())
           .then((data) => {
             if (data.swimmerMap) {
               data.swimmerMap.forEach(s => {
-                //console.log("S",s);
                 s.bahnanzahl = 0;
                 curSwimmerMap[s.nummer] = s;
               })
@@ -194,7 +192,7 @@
             if (data.actions) {
               //console.log("data.actions", JSON.stringify(data.actions));
               let datasorted = data.actions.filter((x) => x.kommando == "ADD")
-              datasorted.sort((a, b) => a.zeitstempel.localeCompare(b.zeitstempel)); // sortiert
+              datasorted.sort((a, b) => a.zeitstempel.localeCompare(b.zeitstempel));
               const neueElemente = gibNeueEintraege(datasorted, curActions);
               neueElemente.forEach(element => {
                 // Wenn noch nicht in curActions vorhanden, einfügen
@@ -208,7 +206,6 @@
                 } else {
                   console.log(`Schwimmer ${parameter[0]} gibt es noch nicht`);
                 }
-
               });
             }
             if (data.filter) setFilter(data.filter);
@@ -306,54 +303,48 @@
       }
       gefiltert.sort((a, b) => b.bahnanzahl - a.bahnanzahl);
 
-      return (
-        <div id="root">
-          <div className="left" ref={leftRef}>
-            <h2>Ranking</h2>
-            <select value={filterAuswahl} onChange={(e) => setFilterAuswahl(e.target.value)}>
-              <option value="">Alle anzeigen</option>
-              <option value="nurKinder">Nur Kinder</option>
-            </select>
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Gruppe</th>
-                  <th>Bahnen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {gefiltert.map((s, i) => (
-                  <tr key={s.nummer}>
-                    <td>{i + 1}</td>
-                    <td>
-                      ({s.nummer}) {s.vorname} {s.nachname}
-                    </td>
-                    <td>{s.gruppe}</td>
-                    <td>{s.bahnanzahl}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="right">
-            <h2>Letzte Bahnen</h2>
-            {lapLog.map((l, i) => {
-              return (
-                <div key={i}>
-                  {l.zeit.split("T")[1].split(".")[0]} – {l.vorname} ({l.schwimmer}) hat angeschlagen: {l.laps} Bahnen
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      return React.createElement('div', { id: 'root' },
+        React.createElement('div', { className: 'left', ref: leftRef },
+          React.createElement('h2', null, 'Ranking'),
+          React.createElement('select', { value: filterAuswahl, onChange: (e) => setFilterAuswahl(e.target.value) },
+            React.createElement('option', { value: '' }, 'Alle anzeigen'),
+            React.createElement('option', { value: 'nurKinder' }, 'Nur Kinder')
+          ),
+          React.createElement('table', null,
+            React.createElement('thead', null,
+              React.createElement('tr', null,
+                React.createElement('th', null, '#'),
+                React.createElement('th', null, 'Name'),
+                React.createElement('th', null, 'Gruppe'),
+                React.createElement('th', null, 'Bahnen')
+              )
+            ),
+            React.createElement('tbody', null,
+              gefiltert.map((s, i) =>
+                React.createElement('tr', { key: s.nummer },
+                  React.createElement('td', null, i + 1),
+                  React.createElement('td', null, `(${s.nummer}) ${s.vorname} ${s.nachname}`),
+                  React.createElement('td', null, s.gruppe),
+                  React.createElement('td', null, s.bahnanzahl)
+                )
+              )
+            )
+          )
+        ),
+        React.createElement('div', { className: 'right' },
+          React.createElement('h2', null, 'Letzte Bahnen'),
+          lapLog.map((l, i) =>
+            React.createElement('div', { key: i },
+              `${l.zeit.split("T")[1].split(".")[0]} – ${l.vorname} (${l.schwimmer}) hat angeschlagen: ${l.laps} Bahnen`
+            )
+          )
+        )
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
   </script>
+
 </body>
 
 </html>
