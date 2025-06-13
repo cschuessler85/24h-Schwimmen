@@ -77,7 +77,7 @@ function schwimmerHinzufuegen(nummer) {
         fetchSchwimmer(nummer);
         const bekannter = alleSchwimmer[parseInt(nummer)] ?? null;
         if (bekannter) {
-            console.debug(`Schwimmer ${nummer} Nummer war schon vorhanden`);
+            console.debug(`Schwimmer ${nummer} Nummer war schon vorhanden:`, bekannter);
             const scopy = {
                 nummer: parseInt(nummer),
                 vorname: bekannter.vorname,
@@ -316,9 +316,10 @@ container.addEventListener('click', async (event) => {
                     s_data.aufBahn = verwaltete_bahnen[0];
                 }
                 s_data.prio = 0;
+                //Evtl. genauere Daten in alleSchwimmer
+                s_data.bahnen = Math.max(s_data.bahnen, alleSchwimmer[nummer] ? alleSchwimmer[nummer].bahnanzahl : 0);
                 s_data.bahnen += 1;
-                //das Div löschen - wird beim rendern wieder hinten angehangen
-                //clicked_schwimmer.remove();
+                
                 clicked_schwimmer.style.opacity = '';
                 render();
                 actions.push({
@@ -495,7 +496,7 @@ function removeSchwimmerDiv(div, setinactive = true, dorender = true) {
         schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
         // Aktualisiere die Daten in alleSchwimmer - Bahnen reicht
         // console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
-        alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = entfernterSchwimmer.bahnen;
+        alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = Math.max(alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl, entfernterSchwimmer.bahnen);
         if (setinactive) {
             alleSchwimmer[entfernterSchwimmer.nummer].aktiv = 0;
             actions.push({
@@ -763,7 +764,7 @@ async function fetchSchwimmerVonBahnen() {
 function parseUpdates(resp) {
     if (resp["updates"] && Array.isArray(resp["updates"])) {
         resp["updates"].forEach((eintrag) => {
-            alleSchwimmer[eintrag["nummer"]] = eintrag;
+            alleSchwimmer[parseInt(eintrag["nummer"])] = {...eintrag};
             debugLog(`Schwimmer Nummer ${eintrag["nummer"]} aktualisiert`);
         });
     }
