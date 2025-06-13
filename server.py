@@ -206,6 +206,7 @@ def admin():
             if not isinstance(schwimmer_liste, list):
                 return jsonify({"error": "Datenformat ungültig"}), 400
 
+            db.db.setBegin(True)
             # Beispiel: Daten durchgehen und validieren
             validierte = []
             for s in schwimmer_liste:
@@ -240,6 +241,7 @@ def admin():
                     validierte.append(filtered_args)
 
             logging.info(f"Importiert wurden {len(validierte)} Schwimmer")
+            db.db.setBegin(False)
 
             print("Validierte", validierte)
 
