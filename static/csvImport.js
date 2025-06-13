@@ -32,7 +32,9 @@ export function initCSVImport(fileInputSelector, previewContainerSelector, sendB
         if (options.knownHeaders) {
             showHeaderMappingModal(headers, mapping => {
                 parsedData = lines.slice(1).map(line => {
-                    const values = line.split(separator).map(v => v.trim());
+                    const values = line.split(separator).map(v => 
+                        v.trim().replace(/^"(.*)"$/, '$1')
+                    );
                     const entry = {};
                     mapping.forEach((key, i) => {
                         if (key) entry[key] = values[i];
@@ -44,7 +46,9 @@ export function initCSVImport(fileInputSelector, previewContainerSelector, sendB
         } else {
 
             parsedData = lines.slice(1).map(line => {
-                const values = line.split(separator).map(v => v.trim());
+                const values = line.split(separator).map(v => 
+                    v.trim().replace(/^"(.*)"$/, '$1')
+                );
                 return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
             });
 
