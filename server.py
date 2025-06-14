@@ -56,6 +56,7 @@ with app.app_context():
     db.db = get_db()
     if not db.finde_benutzer_by_username("admin"):
         passwort = config["default_admin_pass"]
+        db.init_db()
         if not passwort:
             passwort = generiere_passwort()
 
