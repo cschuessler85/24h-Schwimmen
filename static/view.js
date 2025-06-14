@@ -23,7 +23,7 @@ function gibNeueEintraege(neueListe, vorhandeneListe) {
 }
 
 const formatNummer = (nummer) =>
-  nummer.toString().padStart(NUMMER_LAENGE, '0');
+    nummer.toString().padStart(NUMMER_LAENGE, '0');
 
 const NUMMER_LAENGE = 3;
 
@@ -45,15 +45,20 @@ function App() {
     const scrollPosition = useRef(0);
     let spezialzeiten = [];
 
-    function initSpezialzeiten(date = new Date()) {
-        const tomorrow = (new Date(date))
-        tomorrow.setHours(date.getHours() + 24);
+    function gibZeitZukunft(zeit, stunden, minuten) {
+        const basis = new Date(zeit); // Kopie der gegebenen Zeit
+        basis.setHours(basis.getHours() + stunden);
+        basis.setMinutes(basis.getMinutes() + minuten);
+        return basis;
+    }
+
+    function initSpezialzeiten(startzeit = new Date()) {
         spezialzeiten = [
-            { name: "Tag1", start: (new Date(date)).setHours(0, 0, 0), end: (new Date(date).setHours(23, 59, 59)) },
-            { name: "Geisterstunde", start: (new Date(tomorrow)).setHours(0, 0, 0), end: (new Date(tomorrow).setHours(0, 59, 59)) },
-            { name: "Gute Nacht", start: (new Date(tomorrow)).setHours(1, 0, 0), end: (new Date(tomorrow).setHours(4, 59, 59)) },
-            { name: "Frühaufsteher", start: (new Date(tomorrow)).setHours(5, 0, 0), end: (new Date(tomorrow).setHours(5, 59, 59)) },
-            { name: "Tag2", start: (new Date(tomorrow)).setHours(6, 0, 0), end: (new Date(tomorrow).setHours(23, 59, 59)) }
+            { name: "Tag1", start: startzeit, end: gibZeitZukunft(startzeit,11,59) },
+            { name: "Geisterstunde", start: gibZeitZukunft(startzeit,12,0), end: gibZeitZukunft(startzeit,12,59) },
+            { name: "Gute Nacht", start: gibZeitZukunft(startzeit,13,0), end: gibZeitZukunft(startzeit,16,59) },
+            { name: "Frühaufsteher", start: gibZeitZukunft(startzeit,17,0), end: gibZeitZukunft(startzeit,17,59) },
+            { name: "Tag2", start: gibZeitZukunft(startzeit,18,0), end: gibZeitZukunft(startzeit,25,0) }
         ];
         console.log("Spezialzeiten", spezialzeiten);
     }
@@ -191,7 +196,7 @@ function App() {
 
     useEffect(() => {
         holeNeueDaten();
-        initSpezialzeiten(new Date("2025-06-09T00:00:00Z"));
+        initSpezialzeiten(new Date("2025-06-13T10:00:00Z"));
     }, []); // [] - sorgt dafür, dass dieser Effect (diese Funktion) nur ein einziges Mal ausgeführt wird
 
     // Der Timer für das holen neuer Daten
@@ -275,7 +280,7 @@ function App() {
                                 liste.map((s, i) =>
                                     React.createElement('tr', { key: s.nummer },
                                         React.createElement('td', null, (spaltenIndex === 0 ? i : i + halb) + 1),
-                                        React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv?s.nachname:""}`),
+                                        React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv ? s.nachname : ""}`),
                                         React.createElement('td', null, s.gruppe),
                                         React.createElement('td', null, s.bahnanzahl)
                                     )
@@ -297,7 +302,7 @@ function App() {
                         gefiltert.map((s, i) =>
                             React.createElement('tr', { key: s.nummer },
                                 React.createElement('td', null, i + 1),
-                                React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv?s.nachname:""}`),
+                                React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv ? s.nachname : ""}`),
                                 React.createElement('td', null, s.gruppe),
                                 React.createElement('td', null, s.bahnanzahl)
                             )

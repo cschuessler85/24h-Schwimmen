@@ -113,6 +113,10 @@ mit Beispielen
     ACT [123, 0] - setzt den Schwimmer Nr. 123 auf inaktiv
 ```
 
+### Zeiten
+
+timestamps werden in UTC-Strings gespeichert, müssen also für die Darstellung entsprechend in die Lokale Zeit umgewandelt werden - das ist auch für die Konfiguration von Geisterstunde und ähnlichem wichtig.
+
 ## Projektverzeichnisstruktur
 
 Hier ist eine Übersicht über die Verzeichnisstruktur des Projektes:
@@ -147,7 +151,13 @@ Gegebenenfalls muss die Windows-Firewall angepasst werden. Windows-Defender-Fire
 
 ## Spezialfunktionen
 
-Im view kann man mit ``Shift+D`` eine CSV-Datei herunterladen
+Im view kann man:
+
+* mit ``Shift+D`` eine CSV-Datei herunterladen
+* mit ``Shift+G`` die Gruppentabelle ein und ausblenden
+* mit ``Shift+Z`` zwischen ein- und zweispaltiger Darstellung wechseln
+* mit ``Shift+N`` die Nachnamen ein- oder ausblenden
+
 Wenn man die URL mit ``?dbgfkt=true`` lädt, kann durch anklicken der Überschrift eine automatisches Klicken der vorhandenen DIVs simuliert werden.
 
 ## Git-Workflow
