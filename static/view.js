@@ -22,6 +22,12 @@ function gibNeueEintraege(neueListe, vorhandeneListe) {
     );
 }
 
+const formatNummer = (nummer) =>
+  nummer.toString().padStart(NUMMER_LAENGE, '0');
+
+const NUMMER_LAENGE = 3;
+
+
 function App() {
     let curSwimmerMap = {};
     let curActions = [];
@@ -29,6 +35,9 @@ function App() {
     // Referenz zum Zwischenspeichern des jeweils aktuellen swimmerMap-States
     const [filterAuswahl, setFilterAuswahl] = useState("");
     const [shiftLockAktiv, setShiftLockAktiv] = useState(false);
+    const [zweispaltigAktiv, setZweispaltigAktiv] = useState(true);
+    const [gruppenAnzeigeAktiv, setGruppenAnzeigeAktiv] = useState(false);
+    const [nachnameAnzeigenAktiv, setNachnameAnzeigenAktiv] = useState(false);
     const swimmerMapRef = useRef(swimmerMap);
     const [lapLog, setLapLog] = useState([]);
     const [filter, setFilter] = useState({ gruppe: null, nurKinder: false, sortierung: "bahnanzahl" });
@@ -36,15 +45,15 @@ function App() {
     const scrollPosition = useRef(0);
     let spezialzeiten = [];
 
-    function initSpezialzeiten(date=new Date()) {
+    function initSpezialzeiten(date = new Date()) {
         const tomorrow = (new Date(date))
-        tomorrow.setHours(date.getHours()+24);
+        tomorrow.setHours(date.getHours() + 24);
         spezialzeiten = [
-            {name: "Tag1", start: (new Date(date)).setHours(0,0,0), end: (new Date(date).setHours(23,59,59))},
-            {name: "Geisterstunde", start: (new Date(tomorrow)).setHours(0,0,0), end: (new Date(tomorrow).setHours(0,59,59))},
-            {name: "Gute Nacht", start: (new Date(tomorrow)).setHours(1,0,0), end: (new Date(tomorrow).setHours(4,59,59))},
-            {name: "Frühaufsteher", start: (new Date(tomorrow)).setHours(5,0,0), end: (new Date(tomorrow).setHours(5,59,59))},
-            {name: "Tag2", start: (new Date(tomorrow)).setHours(6,0,0), end: (new Date(tomorrow).setHours(23,59,59))}
+            { name: "Tag1", start: (new Date(date)).setHours(0, 0, 0), end: (new Date(date).setHours(23, 59, 59)) },
+            { name: "Geisterstunde", start: (new Date(tomorrow)).setHours(0, 0, 0), end: (new Date(tomorrow).setHours(0, 59, 59)) },
+            { name: "Gute Nacht", start: (new Date(tomorrow)).setHours(1, 0, 0), end: (new Date(tomorrow).setHours(4, 59, 59)) },
+            { name: "Frühaufsteher", start: (new Date(tomorrow)).setHours(5, 0, 0), end: (new Date(tomorrow).setHours(5, 59, 59)) },
+            { name: "Tag2", start: (new Date(tomorrow)).setHours(6, 0, 0), end: (new Date(tomorrow).setHours(23, 59, 59)) }
         ];
         console.log("Spezialzeiten", spezialzeiten);
     }
@@ -91,9 +100,9 @@ function App() {
             s.bahnanzahl += anzahl;
             zeitD = new Date(zeit);
             spezialzeiten.forEach((t) => {
-                if (zeitD>t.start && zeitD < t.end) {
+                if (zeitD > t.start && zeitD < t.end) {
                     console.log(`${t.name} bei Schwimmer ${schwimmerID} - Zeit: ${zeit}`);
-                    s[t.name] = (s[t.name] ? s[t.name]+anzahl : 1); // Mit 1 initialisieren - erste Bahn dieses Typs
+                    s[t.name] = (s[t.name] ? s[t.name] + anzahl : 1); // Mit 1 initialisieren - erste Bahn dieses Typs
                 }
             })
             curSwimmerMap[schwimmerID] = s;
@@ -120,7 +129,7 @@ function App() {
                 if (data.swimmerMap) {
                     data.swimmerMap.forEach(s => {
                         s.bahnanzahl = 0;
-                        spezialzeiten.forEach(szeit => s[szeit.name]=0);
+                        spezialzeiten.forEach(szeit => s[szeit.name] = 0);
                         curSwimmerMap[s.nummer] = s;
                     })
                     //console.log(`curSwimmerMap ist ein Array ${Array.isArray(curSwimmerMap)}`);
@@ -165,6 +174,15 @@ function App() {
             } else if (e.shiftKey && e.key === "D") {
                 console.log("Download gedrückt");
                 downloadCSV();
+            } else if (e.shiftKey && e.key === "Z") {
+                console.log("Zweispaltig geändert");
+                setZweispaltigAktiv((prev) => !prev);
+            } else if (e.shiftKey && e.key === "G") {
+                console.log("Gruppenanzeige geändert");
+                setGruppenAnzeigeAktiv((prev) => !prev);
+            } else if (e.shiftKey && e.key === "N") {
+                console.log("Nachnamenanzeige geändert");
+                setNachnameAnzeigenAktiv((prev) => !prev);
             }
         }
         window.addEventListener("keydown", handleKeyDown);
@@ -213,6 +231,27 @@ function App() {
     }
     gefiltert.sort((a, b) => b.bahnanzahl - a.bahnanzahl);
 
+    // Für zweispaltige Darstellung
+    const halb = Math.ceil(gefiltert.length / 2);
+    const ersteHaelfte = gefiltert.slice(0, halb);
+    const zweiteHaelfte = gefiltert.slice(halb);
+
+    // Für das Gruppenranking
+    const gruppenRanking = {};
+    if (gruppenAnzeigeAktiv) {
+        Object.values(swimmerMap).forEach(s => {
+            const gruppe = s.gruppe || '–';
+            gruppenRanking[gruppe] = (gruppenRanking[gruppe] || 0) + (s.bahnanzahl || 0);
+        });
+    }
+
+    // Gruppe "-" entfernen, wenn vorhanden
+    delete gruppenRanking['–'];
+
+    // In ein sortiertes Array umwandeln
+    const gruppenArray = Object.entries(gruppenRanking)
+        .sort((a, b) => b[1] - a[1]); // nach Bahnen absteigend sortieren
+
     return React.createElement('div', { id: 'root' },
         React.createElement('div', { className: 'left', ref: leftRef },
             React.createElement('h2', null, 'Ranking'),
@@ -220,26 +259,51 @@ function App() {
                 React.createElement('option', { value: '' }, 'Alle anzeigen'),
                 React.createElement('option', { value: 'nurKinder' }, 'Nur Kinder')
             ),
-            React.createElement('table', null,
-                React.createElement('thead', null,
-                    React.createElement('tr', null,
-                        React.createElement('th', null, '#'),
-                        React.createElement('th', null, 'Name'),
-                        React.createElement('th', null, 'Gruppe'),
-                        React.createElement('th', null, 'Bahnen')
-                    )
-                ),
-                React.createElement('tbody', null,
-                    gefiltert.map((s, i) =>
-                        React.createElement('tr', { key: s.nummer },
-                            React.createElement('td', null, i + 1),
-                            React.createElement('td', null, `(${s.nummer}) ${s.vorname} ${s.nachname}`),
-                            React.createElement('td', null, s.gruppe),
-                            React.createElement('td', null, s.bahnanzahl)
+            zweispaltigAktiv
+                ? React.createElement('div', { style: { display: 'flex', gap: '2rem' } },
+                    [ersteHaelfte, zweiteHaelfte].map((liste, spaltenIndex) =>
+                        React.createElement('table', { key: spaltenIndex },
+                            React.createElement('thead', null,
+                                React.createElement('tr', null,
+                                    React.createElement('th', null, '#'),
+                                    React.createElement('th', null, 'Name'),
+                                    React.createElement('th', null, 'Gruppe'),
+                                    React.createElement('th', null, 'Bahnen')
+                                )
+                            ),
+                            React.createElement('tbody', null,
+                                liste.map((s, i) =>
+                                    React.createElement('tr', { key: s.nummer },
+                                        React.createElement('td', null, (spaltenIndex === 0 ? i : i + halb) + 1),
+                                        React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv?s.nachname:""}`),
+                                        React.createElement('td', null, s.gruppe),
+                                        React.createElement('td', null, s.bahnanzahl)
+                                    )
+                                )
+                            )
                         )
                     )
                 )
-            )
+                : React.createElement('table', null,
+                    React.createElement('thead', null,
+                        React.createElement('tr', null,
+                            React.createElement('th', null, '#'),
+                            React.createElement('th', null, 'Name'),
+                            React.createElement('th', null, 'Gruppe'),
+                            React.createElement('th', null, 'Bahnen')
+                        )
+                    ),
+                    React.createElement('tbody', null,
+                        gefiltert.map((s, i) =>
+                            React.createElement('tr', { key: s.nummer },
+                                React.createElement('td', null, i + 1),
+                                React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv?s.nachname:""}`),
+                                React.createElement('td', null, s.gruppe),
+                                React.createElement('td', null, s.bahnanzahl)
+                            )
+                        )
+                    )
+                )
         ),
         React.createElement('div', { className: 'right' },
             React.createElement('h2', null, 'Letzte Bahnen'),
@@ -247,7 +311,30 @@ function App() {
                 React.createElement('div', { key: i },
                     `${l.zeit.split("T")[1].split(".")[0]} – ${l.vorname} (${l.schwimmer}) hat angeschlagen: ${l.laps} Bahnen`
                 )
-            )
+            ),
+            gruppenAnzeigeAktiv
+                ? React.createElement('div', null,
+                    React.createElement('h3', null, 'Gruppenwertung'),
+                    React.createElement('table', null,
+                        React.createElement('thead', null,
+                            React.createElement('tr', null,
+                                React.createElement('th', null, '#'),
+                                React.createElement('th', null, 'Gruppe'),
+                                React.createElement('th', null, 'Bahnen')
+                            )
+                        ),
+                        React.createElement('tbody', null,
+                            gruppenArray.map(([gruppe, bahnen], i) =>
+                                React.createElement('tr', { key: gruppe },
+                                    React.createElement('td', null, i + 1), // Rang
+                                    React.createElement('td', null, gruppe),
+                                    React.createElement('td', null, bahnen)
+                                )
+                            )
+                        )
+                    )
+                )
+                : null
         )
     );
 }
