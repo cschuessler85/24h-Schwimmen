@@ -12,6 +12,8 @@ let lastupdate = new Date("2000-01-01T00:00:00Z").toISOString();
 const offsetInMinutes = new Date().getTimezoneOffset();
 const offsetInMillis = -offsetInMinutes * 60 * 1000;
 
+const bahnLaenge = parseInt("{{bahnlaenge}}");;
+
 function gibNeueEintraege(neueListe, vorhandeneListe) {
     return neueListe.filter(neu =>
         !vorhandeneListe.some(alt =>
@@ -37,6 +39,7 @@ function App() {
     const [shiftLockAktiv, setShiftLockAktiv] = useState(false);
     const [zweispaltigAktiv, setZweispaltigAktiv] = useState(true);
     const [gruppenAnzeigeAktiv, setGruppenAnzeigeAktiv] = useState(false);
+    const [unitMeterAktiv, setUnitMeterAktiv] = useState(false);
     const [nachnameAnzeigenAktiv, setNachnameAnzeigenAktiv] = useState(false);
     const swimmerMapRef = useRef(swimmerMap);
     const [lapLog, setLapLog] = useState([]);
@@ -54,16 +57,16 @@ function App() {
 
     function initSpezialzeiten(startzeit = new Date()) {
         spezialzeiten = [
-            { name: "Tag1", start: startzeit, end: gibZeitZukunft(startzeit,11,59) },
-            { name: "Geisterstunde", start: gibZeitZukunft(startzeit,12,0), end: gibZeitZukunft(startzeit,12,59) },
-            { name: "Gute Nacht", start: gibZeitZukunft(startzeit,13,0), end: gibZeitZukunft(startzeit,16,59) },
-            { name: "Frühaufsteher", start: gibZeitZukunft(startzeit,17,0), end: gibZeitZukunft(startzeit,17,59) },
-            { name: "Tag2", start: gibZeitZukunft(startzeit,18,0), end: gibZeitZukunft(startzeit,25,0) }
+            { name: "Tag1", start: startzeit, end: gibZeitZukunft(startzeit, 11, 59) },
+            { name: "Geisterstunde", start: gibZeitZukunft(startzeit, 12, 0), end: gibZeitZukunft(startzeit, 12, 59) },
+            { name: "Gute Nacht", start: gibZeitZukunft(startzeit, 13, 0), end: gibZeitZukunft(startzeit, 16, 59) },
+            { name: "Frühaufsteher", start: gibZeitZukunft(startzeit, 17, 0), end: gibZeitZukunft(startzeit, 17, 59) },
+            { name: "Tag2", start: gibZeitZukunft(startzeit, 18, 0), end: gibZeitZukunft(startzeit, 25, 0) }
         ];
         console.log("Spezialzeiten", spezialzeiten);
     }
 
-    function downloadCSV(headers = ["nummer", "vorname", "nachname", "bahnanzahl"]) {
+    function downloadCSV(headers = ["vorname", "nachname", "bahnanzahl"]) {
         const maxID = Math.max(...Object.keys(curSwimmerMap).map(s => parseInt(s)));
         console.log("Maximum:", maxID);
         headersspezial = spezialzeiten.map((szeit) => szeit.name);
@@ -72,13 +75,19 @@ function App() {
         console.log("curSwimmerMap", curSwimmerMap);
 
         let csvRows = [
-            "id," + headers.join(',') // Kopfzeile
+            "nummer," + headers.join(',') // Kopfzeile
         ];
 
         for (let i = 0; i < maxID; i++) {
             if (curSwimmerMap[i + 1]) {
                 csvRows.push(`${i + 1},` +
-                    headers.map(header => `"${(curSwimmerMap[i + 1][header] ?? '').toString().replace(/"/g, '""')}"`).join(',')
+                    headers.map(header => {
+                        let value = curSwimmerMap[i + 1][header] ?? '';
+                        const isNumeric = typeof value === 'number' || !isNaN(value);
+                        if (isNumeric) value*=bahnLaenge;
+                        const stringValue = value.toString().replace(/"/g, '""');
+                        return isNumeric ? stringValue : `"${stringValue}"`;
+                    }).join(',')
                 );
             } else {
                 csvRows.push(`${i + 1},` +
@@ -188,6 +197,9 @@ function App() {
             } else if (e.shiftKey && e.key === "N") {
                 console.log("Nachnamenanzeige geändert");
                 setNachnameAnzeigenAktiv((prev) => !prev);
+            } else if (e.shiftKey && e.key === "U") {
+                console.log("Einheiten geändert");
+                setUnitMeterAktiv((prev) => !prev);
             }
         }
         window.addEventListener("keydown", handleKeyDown);
@@ -273,7 +285,7 @@ function App() {
                                     React.createElement('th', null, '#'),
                                     React.createElement('th', null, 'Name'),
                                     React.createElement('th', null, 'Gruppe'),
-                                    React.createElement('th', null, 'Bahnen')
+                                    React.createElement('th', null, (unitMeterAktiv ? 'Strecke(m)' : 'Bahnen'))
                                 )
                             ),
                             React.createElement('tbody', null,
@@ -282,7 +294,7 @@ function App() {
                                         React.createElement('td', null, (spaltenIndex === 0 ? i : i + halb) + 1),
                                         React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv ? s.nachname : ""}`),
                                         React.createElement('td', null, s.gruppe),
-                                        React.createElement('td', null, s.bahnanzahl)
+                                        React.createElement('td', null, (unitMeterAktiv ? s.bahnanzahl*bahnLaenge : s.bahnanzahl))
                                     )
                                 )
                             )
@@ -295,7 +307,7 @@ function App() {
                             React.createElement('th', null, '#'),
                             React.createElement('th', null, 'Name'),
                             React.createElement('th', null, 'Gruppe'),
-                            React.createElement('th', null, 'Bahnen')
+                            React.createElement('th', null, (unitMeterAktiv ? 'Strecke(m)' : 'Bahnen'))
                         )
                     ),
                     React.createElement('tbody', null,
@@ -304,7 +316,7 @@ function App() {
                                 React.createElement('td', null, i + 1),
                                 React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv ? s.nachname : ""}`),
                                 React.createElement('td', null, s.gruppe),
-                                React.createElement('td', null, s.bahnanzahl)
+                                React.createElement('td', null, (unitMeterAktiv ? s.bahnanzahl*bahnLaenge : s.bahnanzahl))
                             )
                         )
                     )

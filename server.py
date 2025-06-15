@@ -282,6 +282,13 @@ def send_mainjs():
     }
     return render_template("main.js", **params), 200, {'Content-Type': 'application/javascript'}
 
+@app.route("/view.js")
+def send_viewjs():
+    params = {
+        'bahnlaenge': config["laenge_bahn_m"]
+    }
+    return render_template("view.js", **params), 200, {'Content-Type': 'application/javascript'}
+
 @app.route("/<path:filename>")
 def static_files(filename):
     return send_from_directory("static", filename)
