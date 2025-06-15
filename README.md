@@ -157,6 +157,7 @@ Im view kann man:
 * mit ``Shift+G`` die Gruppentabelle ein und ausblenden
 * mit ``Shift+Z`` zwischen ein- und zweispaltiger Darstellung wechseln
 * mit ``Shift+N`` die Nachnamen ein- oder ausblenden
+* mit ``Shift+U`` die Anzeige zwischen Bahnen / Strecke wechseln
 
 Wenn man die URL mit ``?dbgfkt=true`` lädt, kann durch anklicken der Überschrift eine automatisches Klicken der vorhandenen DIVs simuliert werden.
 

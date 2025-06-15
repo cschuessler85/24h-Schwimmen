@@ -84,7 +84,7 @@ function App() {
                     headers.map(header => {
                         let value = curSwimmerMap[i + 1][header] ?? '';
                         const isNumeric = typeof value === 'number' || !isNaN(value);
-                        if (isNumeric) value*=bahnLaenge;
+                        if (isNumeric) value *= bahnLaenge;
                         const stringValue = value.toString().replace(/"/g, '""');
                         return isNumeric ? stringValue : `"${stringValue}"`;
                     }).join(',')
@@ -106,6 +106,40 @@ function App() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    function transformData(eintrag) {
+        return {
+            kommando: eintrag.kommando,
+            parameter: JSON.parse(eintrag.parameter),
+            timestamp: eintrag.zeitstempel,
+            transmitted: false
+        };
+    }
+
+    function downloadJSON() {
+        // Daten für JSON-Umwandlung in ein Dictionary packen
+        const data = { "schwimmer": curSwimmerMap, "actions": curActions.map(transformData) };
+
+        // In JSON-Text umwandeln
+        const jsonString = JSON.stringify(data, null, 2);
+
+        // Blob erstellen (Dateiobjekt)
+        const blob = new Blob([jsonString], { type: "application/json" });
+
+        // Temporären Download-Link erstellen
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "view_backup.json";
+
+        // Link klicken (Download starten)
+        document.body.appendChild(link);
+        link.click();
+
+        // Aufräumen
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 
     function updateBahnen(schwimmerID, anzahl = 1, zeit = new Date().toISOString()) {
@@ -200,6 +234,9 @@ function App() {
             } else if (e.shiftKey && e.key === "U") {
                 console.log("Einheiten geändert");
                 setUnitMeterAktiv((prev) => !prev);
+            } else if (e.shiftKey && e.key === "B") {
+                console.log("Download JSON-Backup");
+                downloadJSON();
             }
         }
         window.addEventListener("keydown", handleKeyDown);
@@ -294,7 +331,7 @@ function App() {
                                         React.createElement('td', null, (spaltenIndex === 0 ? i : i + halb) + 1),
                                         React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv ? s.nachname : ""}`),
                                         React.createElement('td', null, s.gruppe),
-                                        React.createElement('td', null, (unitMeterAktiv ? s.bahnanzahl*bahnLaenge : s.bahnanzahl))
+                                        React.createElement('td', null, (unitMeterAktiv ? s.bahnanzahl * bahnLaenge : s.bahnanzahl))
                                     )
                                 )
                             )
@@ -316,7 +353,7 @@ function App() {
                                 React.createElement('td', null, i + 1),
                                 React.createElement('td', null, `(${formatNummer(s.nummer)}) ${s.vorname} ${nachnameAnzeigenAktiv ? s.nachname : ""}`),
                                 React.createElement('td', null, s.gruppe),
-                                React.createElement('td', null, (unitMeterAktiv ? s.bahnanzahl*bahnLaenge : s.bahnanzahl))
+                                React.createElement('td', null, (unitMeterAktiv ? s.bahnanzahl * bahnLaenge : s.bahnanzahl))
                             )
                         )
                     )
@@ -337,7 +374,7 @@ function App() {
                             React.createElement('tr', null,
                                 React.createElement('th', null, '#'),
                                 React.createElement('th', null, 'Gruppe'),
-                                React.createElement('th', null, 'Bahnen')
+                                React.createElement('th', null, (unitMeterAktiv ? 'Strecke(m)' : 'Bahnen'))
                             )
                         ),
                         React.createElement('tbody', null,
@@ -345,7 +382,7 @@ function App() {
                                 React.createElement('tr', { key: gruppe },
                                     React.createElement('td', null, i + 1), // Rang
                                     React.createElement('td', null, gruppe),
-                                    React.createElement('td', null, bahnen)
+                                    React.createElement('td', null, (unitMeterAktiv ? bahnen * bahnLaenge : bahnen))
                                 )
                             )
                         )
