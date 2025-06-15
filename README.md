@@ -29,7 +29,7 @@ Eine Basisdatenbank mit dem Benutzer ``admin`` und dem Passwort ``swim24`` wird 
 
 ## Wichtiges für den Live-Betrieb
 
-* Der Rechner auf dem der Server läuft, sollte angepasste Energiesparmodi haben, d.h. nicht in den Standby-Wechseln und auch die Festplatte soll nicht abgeschaltet werden. Dazu ``Energiesparplaneinstellungen ändern`` -> ``Erweiterte Einstellungen ändern`` und dort enstprechende Einstellungen vornehmen
+* Der Rechner auf dem der Server läuft, sollte angepasste Energiesparmodi haben, d.h. nicht in den Standby-Wechseln und auch die Festplatte soll nicht abgeschaltet werden. Dazu z.B. unter Windows ``Energiesparplaneinstellungen ändern`` -> ``Erweiterte Einstellungen ändern`` und dort enstprechende Einstellungen vornehmen
 * Um in Excel die CSV-Daten zu importieren, erstellt man eine leere Tabelle, wechselt dann in das Menü Daten und dort gibt es einen Reiter Text/CSV-Importieren. Hier kann man auch die Codierung einstellen. In der Regel arbeitet der Server nur mit UTF-8 Daten
 
 ## grobe Planung
@@ -163,8 +163,9 @@ Im view kann man:
 * mit ``Shift+Z`` zwischen ein- und zweispaltiger Darstellung wechseln
 * mit ``Shift+N`` die Nachnamen ein- oder ausblenden
 * mit ``Shift+U`` die Anzeige zwischen Bahnen / Strecke wechseln
+* mit ``Shift+B`` ein Backup der Actions machen, welches man im Admin-Fenster wieder importieren könnte
 
-Wenn man die URL mit ``?dbgfkt=true`` lädt, kann durch anklicken der Überschrift eine automatisches Klicken der vorhandenen DIVs simuliert werden.
+Wenn man die URL mit ``?dbgfkt=true`` lädt, kann durch anklicken der Überschrift *24h-Schwimmen* eine automatisches Klicken der vorhandenen DIVs simuliert werden.
 
 ## Git-Workflow
 
