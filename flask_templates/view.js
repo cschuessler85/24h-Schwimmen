@@ -57,11 +57,11 @@ function App() {
 
     function initSpezialzeiten(startzeit = new Date()) {
         spezialzeiten = [
-            { name: "Tag1", start: startzeit, end: gibZeitZukunft(startzeit, 11, 59) },
-            { name: "Geisterstunde", start: gibZeitZukunft(startzeit, 12, 0), end: gibZeitZukunft(startzeit, 12, 59) },
-            { name: "Gute Nacht", start: gibZeitZukunft(startzeit, 13, 0), end: gibZeitZukunft(startzeit, 16, 59) },
-            { name: "Frühaufsteher", start: gibZeitZukunft(startzeit, 17, 0), end: gibZeitZukunft(startzeit, 17, 59) },
-            { name: "Tag2", start: gibZeitZukunft(startzeit, 18, 0), end: gibZeitZukunft(startzeit, 25, 0) }
+            { name: "Tag1", start: startzeit, end: gibZeitZukunft(startzeit, 12, 0) },
+            { name: "Geisterstunde", start: gibZeitZukunft(startzeit, 12, 0), end: gibZeitZukunft(startzeit, 13, 0) },
+            { name: "Gute Nacht", start: gibZeitZukunft(startzeit, 13, 0), end: gibZeitZukunft(startzeit, 17, 0) },
+            { name: "Frühaufsteher", start: gibZeitZukunft(startzeit, 17, 0), end: gibZeitZukunft(startzeit, 18, 0) },
+            { name: "Tag2", start: gibZeitZukunft(startzeit, 18, 0), end: gibZeitZukunft(startzeit, 48, 0) }
         ];
         console.log("Spezialzeiten", spezialzeiten);
     }
@@ -148,7 +148,7 @@ function App() {
             s.bahnanzahl += anzahl;
             zeitD = new Date(zeit);
             spezialzeiten.forEach((t) => {
-                if (zeitD > t.start && zeitD < t.end) {
+                if (zeitD >= t.start && zeitD < t.end) {
                     console.log(`${t.name} bei Schwimmer ${schwimmerID} - Zeit: ${zeit}`);
                     s[t.name] = (s[t.name] ? s[t.name] + anzahl : 1); // Mit 1 initialisieren - erste Bahn dieses Typs
                 }
@@ -245,7 +245,7 @@ function App() {
 
     useEffect(() => {
         holeNeueDaten();
-        initSpezialzeiten(new Date("2025-06-13T10:00:00Z"));
+        initSpezialzeiten(new Date("2025-06-14T08:00:00Z"));
     }, []); // [] - sorgt dafür, dass dieser Effect (diese Funktion) nur ein einziges Mal ausgeführt wird
 
     // Der Timer für das holen neuer Daten
