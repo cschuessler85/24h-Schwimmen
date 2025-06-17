@@ -63,7 +63,7 @@ function App() {
             { name: "Frühaufsteher", start: gibZeitZukunft(startzeit, 17, 0), end: gibZeitZukunft(startzeit, 18, 0) },
             { name: "Tag2", start: gibZeitZukunft(startzeit, 18, 0), end: gibZeitZukunft(startzeit, 48, 0) }
         ];
-        console.log("Spezialzeiten", spezialzeiten);
+        //console.log("Spezialzeiten", spezialzeiten);
     }
 
     function downloadCSV(headers = ["vorname", "nachname", "bahnanzahl"]) {
@@ -146,10 +146,10 @@ function App() {
         if (curSwimmerMap[schwimmerID]) {
             const s = { ...curSwimmerMap[schwimmerID] }
             s.bahnanzahl += anzahl;
-            zeitD = new Date(zeit);
+            const zeitD = new Date(zeit);
             spezialzeiten.forEach((t) => {
                 if (zeitD >= t.start && zeitD < t.end) {
-                    console.log(`${t.name} bei Schwimmer ${schwimmerID} - Zeit: ${zeit}`);
+                    //console.log(`${t.name} bei Schwimmer ${schwimmerID} - Zeit: ${zeit}`);
                     s[t.name] = (s[t.name] ? s[t.name] + anzahl : 1); // Mit 1 initialisieren - erste Bahn dieses Typs
                 }
             })
@@ -308,10 +308,15 @@ function App() {
 
     return React.createElement('div', { id: 'root' },
         React.createElement('div', { className: 'left', ref: leftRef },
-            React.createElement('h2', null, 'Ranking'),
-            React.createElement('select', { value: filterAuswahl, onChange: (e) => setFilterAuswahl(e.target.value) },
-                React.createElement('option', { value: '' }, 'Alle anzeigen'),
-                React.createElement('option', { value: 'nurKinder' }, 'Nur Kinder')
+            React.createElement('div', { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } },
+                React.createElement('h2', null, 'Ranking'),
+                React.createElement('select', {
+                    value: filterAuswahl,
+                    onChange: (e) => setFilterAuswahl(e.target.value)
+                },
+                    React.createElement('option', { value: '' }, 'Alle anzeigen'),
+                    React.createElement('option', { value: 'nurKinder' }, 'Nur Kinder')
+                )
             ),
             zweispaltigAktiv
                 ? React.createElement('div', { style: { display: 'flex', gap: '2rem' } },
