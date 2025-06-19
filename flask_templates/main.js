@@ -839,8 +839,8 @@ document.getElementById("bahnen").addEventListener("keydown", (event) => {
 
 
 debugLog("Initial commands - Grundlagen einrichten");
-//alle Zehn Sekunden die Daten zum Server schicken
-setInterval(transmitActions, 10000);
+//alle Dreißig Sekunden die Daten zum Server schicken
+setInterval(transmitActions, 30000);
 
 // zu Beginn Daten vom Server holen
 fetchSchwimmer().then(() => {
