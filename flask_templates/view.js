@@ -66,7 +66,7 @@ function App() {
         //console.log("Spezialzeiten", spezialzeiten);
     }
 
-    function downloadCSV(headers = ["vorname", "nachname", "bahnanzahl"]) {
+    function downloadCSV(headers = ["vorname", "nachname", "gruppe", "bahnanzahl"]) {
         const maxID = Math.max(...Object.keys(curSwimmerMap).map(s => parseInt(s)));
         console.log("Maximum:", maxID);
         headersspezial = spezialzeiten.map((szeit) => szeit.name);
