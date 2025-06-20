@@ -1,6 +1,7 @@
 {
     "flask_secret_key": "Lang&Umständlich",
     "default_admin_pass": "swim24",
-    "laenge_schwimmerNr": 3
+    "laenge_schwimmerNr": 3,
+    "laenge_bahn_m": 100
    }
   

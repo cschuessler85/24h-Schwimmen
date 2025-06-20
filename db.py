@@ -21,10 +21,19 @@ class Database:
         Initialisiert die Datenbankverbindung. 
         Wird einmalig beim Start der Anwendung aufgerufen.
         """
+        self.begin = False
         self.db_name = db_name
         self.conn = None
         self.cursor = None
         self.connect()  # Verbindung herstellen
+
+    def setBegin(self, value = True):
+        if (self.begin != value):
+            self.begin = value
+            if (value):
+                self.conn.execute("BEGIN")
+            else:
+                self.conn.commit()
 
     def connect(self):
         """
@@ -32,10 +41,11 @@ class Database:
         """
         try:
             #TODO: Darüber nachdenken, wie man same thread-Problematik dauerhaft löst
-            self.conn = sqlite3.connect(self.db_name, check_same_thread=False)
+            self.conn = sqlite3.connect(self.db_name, check_same_thread=True)
             self.conn.row_factory = sqlite3.Row  # Für dict-ähnliche Zeilen
             self.cursor = self.conn.cursor()
-            logging.info("Database.connect - Datenbankverbindung hergestellt.")
+            self.begin = False
+            logging.debug("Database.connect - Datenbankverbindung hergestellt.")
         except sqlite3.DatabaseError as e:
             logging.error(f"Database.connect - Fehler beim Verbinden zur Datenbank: {e}")
             self.conn = None
@@ -58,7 +68,7 @@ class Database:
             if params is None:
                 params = []
             self.cursor.execute(query, params)
-            self.conn.commit()
+            if (not self.begin): self.conn.commit()
             return self.cursor
         except sqlite3.OperationalError as e:
             logging.error(f"OperationalError: {e}")
@@ -133,13 +143,8 @@ class Database:
         """
         if self.conn:
             self.conn.close()
-            logging.info("Datenbankverbindung geschlossen.")
+            logging.debug("Datenbankverbindung geschlossen.")
 
-# Globale Instanz der Database-Klasse
-db = Database()
-
-# Automatisch beim Programmende die Verbindung schließen
-atexit.register(db.close)
 
 # ===================================================
 # DATENBANK-INITIALISIERUNG UND ALLGEMEINE METHODEN
@@ -212,8 +217,6 @@ def init_db():
         )
     '''
     db.execute(query_actions)
-
-init_db()
 
 def dict_from_table_row(row, table_name):
     """
@@ -361,16 +364,23 @@ def erstelle_schwimmer(nummer, erstellt_von_client_id, vorname, nachname, istKin
     params = (nummer, erstellt_von_client_id, vorname, nachname, istKind, gruppe, bahnanzahl, strecke, auf_bahn, aktiv)
     return db.execute(query, params)
 
+def get_bahnanzahl(nummer):
+    result=db.fetchone("SELECT bahnanzahl FROM schwimmer WHERE nummer = ?", (nummer,))
+    
+    if result is None:
+        return None  # Schwimmer existiert nicht
+    return result[0]  # Bahnanzahl
+
 def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
     """
     Ändert die Bahnanzahl eines Schwimmers. 
     Falls der Schwimmer nicht existiert, wird er mit Standardwerten angelegt.
     """
-    schwimmer = lies_schwimmer(int(nummer))
+    bahnanzahl = get_bahnanzahl(int(nummer))
     logging.info(f"Schwimmer Ändern mit Nummer {nummer}")
     #print(schwimmer if (schwimmer) else f"Schwimmer {nummer} Nicht gefunden")
     
-    if schwimmer is None or len(schwimmer) == 0 :
+    if bahnanzahl is None:
         # Schwimmer existiert nicht → neu anlegen
         logging.info(f"Schwimmer {nummer} wird neu angelegt")
         if (not erstelle_schwimmer(
@@ -389,10 +399,10 @@ def aendere_bahnanzahl_um(nummer, anzahl, client_id, bahnnr=0):
             raise AttributeError('Schwimmer konnte nicht erstellt werden')
     else:
         # Schwimmer existiert → Bahnanzahl ändern
-        neue_bahnanzahl = (schwimmer["bahnanzahl"] or 0) + anzahl
+        neue_bahnanzahl = bahnanzahl + anzahl
         if neue_bahnanzahl < 0:
             neue_bahnanzahl = 0
-        if (not update_schwimmer(schwimmer["nummer"], bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)):
+        if (not update_schwimmer(int(nummer), bahnanzahl=neue_bahnanzahl, auf_bahn=bahnnr)):
             logging.error(f"Schwimmer {nummer} konnte nicht aktualisert werden - neue Bahnazahl {neue_bahnanzahl}")
             raise AttributeError('Schwimmer konnte nicht aktualisiert werden')
 
@@ -537,6 +547,29 @@ def finde_benutzer_by_username(benutzername):
 
 def erstelle_action(benutzer_id, client_id, zeitstempel, kommando, parameter):
     """
+    Fügt eine NEUE Action zur Datenbank hinzu.
+    Gibt die Anzahl der eingetragenen Zeilen zurück (also 0 oder 1) .
+    """
+    #Prüfen ob der Eintrag schon existiert
+    query = '''
+    SELECT 1 FROM actions
+    WHERE zeitstempel = ? AND kommando = ? AND parameter = ?
+    LIMIT 1
+    '''
+    params = (zeitstempel, kommando, parameter)
+    cursor = db.execute(query, params)
+    exists = cursor.fetchone() is not None
+    if (exists): return 0 #Kein neuer Eintrag
+    query = '''
+        INSERT INTO actions (benutzer_id, client_id, zeitstempel, kommando, parameter)
+        VALUES (?, ?, ?, ?, ?)
+    '''
+    params = (benutzer_id, client_id, zeitstempel, kommando, parameter)
+    cursor = db.execute(query, params) 
+    return (cursor.rowcount if cursor else 0)
+
+def erstelle_actions(actionliste):
+    """
     Fügt eine neue Action zur Datenbank hinzu.
     Gibt die ID der neuen Action zurück.
     """
@@ -544,8 +577,11 @@ def erstelle_action(benutzer_id, client_id, zeitstempel, kommando, parameter):
         INSERT INTO actions (benutzer_id, client_id, zeitstempel, kommando, parameter)
         VALUES (?, ?, ?, ?, ?)
     '''
-    params = (benutzer_id, client_id, zeitstempel, kommando, parameter)
-    return db.execute(query, params)
+    db.cursor.executemany(query, actionliste)
+    if (not db.begin): db.conn.commit()
+    return db.cursor
+
+
 
 def finde_actions_by_benutzer_id(benutzer_id):
     """
@@ -595,7 +631,7 @@ def checkBahnenAnzahlen():
     """
     query = """select 
     a.schwimmerID,
-    s.name,
+    s.vorname,
     s.bahnanzahl as Anz,
     a.anzahl as ActionAnz,
     a.kommando
@@ -623,6 +659,14 @@ def checkBahnenAnzahlen():
 
 
 if __name__ == "__main__":
+    # Globale Instanz der Database-Klasse
+    db = Database()
+
+    # Automatisch beim Programmende die Verbindung schließen
+    atexit.register(db.close)
+    
+    init_db()
+
     #print(checkBahnenAnzahlen())
 
     # Setze den DB-Namen auf eine Testdatenbank

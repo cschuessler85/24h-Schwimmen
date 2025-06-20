@@ -3,6 +3,14 @@ import { schwimmerNummerErfragen, showStatusMessage } from './mymodals.js'
 const schwimmerNrLength = parseInt("{{schwimmerNrLen}}");
 const DEBUG = false;
 
+function logMessage(text, isSuccess = true) {
+    statMessages.push({
+        message: text,
+        success: isSuccess,
+        timestamp: new Date().toISOString()
+    });
+}
+
 let formIsDirty = false; // Flag, das anzeigt, ob Daten geändert wurden
 // Beim Verlassen der Seite warnen, falls Änderungen vorhanden sind
 window.addEventListener('beforeunload', function (event) {
@@ -23,19 +31,9 @@ if (isBahnenInputValid(input.value)) {
 }
 
 // Daten schwimmer und actions
-let schwimmer = [
-    /*    { nummer: 8, name: "Ben", bahnen: 3, prio: 15 },
-        { nummer: 9, name: "Anna", bahnen: 5, prio: 10 },
-        { nummer: 10, name: "Anna", bahnen: 5, prio: 10 },
-        { nummer: 11, name: "Ben", bahnen: 3, prio: 15 },
-        { nummer: 12, name: "Anna", bahnen: 5, prio: 10 },
-        { nummer: 13, name: "Ben", bahnen: 3, prio: 15 },
-        { nummer: 14, name: "Anna", bahnen: 5, prio: 10 },
-        { nummer: 15, name: "Ben", bahnen: 3, prio: 15 },
-        { nummer: 16, name: "Ben", bahnen: 3, prio: 15 },
-        { nummer: 17, name: "Clara", bahnen: 7, prio: 5 },*/
-];
+let schwimmer = [];
 let actions = [];
+let statMessages = [];
 let alleSchwimmer = {}; // Beinhaltet die Schwimmer in der Datenbank in einem Dictionary mit nummer als Key
 
 let longPressTimer; // Variable für den Timer um einen Longpress von einem Touchmove zu unterscheiden
@@ -65,7 +63,7 @@ function schwimmerHinzufuegen(nummer) {
     console.debug("Schwimmer Nr. ", nummer, "wird gesucht...");
 
     // Der gesuchte Schwimmer soll auf jeden Fall oben in die Liste
-    const maxPrio = Math.max(Math.max(...schwimmer.map(s => s.prio)),0);
+    const maxPrio = Math.max(Math.max(...schwimmer.map(s => s.prio)), 0);
 
     //Wenn der schwimmer schon in der Liste schwimmer ist, wird seine Priorität auf das aktuelle Maximum gesetzt
     const aktiver = schwimmer.find(s => s.nummer == nummer);
@@ -77,7 +75,7 @@ function schwimmerHinzufuegen(nummer) {
         fetchSchwimmer(nummer);
         const bekannter = alleSchwimmer[parseInt(nummer)] ?? null;
         if (bekannter) {
-            console.debug(`Schwimmer ${nummer} Nummer war schon vorhanden`);
+            console.debug(`Schwimmer ${nummer} Nummer war schon vorhanden:`, bekannter);
             const scopy = {
                 nummer: parseInt(nummer),
                 vorname: bekannter.vorname,
@@ -157,7 +155,7 @@ function toggleInfoBar() {
 
 function downloadJSON() {
     // Daten für JSON-Umwandlung in ein Dictionary packen
-    const data = { "schwimmer": schwimmer, "alleSchwimmer": alleSchwimmer, "actions": actions };
+    const data = { "schwimmer": schwimmer, "alleSchwimmer": alleSchwimmer, "actions": actions, "statMessages": statMessages };
 
     // In JSON-Text umwandeln
     const jsonString = JSON.stringify(data, null, 2);
@@ -316,9 +314,10 @@ container.addEventListener('click', async (event) => {
                     s_data.aufBahn = verwaltete_bahnen[0];
                 }
                 s_data.prio = 0;
+                //Evtl. genauere Daten in alleSchwimmer
+                s_data.bahnen = Math.max(s_data.bahnen, alleSchwimmer[nummer] ? alleSchwimmer[nummer].bahnanzahl : 0);
                 s_data.bahnen += 1;
-                //das Div löschen - wird beim rendern wieder hinten angehangen
-                //clicked_schwimmer.remove();
+
                 clicked_schwimmer.style.opacity = '';
                 render();
                 actions.push({
@@ -378,7 +377,7 @@ function showSchwimmerContextMenu(x, y) {
     // Bahn abziehen nur Anzeigen, wenn Anzahl größer 0
     const s_data = schwimmer.find(s => s.nummer == parseInt(clickedDiv.dataset.nummer));
     const bahnAbziehen = document.getElementById("rundeAbziehenOption");
-    if (!s_data || s_data.bahnen <=0) {
+    if (!s_data || s_data.bahnen <= 0) {
         bahnAbziehen.style.display = "none";
     } else {
         bahnAbziehen.style.display = "block";
@@ -495,7 +494,7 @@ function removeSchwimmerDiv(div, setinactive = true, dorender = true) {
         schwimmer.splice(index, 1); //lösche einen Eintrag an Stelle index
         // Aktualisiere die Daten in alleSchwimmer - Bahnen reicht
         // console.log(`entfernter Schwimmer ${entfernterSchwimmer.nummer} hat bisher ${alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl} Bahnen`);
-        alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = entfernterSchwimmer.bahnen;
+        alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl = Math.max(alleSchwimmer[entfernterSchwimmer.nummer].bahnanzahl, entfernterSchwimmer.bahnen);
         if (setinactive) {
             alleSchwimmer[entfernterSchwimmer.nummer].aktiv = 0;
             actions.push({
@@ -663,7 +662,6 @@ function redrawStatusBar() {
             <span style="height: 10px; width: 10px; background-color: red; border-radius: 50%; display: inline-block; margin-right: 5px">
             </span> Nicht Verbunden
             `;
-        showStatusMessage("Serververbindung verloren", false);
     }
 }
 
@@ -671,6 +669,7 @@ function updateServerStatus(neu) {
     //console.log("updateServerStatus - alt", server_verbunden, "neu", neu, "ungespeicherte Daten: ", formIsDirty);
     if (server_verbunden != neu) { //Server status hat sich geändert
         server_verbunden = neu;
+        logMessage(neu ? "Server wieder verbunden" : "Serververbindung verloren", neu);
         showStatusMessage(neu ? "Server wieder verbunden" : "Serververbindung verloren", neu);
         redrawStatusBar();
     }
@@ -711,7 +710,7 @@ async function fetchSchwimmer(id = -1) {
             const resp = await response.json();
             console.log(resp);
             if (resp["updates"]) parseUpdates(resp);
-            console.log(alleSchwimmer);
+            //console.log(alleSchwimmer);
             updateServerStatus(true);
         } else {
             updateServerStatus(false);
@@ -763,7 +762,7 @@ async function fetchSchwimmerVonBahnen() {
 function parseUpdates(resp) {
     if (resp["updates"] && Array.isArray(resp["updates"])) {
         resp["updates"].forEach((eintrag) => {
-            alleSchwimmer[eintrag["nummer"]] = eintrag;
+            alleSchwimmer[parseInt(eintrag["nummer"])] = { ...eintrag };
             debugLog(`Schwimmer Nummer ${eintrag["nummer"]} aktualisiert`);
         });
     }
@@ -840,8 +839,8 @@ document.getElementById("bahnen").addEventListener("keydown", (event) => {
 
 
 debugLog("Initial commands - Grundlagen einrichten");
-//alle Zehn Sekunden die Daten zum Server schicken
-setInterval(transmitActions, 10000);
+//alle Dreißig Sekunden die Daten zum Server schicken
+setInterval(transmitActions, 30000);
 
 // zu Beginn Daten vom Server holen
 fetchSchwimmer().then(() => {

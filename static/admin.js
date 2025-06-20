@@ -1,5 +1,5 @@
 import { showStatusMessage } from './mymodals.js'
-import { initCSVImport } from './csvImport.js'
+import { initCSVImport, initJSONImport } from './csvImport.js'
 
 // Globale Variablen für die Schwimmer und User Tabelle
 let swimmerData = [];
@@ -394,11 +394,32 @@ function showChecksSection() {
     button.addEventListener('click', (e) => fetchAndFillTable(null, 'checkAnzahlenTable', 'get_checkAnzahlTable', 'Anzahlen'));
     checkSection.appendChild(button);
     const info = document.createElement('span');
-    info.innerText = "Gibt Schwimmer aus, bei denen die Anzahlen in Actions nicht denen in der Tabelle entspricht"
+    info.innerText = "Gibt Schwimmer aus, bei denen die Anzahlen in Actions nicht denen in der Schwimmer-Tabelle entspricht"
     checkSection.appendChild(info);
     let table = document.createElement('table');
     table.id = "checkAnzahlenTable";
     checkSection.appendChild(table);
+    let heading = document.createElement('h2');
+    heading.innerText = "ACTIONS importieren (JSON)";
+    checkSection.appendChild(heading);
+    // Bereich für die ImportDaten
+    const adiv = document.createElement('div');
+    adiv.id = 'actionsDiv';
+    checkSection.appendChild(adiv);
+    // Bereich für den Datenimport
+    checkSection.appendChild(document.createElement('hr'));
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.id = 'jsonInput';
+    checkSection.appendChild(input);
+    const div = document.createElement('div');
+    div.id = 'jsonPreviewContainer';
+    checkSection.appendChild(div);
+    button = document.createElement('button');
+    button.id = "jsonSend";
+    button.innerText = 'Importieren';
+    checkSection.appendChild(button);
+    initJSONImport('#jsonInput', '#jsonPreviewContainer', '#jsonSend', { url: '/action'});
 
 }
 
